@@ -127,6 +127,10 @@
   .qtable .qn{color:#8b6a3e;width:34px}
   .qtable .btns{text-align:right;white-space:nowrap}
   .anote{font-size:12px;color:#8b6a3e;margin-top:4px}
+  #mapBtn{position:absolute;right:10px;top:10px;z-index:2;font:700 13px 'Gowun Batang',serif;background:rgba(24,18,14,.8);color:#ffd76a;
+    border:1.5px solid #c9a24a;border-radius:8px;padding:5px 10px;cursor:pointer}
+  #mapBtn.on{background:#c9a24a;color:#2b1d12}
+  body:not(.playing) #mapBtn{display:none}
   #admBtn{position:absolute;left:14px;top:64px;z-index:2;font:700 12px 'Gowun Batang',serif;background:#2f3d5a;color:#fff;border:none;border-radius:6px;padding:4px 9px;cursor:pointer;opacity:.9}
   #rotate{display:none;position:fixed;inset:0;background:#1a1410;color:#f3e3c0;z-index:9;align-items:center;justify-content:center;font-size:20px;text-align:center;line-height:1.7}
   @media (orientation:portrait) and (pointer:coarse){#rotate{display:flex}}
@@ -200,6 +204,7 @@
     </div>
   </div>
   <button id="admBtn" class="hidden">🛠 관리자 (F2)</button>
+  <button id="mapBtn">🗺 조선 지도 (M)</button>
 
   <div id="title" class="hidden">
     <h1>조선유랑기</h1>
@@ -293,7 +298,7 @@ const KEYMAP = {
   Space: 'jump', KeyC: 'jump', AltLeft: 'jump', AltRight: 'jump',
   KeyZ: 'attack', ControlLeft: 'attack', ControlRight: 'attack',
   KeyX: 'skill', ShiftLeft: 'skill', ShiftRight: 'skill',
-  KeyA: 'potion', KeyH: 'help',
+  KeyA: 'potion', KeyH: 'help', KeyM: 'map',
 };
 addEventListener('keydown', e => {
   if (admin.on && (e.code === 'F2' || (e.code === 'Escape' && adminOpen))) { e.preventDefault(); toggleAdmin(); return; }
@@ -371,6 +376,11 @@ const MON = {
   tamgwan: { name: '탐관오리', hp: 260, atk: 26, exp: 62, speed: 0.9, w: 38, h: 66, aggro: true, coin: [25, 45], person: 'tamgwan', weapon: 'paddle', shoot: 1 },
   satto: { name: '변 사또', hp: 2400, atk: 32, exp: 900, speed: 1.3, w: 56, h: 104, boss: true, coin: [60, 90], person: 'satto', weapon: 'paddle', scale: 1.6,
     title: '변 사또 — 남원 고을의 탐관오리', intro: '변 사또: "웬 놈이냐! 감히 동헌에 발을 들이다니!"' },
+  hwangchung: { name: '메뚜기 떼', hp: 220, atk: 30, exp: 70, speed: 1.4, w: 46, h: 34, float: true, aggro: true, coin: [20, 40] },
+  haesuin: { name: '세도가 하수인', hp: 420, atk: 36, exp: 105, speed: 1.2, w: 32, h: 64, aggro: true, coin: [35, 60], person: 'haesuin', weapon: 'club' },
+  bitdok: { name: '빚 문서 도깨비', hp: 520, atk: 40, exp: 130, speed: 1.0, w: 36, h: 42, float: true, aggro: true, coin: [40, 70], shoot: 1, glyph: '債' },
+  gotgan: { name: '곳간 도깨비', hp: 4500, atk: 48, exp: 3000, speed: 1.5, w: 110, h: 118, boss: true, coin: [120, 200],
+    title: '곳간 도깨비 — 백성의 곡식을 삼킨 탐욕', intro: '곳간 도깨비: "내 곳간에 손대지 마라!"' },
 };
 
 const MAPS = {
@@ -390,6 +400,8 @@ const MAPS = {
       { x: 2640, to: 'mountain', tx: 140, label: '인왕산 산길 ▶' },
       { x: 50, to: 'goeul', tx: 150, label: '◀ 남원 고을 (삼남)', req: () => !!QS.q5,
         lock: '삼남으로 가는 먼 길이다. 지금은 떠날 이유가 없다.' },
+      { x: 1300, to: () => (QS.q12 ? 'jinju' : 'jeongju'), tx: 150, label: '📜 역사 두루마리', req: () => !!QS.q9,
+        lock: '서당 훈장이 아끼는 두루마리다. 함부로 펼칠 수 없다.' },
     ],
     spawns: [],
   },
@@ -461,6 +473,61 @@ const MAPS = {
     portals: [{ x: 60, to: 'goeul', tx: 3140, label: '◀ 남원 고을' }],
     spawns: [{ t: 'satto', a: 300, b: 1540, y: GROUND }],
   },
+
+  /* ---------- 3장 ---------- */
+  jeongju: {
+    name: '1811년 · 평안도 정주', w: 3200, theme: 'winter',
+    platforms: [
+      { x: 1150, y: 372, w: 220 }, { x: 1450, y: 286, w: 200 }, { x: 1750, y: 372, w: 240 },
+      { x: 2050, y: 286, w: 220 }, { x: 2350, y: 372, w: 220 }, { x: 2650, y: 286, w: 200 },
+    ],
+    decor: [
+      { t: 'tree', x: 190, s: 1.1 }, { t: 'choga', x: 560 }, { t: 'tree', x: 980, s: 0.9 }, { t: 'rock', x: 1400, s: 0.9 },
+      { t: 'tree', x: 1680, s: 1.2 }, { t: 'tree', x: 2280, s: 1 }, { t: 'rock', x: 2600, s: 1.1 }, { t: 'seongmun', x: 2940, sign: '定州城' },
+    ],
+    portals: [
+      { x: 50, to: 'village', tx: 1300, label: '◀ 두루마리 밖으로 (한양)' },
+      { x: 3140, to: 'jinju', tx: 150, label: '📜 51년 뒤 · 진주 ▶', req: () => !!QS.q12,
+        lock: '두루마리의 다음 장이 아직 펼쳐지지 않았다.' },
+    ],
+    spawns: [
+      { t: 'haesuin', a: 1000, b: 1600, y: GROUND }, { t: 'haesuin', a: 1160, b: 1360, y: 372 },
+      { t: 'haesuin', a: 1760, b: 1980, y: 372 }, { t: 'haesuin', a: 1650, b: 2300, y: GROUND },
+      { t: 'haesuin', a: 2360, b: 2560, y: 372 },
+      { t: 'hwangchung', a: 1460, b: 1640, y: 286 }, { t: 'hwangchung', a: 2060, b: 2260, y: 286 },
+      { t: 'hwangchung', a: 2660, b: 2840, y: 286 }, { t: 'hwangchung', a: 2250, b: 2850, y: GROUND },
+      { t: 'hwangchung', a: 1150, b: 1700, y: GROUND },
+    ],
+  },
+  jinju: {
+    name: '1862년 · 경상도 진주', w: 3300, theme: 'jinju',
+    platforms: [
+      { x: 1300, y: 372, w: 220 }, { x: 1650, y: 286, w: 200 }, { x: 1950, y: 372, w: 240 },
+      { x: 2280, y: 286, w: 220 }, { x: 2600, y: 372, w: 220 }, { x: 2900, y: 286, w: 180 },
+    ],
+    decor: [
+      { t: 'choga', x: 230 }, { t: 'tree', x: 560, s: 1.3 }, { t: 'choga', x: 900 }, { t: 'stack', x: 1150 },
+      { t: 'tree', x: 1600, s: 0.9 }, { t: 'rock', x: 2200, s: 1 }, { t: 'tree', x: 2540, s: 1.1 }, { t: 'tree', x: 3080, s: 1 },
+    ],
+    portals: [
+      { x: 50, to: 'village', tx: 1300, label: '◀ 두루마리 밖으로 (한양)' },
+      { x: 3240, to: 'jinjuseong', tx: 140, label: '진주성 ▶', req: () => !!QS.q14,
+        lock: '진주성 문이 굳게 닫혀 있다. 유계춘과 먼저 이야기해 보자.' },
+    ],
+    spawns: [
+      { t: 'bitdok', a: 1310, b: 1510, y: 372 }, { t: 'bitdok', a: 1660, b: 1840, y: 286 },
+      { t: 'bitdok', a: 1960, b: 2180, y: 372 }, { t: 'bitdok', a: 2290, b: 2490, y: 286 },
+      { t: 'bitdok', a: 2610, b: 2810, y: 372 }, { t: 'bitdok', a: 1450, b: 2150, y: GROUND },
+      { t: 'haesuin', a: 2300, b: 3000, y: GROUND }, { t: 'haesuin', a: 2910, b: 3070, y: 286 },
+    ],
+  },
+  jinjuseong: {
+    name: '1862년 · 진주성', w: 1600, theme: 'dongheon',
+    platforms: [{ x: 380, y: 400, w: 150, kind: 'bench' }],
+    decor: [{ t: 'tree', x: 200, s: 1 }, { t: 'pavilion', x: 1180, sign: '矗石樓' }],
+    portals: [{ x: 60, to: 'jinju', tx: 3140, label: '◀ 진주 고을' }],
+    spawns: [{ t: 'gotgan', a: 300, b: 1540, y: GROUND }],
+  },
 };
 
 const NPCS = {
@@ -472,6 +539,10 @@ const NPCS = {
   elder: { name: '고을 어른 김 노인', map: 'goeul', x: 380, look: 'elder' },
   widow: { name: '박씨 아낙', map: 'goeul', x: 700, look: 'widow' },
   farmer: { name: '소작농 최 서방', map: 'goeul', x: 1020, look: 'farmer' },
+  merchant: { name: '평안도 상인 이씨', map: 'jeongju', x: 380, look: 'merchant' },
+  jwoman: { name: '정주 아낙', map: 'jeongju', x: 780, look: 'jwoman' },
+  yu: { name: '유계춘', map: 'jinju', x: 380, look: 'yu' },
+  chogun: { name: '초군(나무꾼) 돌쇠', map: 'jinju', x: 760, look: 'chogun' },
 };
 
 const note = text => ({ name: '📜 역사 노트', look: null, text });
@@ -605,6 +676,96 @@ const QUESTS = [
     ],
     idle: [`올가을엔 처음으로 내 손으로 거둔 쌀을 내 곳간에 넣었소. 이런 날이 오다니….`],
   },
+
+  /* ===================== 3장 · 들고일어난 백성들 ===================== */
+  {
+    id: 'q9', npc: 'hunjang', turnin: 'merchant', title: '역사 두루마리', need: 0, req: 'q8', reward: { exp: 300, coins: 80 },
+    onAccept: () => setTimeout(() => { toast('📜 두루마리를 펼치자 눈앞이 아득해진다…', '#f3e3c0', 200); trans = { to: 'jeongju', x: 150, t: 0 }; }, 300),
+    offer: A => [
+      `${A}, 남원 소식은 들었소. 참으로 장한 일을 했구려!`,
+      `삼정의 문란에 시달린 백성들은 끝내 들고일어났소. 그 이야기를 이 <b>역사 두루마리</b>에 적어 두었지. 두루마리를 펼치면 그때 그곳으로 가 볼 수 있다오.`,
+      `먼저 <b>1811년, 평안도 정주</b>로 가 보시오. 그곳의 <b>상인 이씨</b>가 사정을 들려줄 것이오. (두루마리는 서당 오른쪽에 펼쳐 두겠소.)`,
+    ],
+    progress: () => `두루마리를 펼쳐 1811년 평안도 정주의 상인 이씨를 찾아가 보시오. 두루마리는 서당 오른쪽에 있소.`,
+    done: () => [
+      `어디서 오셨소? 한양 말씨로구려. 여기는 평안도 정주요. 올해(1811년)는 큰 흉년까지 들어 다들 굶주리고 있소.`,
+      `우리 평안도는 청나라와 장사하며 상업과 광업이 꽤 발달했소. 그런데 나라에서는 <b>서북 사람</b>이라며 높은 벼슬길을 막고 업신여겼지. 게다가 세도가들의 수탈은 날로 심해지니….`,
+      note(`<b>세도 정치</b> — 순조가 어린 나이에 왕이 되자 안동 김씨 같은 몇몇 외척 가문이 권력을 독차지했어요. 이를 세도 정치라고 해요. 돈으로 벼슬을 사고파는 일이 흔해졌고, 벼슬을 산 관리들은 백성을 수탈해 본전을 찾으려 했어요.`),
+    ],
+    idle: [],
+  },
+  {
+    id: 'q10', npc: 'merchant', title: '바람에 흩어진 격문', target: 'haesuin', item: '격문 조각', drop: 0.55, need: 4, req: 'q9',
+    reward: { exp: 1200, coins: 150 },
+    offer: A => [
+      `요즘 고을 곳곳에 <b>격문</b>이 나붙었소. 격문은 사람들에게 뜻을 알리고 함께하자고 부르는 글이오.`,
+      `그런데 세도가의 하수인들이 격문을 찢어 바람에 날려 버렸지. <b>격문 조각 4장</b>을 모아 오시오. 무슨 내용인지 함께 읽어 봅시다.`,
+    ],
+    progress: (c, n) => `세도가 하수인들은 정주성 앞 눈 덮인 들판에 있소. 쓰러뜨리면 격문 조각을 떨어뜨릴 거요. (${c}/${n})`,
+    done: () => [
+      `조각을 맞춰 보니… "조정은 서북 땅을 더러운 흙처럼 버려두었다. 권세가의 종들조차 서북 사람을 업신여긴다. 어린 임금 곁에서 권세 있는 신하들이 나라를 어지럽힌다…"`,
+      `이건 <b>홍경래</b>라는 사람이 돌린 격문이오. 서북 사람에 대한 차별과 세도 정치를 꾸짖고 있구려.`,
+      note(`<b>홍경래의 난(1811)</b> — 몰락 양반 홍경래가 평안도 가산 다복동에서 일으킨 봉기예요. 서북 지역에 대한 차별, 세도 정치 아래의 수탈, 흉년이 겹친 것이 원인이었어요. 영세 농민, 광산 노동자, 일부 상인 등이 함께했고, 한때 청천강 북쪽의 여러 고을을 차지했어요.`),
+    ],
+    idle: [`장사꾼은 세상 돌아가는 소식에 밝아야 하오. 이번 일은 쉽게 끝나지 않을 것 같구려.`],
+  },
+  {
+    id: 'q11', npc: 'jwoman', title: '굶주린 들판', target: 'hwangchung', need: 8, req: 'q9', reward: { exp: 1200, coins: 150 },
+    offer: A => [
+      `나그네님, 올해 농사는 다 망쳤다오. 가뭄으로 흉년이 들었는데 들판엔 <b>메뚜기 떼</b>까지 들끓어 남은 곡식마저 갉아 먹고 있소.`,
+      `그런데도 관아에선 세금을 줄여 주지 않는다오. 남은 낟알이라도 지킬 수 있게 <b>메뚜기 떼 8무리</b>를 쫓아 주시오.`,
+    ],
+    progress: (c, n) => `메뚜기 떼는 들판과 높은 바위 위를 날아다니오. 이단 점프로 쫓아가시오! (${c}/${n})`,
+    done: () => [
+      `고맙소…. 사람들 말로는 홍경래 군이 관군에 밀려 <b>정주성</b>으로 들어갔다 하오. 우리 같은 백성도 꽤 많이 따라 들어갔다더구려.`,
+      note(`<b>홍경래의 난, 그 뒤</b> — 봉기군은 관군에 밀려 정주성으로 들어가 약 4개월 동안 버텼어요. 1812년 4월, 관군이 성 밑으로 굴을 파고 화약을 터뜨려 성벽을 무너뜨리면서 봉기는 진압되었고 홍경래도 목숨을 잃었어요. 하지만 백성들이 세상을 바꾸려고 직접 나섰다는 점에서 이후의 농민 봉기에 큰 영향을 주었어요.`),
+    ],
+    idle: [`정주성 쪽에서 밤마다 함성이 들린다오…. 다들 무사해야 할 텐데.`],
+  },
+  {
+    id: 'q12', npc: 'merchant', turnin: 'yu', title: '두루마리의 다음 장', need: 0, req: ['q10', 'q11'], reward: { exp: 400, coins: 80 },
+    lock: `정주 아낙의 들판 일도 도와주시오. 그 뒤에 할 이야기가 있소.`,
+    onAccept: () => setTimeout(() => { toast('📜 두루마리가 다음 장으로 넘어간다… 51년 뒤, 진주', '#f3e3c0', 220); trans = { to: 'jinju', x: 150, t: 0 }; }, 300),
+    offer: A => [
+      `봉기는 끝났지만 백성들의 고통은 그 뒤로도 이어졌소…. 아니, 오히려 더 심해졌지.`,
+      { name: '📜 역사 두루마리', look: null, text: `두루마리가 저절로 펼쳐진다…. <b>51년 뒤, 1862년 경상도 진주.</b> 진주의 선비 <b>유계춘</b>을 찾아가자.` },
+    ],
+    progress: () => `정주 오른쪽 끝의 두루마리 포탈(또는 한양 서당 옆 두루마리)로 1862년 진주에 가서 유계춘을 찾으시오.`,
+    done: () => [
+      `처음 보는 얼굴이구려. 나는 진주에 사는 선비 유계춘이오. 몰락한 양반이라 농사꾼과 다를 바 없지만.`,
+      `올해(1862년) 진주 백성들은 더는 버틸 수가 없소. 경상우병사 <b>백낙신</b>은 병영 곳간에서 축난 곡식을 채운다며 그 부담을 백성들에게 떠넘겼고, 진주 관아는 세금을 한꺼번에 돈으로 매기는 <b>도결</b>로 몇 배를 거두어 가오.`,
+      note(`<b>진주 농민 봉기(1862)</b> — 1862년 2월, 경상우병사 백낙신의 수탈과 진주목의 무거운 세금에 맞서 진주 농민들이 들고일어났어요. 몰락 양반 유계춘이 앞장섰고, 나무꾼(초군)을 비롯한 많은 농민이 참여했어요.`),
+    ],
+    idle: [],
+  },
+  {
+    id: 'q13', npc: 'chogun', title: '빚 문서 도깨비', target: 'bitdok', need: 7, req: 'q12', reward: { exp: 2000, coins: 200 },
+    offer: A => [
+      `어이, 나는 산에서 나무를 해다 파는 <b>초군</b> 돌쇠요. 땅 한 뙈기 없어도 환곡 빚은 꼬박꼬박 지고 있다오.`,
+      `관아 근처엔 백성들의 한이 서린 <b>빚 문서</b>가 도깨비가 되어 날아다닌다는 소문이오. 놈들은 <b>債(빚 채)</b> 자가 적힌 종이를 던진다오. <b>빚 문서 도깨비 7마리</b>를 없애 주시오!`,
+    ],
+    progress: (c, n) => `빚 문서 도깨비는 남강 가 바위 위를 날아다니오. (${c}/${n})`,
+    done: () => [
+      `후련하구려! 이제 우리 초군들도 유계춘 어른과 함께 진주 관아로 가려 하오.`,
+      note(`<b>몰락 양반과 농민</b> — 조선 후기에는 벼슬을 하지 못해 가난해진 <b>몰락 양반</b>이 많았어요. 홍경래, 유계춘처럼 글을 아는 몰락 양반이 계획을 세우고 글을 돌리면, 농민·나무꾼·광산 노동자 같은 사람들이 함께하면서 큰 봉기가 일어났어요.`),
+    ],
+    idle: [`나무 한 짐 팔아 봐야 빚 갚기도 빠듯하다오. 그래도 이젠 숨통이 좀 트이는구려.`],
+  },
+  {
+    id: 'q14', npc: 'yu', title: '곳간을 삼킨 도깨비', target: 'gotgan', need: 1, req: 'q13', reward: { exp: 5000, coins: 500 },
+    lock: `초군 돌쇠가 빚 문서 때문에 골치를 앓고 있소. 그 일부터 도와주시오.`,
+    offer: A => [
+      `백성들이 진주성으로 모여들고 있소. 그런데 병영 곳간에는 관리들의 탐욕이 뭉쳐 생긴 거대한 <b>곳간 도깨비</b>가 버티고 있다오.`,
+      `고을 오른쪽 끝 <b>진주성</b>으로 들어가 <b>곳간 도깨비</b>를 물리쳐 주시오. 백성의 곡식을 되찾아야 하오!`,
+    ],
+    progress: () => `진주성은 고을 오른쪽 끝에 있소. 도깨비가 <b>!</b>를 띄우면 뛰어올라 땅을 내려찍으니 이단 점프로 피하고, <b>債!</b>를 띄우면 빚 문서를 흩뿌리오!`,
+    done: () => [
+      `이겼소! 곳간에서 쏟아진 곡식을 굶주린 백성들에게 나누어 주었소.`,
+      `우리 진주 농민들은 관아로 몰려가 억울함을 호소하고 못된 아전들을 벌주었소. 이 소식은 곧 삼남 곳곳으로 퍼져 나갈 것이오.`,
+      note(`<b>임술 농민 봉기(1862)</b> — 진주에서 시작된 봉기는 그해 삼남 지방을 중심으로 전국 70여 곳으로 번졌어요. 임술년에 일어나서 '임술 농민 봉기'라고 불러요. 놀란 정부는 박규수를 안핵사로 보내 사정을 조사하게 하고, <b>삼정이정청</b>을 설치해 삼정을 고치겠다고 약속했어요. 하지만 개혁은 얼마 못 가 흐지부지되었고, 농민들의 불만은 훗날 동학 농민 운동으로 이어졌어요.`),
+    ],
+    idle: [`세상이 하루아침에 바뀌진 않겠지. 그래도 백성이 목소리를 냈다는 건 잊히지 않을 것이오.`],
+  },
 ];
 
 /* =========================================================
@@ -682,6 +843,7 @@ function update() {
     clearPressed(); return;
   }
   if (pressed.help) helpT = helpT > 0 ? 0 : 600;
+  if (pressed.map) toggleMap();
   playFrames++;
   if (frame % 600 === 0) saveGame(false);          // 10초마다 기기에 저장
   if (frame % 3600 === 0) saveGame(true);          // 1분마다 서버에도 저장
@@ -927,10 +1089,12 @@ function updateMonsters() {
       tigerAI(m, dx);
     } else if (m.t === 'satto') {
       sattoAI(m, dx);
+    } else if (m.t === 'gotgan') {
+      gotganAI(m, dx);
     } else {
       if (m.d.shoot && near && Math.abs(dx) < 360 && Math.abs(P.y - m.y) < 100 && --m.timer <= 0) {
         m.timer = rnd(140, 220); m.dir = dx > 0 ? 1 : -1;
-        throwPaper(m.x + m.dir * 16, m.y - 44, m.dir * 4.2, 0, m.d.atk * 0.8);
+        throwPaper(m.x + m.dir * 16, monY(m) - 30, m.dir * 4.2, 0, m.d.atk * 0.8, m.d.glyph);
       }
       if (m.stun > 0) m.stun--;
       else {
@@ -991,8 +1155,38 @@ function sattoAI(m, dx) {
   m.x = clamp(m.x, m.s.a, m.s.b);
 }
 
-function throwPaper(x, y, vx, vy, dmg) {
-  eprojs.push({ x, y, vx, vy, dmg, life: 150, spin: 0 });
+function gotganAI(m, dx) {
+  m.vy = Math.min(m.vy + GRAV, 14); m.y += m.vy;
+  if (m.y >= GROUND) {
+    if (m.air) {
+      m.air = false; shake = 12; beep(80, 0.3, 'sawtooth', 0.06, -30);
+      fx.push({ type: 'ring', x: m.x, y: GROUND - 8, r: 10, max: 190, life: 24, maxLife: 24, color: '210,170,100' });
+      if (P.onGround && !P.dead && Math.abs(P.x - m.x) < 180) hurtPlayer(m.d.atk, m.x);
+    }
+    m.y = GROUND; m.vy = 0;
+  }
+  if (m.air) m.x += m.vx;
+  else if (m.windup > 0) {
+    m.windup--;
+    if (m.windup === 0) {
+      if (m.next === 'slam') { m.vy = -13; m.vx = clamp(dx / 48, -6, 6); m.air = true; }
+      else { for (let i = 0; i < 5; i++) throwPaper(m.x + m.dir * 40, m.y - 110 + i * 20, m.dir * 4.4, (i - 2) * 0.45, m.d.atk * 0.6, '債'); beep(700, 0.2, 'square', 0.03, -300); }
+    }
+  } else {
+    m.dir = dx > 0 ? 1 : -1;
+    if (Math.abs(dx) > 90) m.x += m.dir * m.d.speed;
+    if (--m.timer <= 0) {
+      m.next = Math.random() < 0.55 ? 'slam' : 'volley';
+      m.windup = 40; m.timer = rnd(120, 180);
+      addFloat(m.x, m.y - m.d.h - 24, m.next === 'slam' ? '!' : '債!', 'warn');
+    }
+  }
+  m.x += m.kb; m.kb *= 0.8;
+  m.x = clamp(m.x, m.s.a, m.s.b);
+}
+
+function throwPaper(x, y, vx, vy, dmg, glyph = '稅') {
+  eprojs.push({ x, y, vx, vy, dmg, glyph, life: 150, spin: 0 });
 }
 function updateEnemyProjectiles() {
   const pb = playerBox();
@@ -1065,7 +1259,7 @@ function interact() {
   for (const pt of map.portals) if (Math.abs(pt.x - P.x) < 42 && P.y > GROUND - 60) {
     if (pt.req && !pt.req()) { toast(pt.lock, '#f3e3c0', 220); return; }
     beep(300, 0.4, 'sine', 0.05, 500);
-    trans = { to: pt.to, x: pt.tx, t: 0 }; return;
+    trans = { to: typeof pt.to === 'function' ? pt.to() : pt.to, x: pt.tx, t: 0 }; return;
   }
 }
 
@@ -1096,7 +1290,7 @@ function talk(npcId) {
   if (q && !questUnlocked(q)) pages = [q.lock];
   else if (q && !QS[q.id]) {
     pages = q.offer(A);
-    onEnd = () => { QS[q.id] = { state: 'active', count: 0 }; SFX.quest(); toast(`퀘스트 수락: ${q.title}`, '#ffd76a', 200); saveGame(true); };
+    onEnd = () => { QS[q.id] = { state: 'active', count: 0 }; SFX.quest(); toast(`퀘스트 수락: ${q.title}`, '#ffd76a', 200); saveGame(true); q.onAccept && q.onAccept(); };
   } else if (q && (QS[q.id].count < q.need || turninOf(q) !== npcId)) pages = [q.progress(QS[q.id].count, q.need)];
   else if (q) {
     pages = q.done(P.cid);
@@ -1110,7 +1304,8 @@ function talk(npcId) {
         ended = true;
         setTimeout(() => toast('🎉 1장 완료! 서당 훈장에게 새 부탁이 생겼다.', '#ffd76a', 400), 900);
       }
-      if (q.id === 'q8') setTimeout(() => toast('🎉 2장 「삼정의 문란」 완료! 다음 이야기: 홍경래의 난 (준비 중)', '#ffd76a', 450), 900);
+      if (q.id === 'q8') setTimeout(() => toast('🎉 2장 「삼정의 문란」 완료! 서당 훈장에게 새 부탁이 생겼다.', '#ffd76a', 450), 900);
+      if (q.id === 'q14') setTimeout(() => toast('🎉 3장 「들고일어난 백성들」 완료!', '#ffd76a', 450), 900);
     };
   } else {
     const all = QUESTS.filter(x => x.npc === npcId).flatMap(x => x.idle);
@@ -1187,6 +1382,11 @@ const LOOKS = {
   widow: { robe: '#f6f3ec', line: '#d6cfbf', pants: '#f6f3ec', shoe: '#cfc6b2', belt: '#d6cfbf', hat: 'bun', skirt: '#ece7dc', collar: '#ddd' },
   farmer: { robe: '#e3d6b8', line: '#c0ac84', pants: '#d8c9a6', shoe: '#b89a62', belt: '#7a5a35', hat: 'paraengi', patch: true },
   smith: { robe: '#d8c9a6', line: '#b09a70', pants: '#6b5a40', shoe: '#3a2a1e', belt: '#3a2a1e', hat: 'headband', apron: '#5a3a22', mustache: true },
+  merchant: { robe: '#8a9ab0', line: '#6a7a90', pants: '#e0d9c6', shoe: '#3a2a1e', belt: '#4a5a70', hat: 'gat', long: true, mustache: true },
+  jwoman: { robe: '#e8dcc8', line: '#c8b898', pants: '#5a6a8a', shoe: '#5a4a3a', belt: '#a33a2a', hat: 'bun', skirt: '#5a6a8a' },
+  yu: { robe: '#e6e0d0', line: '#c4bca8', pants: '#ddd6c4', shoe: '#3a2a1e', belt: '#6a5a40', hat: 'gat', long: true, patch: true, mustache: true },
+  chogun: { robe: '#d8c9a6', line: '#b09a70', pants: '#c9b890', shoe: '#9a7a4a', belt: '#6b4a2b', hat: 'headband', patch: true, prop: 'jige' },
+  haesuin: { robe: '#4a3f5a', line: '#2f2840', pants: '#d8d0c0', shoe: '#1f1f1f', belt: '#8b2b2b', hat: 'tanggeon', mustache: true },
   eosa: { robe: '#cfc6ae', line: '#a89e84', pants: '#cfc6ae', shoe: '#5a4a38', belt: '#6b5a40', hat: 'gat', long: true, patch: true, prop: 'mapae' },
 };
 
@@ -1380,6 +1580,9 @@ function drawMonster(m) {
     drawPerson(ctx, 0, 0, m.d.person, m.dir, { walk: true, t: frame + m.phase * 10, weapon: m.d.weapon, atk: swing ? 1 - ((frame + m.phase * 30) % 36) / 36 : 0 });
   }
   else if (m.t === 'tiger') drawTiger(m, fy);
+  else if (m.t === 'hwangchung') drawLocusts(m.x, fy, m.phase, m.dir);
+  else if (m.t === 'bitdok') drawDebtGhost(m.x, fy, m.phase, m.dir);
+  else if (m.t === 'gotgan') drawGotgan(m, fy);
   ctx.restore();
   if (!m.dead && (m.showHp > 0 || m.d.boss) && !m.d.boss) {
     const w = 46, x = m.x - w / 2, y = fy - m.d.h - 12;
@@ -1425,6 +1628,71 @@ function drawDokkaebi(x, y, ph) {
   ctx.fillStyle = '#f5d24a'; ctx.beginPath(); ctx.moveTo(x - 3, cy - 14); ctx.lineTo(x, cy - 24); ctx.lineTo(x + 3, cy - 14); ctx.closePath(); ctx.fill();
   ctx.fillStyle = '#1b2b40'; ell(ctx, x - 4, cy, 2, 2.8); ell(ctx, x + 4, cy, 2, 2.8);
   ctx.strokeStyle = '#1b2b40'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(x, cy + 5, 3, 0.2, Math.PI - 0.2); ctx.stroke();
+}
+
+function drawLocusts(x, y, ph, dir) {
+  const cy = y - 18;
+  ctx.fillStyle = 'rgba(80,90,30,.12)'; ell(ctx, x, cy, 26, 18);
+  for (let i = 0; i < 6; i++) {
+    const a = ph * 2.2 + i * TAU / 6, r = 13 + Math.sin(ph * 3 + i) * 4;
+    const lx = x + Math.cos(a) * r, ly = cy + Math.sin(a) * r * 0.6;
+    ctx.save(); ctx.translate(lx, ly); ctx.scale(dir, 1);
+    ctx.fillStyle = '#7a9a2e'; ell(ctx, 0, 0, 6, 2.6);
+    ctx.fillStyle = '#5a7a1e'; ell(ctx, 5, -0.5, 2.4, 2.2);
+    ctx.strokeStyle = 'rgba(230,240,200,.75)'; ctx.lineWidth = 1;
+    const fl = Math.sin(frame * 1.2 + i) * 3;
+    ctx.beginPath(); ctx.moveTo(-1, -1); ctx.lineTo(-6, -4 - fl); ctx.moveTo(1, -1); ctx.lineTo(-3, -5 + fl); ctx.stroke();
+    ctx.strokeStyle = '#4a5a1a'; ctx.beginPath(); ctx.moveTo(-2, 1); ctx.lineTo(-6, 4); ctx.stroke();
+    ctx.restore();
+  }
+}
+
+function drawDebtGhost(x, y, ph, dir) {
+  const cy = y - 20, tilt = Math.sin(ph * 1.5) * 0.15;
+  const gr = ctx.createRadialGradient(x, cy, 2, x, cy, 32);
+  gr.addColorStop(0, 'rgba(170,110,220,.45)'); gr.addColorStop(1, 'rgba(120,60,180,0)');
+  ctx.fillStyle = gr; ell(ctx, x, cy, 32, 32);
+  ctx.save(); ctx.translate(x, cy); ctx.rotate(tilt);
+  ctx.fillStyle = '#efe2c0';
+  ctx.beginPath(); ctx.moveTo(-13, -17); ctx.lineTo(13, -17); ctx.lineTo(14, 12);
+  for (let i = 0; i < 5; i++) ctx.lineTo(14 - i * 7, 12 + (i % 2 ? 6 : 0) + Math.sin(frame * 0.2 + i) * 2);
+  ctx.lineTo(-13, 12); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle = '#8a6a3e'; ctx.lineWidth = 1; ctx.stroke();
+  ctx.fillStyle = '#f5d24a'; ctx.beginPath(); ctx.moveTo(-10, -17); ctx.lineTo(-7, -26); ctx.lineTo(-4, -17); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(4, -17); ctx.lineTo(7, -26); ctx.lineTo(10, -17); ctx.fill();
+  ctx.fillStyle = '#c0392b'; ctx.font = F(15, true); ctx.textAlign = 'center'; ctx.fillText('債', 0, 9);
+  ctx.fillStyle = '#2a1a3a'; ell(ctx, -5 + dir * 2, -8, 2.2, 3); ell(ctx, 5 + dir * 2, -8, 2.2, 3);
+  ctx.restore();
+}
+
+function drawGotgan(m, y) {
+  const x = m.x, crouch = m.windup > 0 ? 0.86 : 1;
+  ctx.save(); ctx.translate(x, y); ctx.scale(m.dir, crouch);
+  ctx.fillStyle = 'rgba(0,0,0,.25)'; ell(ctx, 0, 0, 60, 8);
+  // 등에 진 볏가마
+  ctx.fillStyle = '#c9a55a'; rr(ctx, -62, -96, 34, 44, 10); ctx.fill(); rr(ctx, -58, -60, 30, 36, 10); ctx.fill();
+  ctx.strokeStyle = '#9a7a3a'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(-62, -80); ctx.lineTo(-28, -80); ctx.moveTo(-58, -44); ctx.lineTo(-28, -44); ctx.stroke();
+  // 다리
+  ctx.fillStyle = '#2e3a72'; ctx.fillRect(-26, -30, 18, 30); ctx.fillRect(10, -30, 18, 30);
+  ctx.fillStyle = '#c9a24a'; ctx.fillRect(-28, -30, 58, 8);   // 호랑이 가죽 띠 대신 금빛 띠
+  // 몸통
+  ctx.fillStyle = '#3d4a8a'; ell(ctx, 0, -68, 48, 46);
+  ctx.fillStyle = '#5a68aa'; ell(ctx, 8, -56, 26, 24);
+  // 얼굴
+  ctx.fillStyle = '#f5d24a';
+  ctx.beginPath(); ctx.moveTo(-18, -106); ctx.lineTo(-12, -132); ctx.lineTo(-4, -108); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(12, -108); ctx.lineTo(22, -132); ctx.lineTo(26, -104); ctx.fill();
+  ctx.fillStyle = '#fff'; ell(ctx, 4, -88, 9, 10); ell(ctx, 26, -88, 9, 10);
+  ctx.fillStyle = m.windup > 0 ? '#ff3b2b' : '#111'; ell(ctx, 7, -87, 4, 5); ell(ctx, 29, -87, 4, 5);
+  ctx.fillStyle = '#2a1a1a'; ctx.beginPath(); ctx.ellipse(18, -66, 16, 9, 0, 0, Math.PI); ctx.fill();
+  ctx.fillStyle = '#fff'; [8, 16, 24].forEach(tx => { ctx.beginPath(); ctx.moveTo(tx, -66); ctx.lineTo(tx + 3, -59); ctx.lineTo(tx + 6, -66); ctx.fill(); });
+  // 방망이
+  const sw = m.windup > 0 ? -0.9 : Math.sin(m.phase) * 0.2;
+  ctx.save(); ctx.translate(38, -66); ctx.rotate(-0.6 + sw);
+  ctx.fillStyle = '#7a5230'; ctx.beginPath(); ctx.moveTo(0, -4); ctx.lineTo(54, -11); ctx.lineTo(56, 11); ctx.lineTo(0, 4); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = '#d8d0b8'; [20, 32, 44].forEach(bx => { ell(ctx, bx, -6, 2.5, 2.5); ell(ctx, bx + 4, 5, 2.5, 2.5); });
+  ctx.restore();
+  ctx.restore();
 }
 
 function drawTiger(m, y) {
@@ -1478,6 +1746,33 @@ function drawBackground(theme, cam) {
     return;
   }
   gr = ctx.createLinearGradient(0, 0, 0, VH);
+  if (theme === 'winter') {
+    gr.addColorStop(0, '#b8c6d4'); gr.addColorStop(0.75, '#eef2f5');
+    ctx.fillStyle = gr; ctx.fillRect(0, 0, VW, VH);
+    ridge(cam, 0.08, 270, 80, 3, '#dfe6ee');
+    ridge(cam, 0.2, 340, 55, 6, '#c3cfdc');
+    // 눈 덮인 정주성 성벽
+    const off = -(cam * 0.32) % 40;
+    ctx.fillStyle = '#a7a8a6'; ctx.fillRect(0, 372, VW, 34);
+    ctx.fillStyle = '#959690'; for (let sx = off - 40; sx < VW + 40; sx += 40) ctx.fillRect(sx, 362, 24, 12);
+    ctx.fillStyle = '#ffffff'; for (let sx = off - 40; sx < VW + 40; sx += 40) ctx.fillRect(sx - 1, 360, 26, 4);
+    ctx.fillRect(0, 370, VW, 3);
+    return;
+  }
+  if (theme === 'jinju') {
+    gr.addColorStop(0, '#a9cde3'); gr.addColorStop(0.7, '#f1e6cc');
+    ctx.fillStyle = gr; ctx.fillRect(0, 0, VW, VH);
+    ctx.fillStyle = 'rgba(255,240,200,.85)'; ell(ctx, 780, 90, 34, 34);
+    ridge(cam, 0.08, 285, 65, 11, '#a7b9c6');
+    ridge(cam, 0.18, 330, 40, 13, '#8ea896');
+    // 남강
+    ctx.fillStyle = '#7fb2d0'; ctx.fillRect(0, 368, VW, 46);
+    ctx.strokeStyle = 'rgba(255,255,255,.55)'; ctx.lineWidth = 2;
+    const off = -(cam * 0.4 + frame * 0.3) % 70;
+    for (let sx = off - 70; sx < VW + 70; sx += 70) { ctx.beginPath(); ctx.moveTo(sx, 382); ctx.lineTo(sx + 26, 382); ctx.moveTo(sx + 34, 398); ctx.lineTo(sx + 56, 398); ctx.stroke(); }
+    ctx.fillStyle = '#b8a77a'; ctx.fillRect(0, 414, VW, 46);
+    return;
+  }
   if (theme === 'village' || theme === 'goeul' || theme === 'dongheon') { gr.addColorStop(0, '#9fcbe8'); gr.addColorStop(0.7, '#f4e6c6'); }
   else { gr.addColorStop(0, '#8ec6e0'); gr.addColorStop(0.7, '#e6efd8'); }
   ctx.fillStyle = gr; ctx.fillRect(0, 0, VW, VH);
@@ -1521,8 +1816,8 @@ function drawBackground(theme, cam) {
 }
 
 function drawGround(theme, cam) {
-  const top = { village: '#7da35a', mountain: '#5f8f45', cave: '#55443a', goeul: '#7da35a', dongheon: '#b8b0a0' }[theme];
-  const dirt = { village: '#cfae7c', mountain: '#9a7a52', cave: '#3d2f25', goeul: '#c4a274', dongheon: '#d8cdb8' }[theme];
+  const top = { village: '#7da35a', mountain: '#5f8f45', cave: '#55443a', goeul: '#7da35a', dongheon: '#b8b0a0', winter: '#ffffff', jinju: '#7da35a' }[theme];
+  const dirt = { village: '#cfae7c', mountain: '#9a7a52', cave: '#3d2f25', goeul: '#c4a274', dongheon: '#d8cdb8', winter: '#dfe5ea', jinju: '#c9b58a' }[theme];
   const x0 = Math.floor(cam) - 10;
   ctx.fillStyle = dirt; ctx.fillRect(x0, GROUND, VW + 20, VH - GROUND);
   ctx.fillStyle = top; ctx.fillRect(x0, GROUND, VW + 20, 7);
@@ -1544,12 +1839,15 @@ function drawPlatform(p, theme) {
     for (let x = p.x + 18; x < p.x + p.w; x += 18) { ctx.beginPath(); ctx.moveTo(x, p.y); ctx.lineTo(x, p.y + 9); ctx.stroke(); }
     return;
   }
-  const rock = theme === 'cave' ? '#4a3a2e' : '#857d70', dark = theme === 'cave' ? '#2e241c' : '#5f594f';
+  const rock = theme === 'cave' ? '#4a3a2e' : theme === 'winter' ? '#8a8f96' : '#857d70', dark = theme === 'cave' ? '#2e241c' : theme === 'winter' ? '#666b72' : '#5f594f';
   ctx.fillStyle = dark; ctx.beginPath(); ctx.moveTo(p.x + 6, p.y + 18);
   for (let x = p.x + 6; x <= p.x + p.w - 6; x += 14) ctx.lineTo(x, p.y + 22 + hash(x) * 14);
   ctx.lineTo(p.x + p.w - 6, p.y + 18); ctx.closePath(); ctx.fill();
   ctx.fillStyle = rock; rr(ctx, p.x, p.y, p.w, 22, 8); ctx.fill();
-  if (theme !== 'cave') {
+  if (theme === 'winter') {
+    ctx.fillStyle = '#f7fafc'; rr(ctx, p.x - 3, p.y - 3, p.w + 6, 9, 5); ctx.fill();
+    ctx.fillStyle = 'rgba(200,220,235,.9)'; for (let x = p.x + 14; x < p.x + p.w - 8; x += 31) { ctx.beginPath(); ctx.moveTo(x, p.y + 20); ctx.lineTo(x + 3, p.y + 32); ctx.lineTo(x + 6, p.y + 20); ctx.fill(); }
+  } else if (theme !== 'cave') {
     ctx.fillStyle = '#6a9a4a'; rr(ctx, p.x - 2, p.y - 2, p.w + 4, 7, 4); ctx.fill();
     ctx.strokeStyle = '#4a7a3a'; ctx.lineWidth = 2;
     for (let x = p.x + 20; x < p.x + p.w - 10; x += 37) { ctx.beginPath(); ctx.moveTo(x, p.y + 20); ctx.quadraticCurveTo(x + 4, p.y + 34, x - 2, p.y + 44 * hash(x) + 20); ctx.stroke(); }
@@ -1565,6 +1863,8 @@ function drawDecor(d) {
       ctx.lineTo(x + 12 * s, G - 148 * s); ctx.quadraticCurveTo(x, G - 80 * s, x + 9 * s, G); ctx.closePath(); ctx.fill();
       [[0, -150, 50, 16, '#2f5a3a'], [-30, -120, 40, 13, '#3b6e47'], [30, -105, 44, 14, '#2f5a3a'], [-8, -175, 32, 12, '#3b6e47'], [18, -135, 30, 10, '#46805a']]
         .forEach(([ox, oy, rx, ry, c]) => { ctx.fillStyle = c; ell(ctx, x + ox * s, G + oy * s, rx * s, ry * s); });
+      if (map.theme === 'winter') [[0, -156, 44, 7], [-30, -125, 34, 6], [30, -110, 38, 6], [-8, -180, 26, 5]]
+        .forEach(([ox, oy, rx, ry]) => { ctx.fillStyle = '#f7fafc'; ell(ctx, x + ox * s, G + oy * s, rx * s, ry * s); });
       break;
     }
     case 'rock': {
@@ -1586,6 +1886,7 @@ function drawDecor(d) {
       ctx.fillStyle = '#a87d36'; ctx.fillRect(x - 100, G - 74, 200, 8);
       ctx.strokeStyle = 'rgba(110,75,25,.55)'; ctx.lineWidth = 2;
       for (let k = 1; k <= 3; k++) { ctx.beginPath(); ctx.ellipse(x, G - 72, 100 - k * 6, 32 - k * 8, 0, Math.PI, 0); ctx.stroke(); }
+      if (map.theme === 'winter') { ctx.fillStyle = '#f7fafc'; ctx.beginPath(); ctx.ellipse(x, G - 74, 96, 30, 0, Math.PI * 1.05, Math.PI * 1.95); ctx.ellipse(x, G - 86, 70, 16, 0, Math.PI * 1.95, Math.PI * 1.05, true); ctx.fill(); }
       if (d.t === 'jumak') {
         ctx.fillStyle = '#6b4a2b'; ctx.fillRect(x + 104, G - 130, 5, 130);
         ctx.fillStyle = '#f7f1e3'; ctx.fillRect(x + 109, G - 126, 26, 44);
@@ -1639,6 +1940,38 @@ function drawDecor(d) {
       ctx.fillStyle = '#6b4a2b'; ctx.fillRect(x - 60, G - 128, 4, 98);
       ctx.fillStyle = '#3a2a1c'; ctx.fillRect(x - 56, G - 124, 46, 22);
       ctx.fillStyle = '#e8c870'; ctx.font = F(14, true); ctx.textAlign = 'center'; ctx.fillText('대장간', x - 33, G - 108);
+      break;
+    }
+    case 'seongmun': {   // 성문(정주성)
+      const winter = map.theme === 'winter';
+      ctx.fillStyle = '#9a9890'; ctx.fillRect(x - 110, G - 96, 220, 96);
+      ctx.strokeStyle = 'rgba(80,80,75,.35)'; ctx.lineWidth = 1;
+      for (let yy = G - 90; yy < G; yy += 14) for (let xx = x - 110 + ((yy / 14) % 2) * 14; xx < x + 110; xx += 28) ctx.strokeRect(xx, yy, 28, 14);
+      ctx.fillStyle = '#2a2420'; ctx.beginPath(); ctx.moveTo(x - 30, G); ctx.lineTo(x - 30, G - 46); ctx.arc(x, G - 46, 30, Math.PI, 0); ctx.lineTo(x + 30, G); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = '#6e4a2c'; [x - 70, x - 26, x + 20, x + 64].forEach(px => ctx.fillRect(px, G - 140, 6, 44));
+      ctx.fillStyle = '#3d434c'; ctx.beginPath();
+      ctx.moveTo(x - 104, G - 148); ctx.quadraticCurveTo(x - 90, G - 136, x - 76, G - 136); ctx.lineTo(x + 76, G - 136);
+      ctx.quadraticCurveTo(x + 90, G - 136, x + 104, G - 148); ctx.quadraticCurveTo(x + 66, G - 152, x + 50, G - 176);
+      ctx.lineTo(x - 50, G - 176); ctx.quadraticCurveTo(x - 66, G - 152, x - 104, G - 148); ctx.closePath(); ctx.fill();
+      if (winter) { ctx.fillStyle = '#f7fafc'; ctx.fillRect(x - 52, G - 180, 104, 6); ctx.fillRect(x - 112, G - 100, 224, 5); }
+      ctx.fillStyle = '#3a2a1c'; ctx.fillRect(x - 34, G - 92, 68, 20);
+      ctx.fillStyle = '#e8c870'; ctx.font = F(14, true); ctx.textAlign = 'center'; ctx.fillText(d.sign || '', x, G - 77);
+      break;
+    }
+    case 'pavilion': {   // 누각(촉석루)
+      ctx.fillStyle = '#8a8478';
+      ctx.beginPath(); ctx.moveTo(x - 150, G); ctx.lineTo(x - 140, G - 40); ctx.lineTo(x - 60, G - 54); ctx.lineTo(x + 70, G - 50); ctx.lineTo(x + 150, G - 36); ctx.lineTo(x + 160, G); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = '#a49e92'; ctx.fillRect(x - 120, G - 62, 240, 10);
+      ctx.fillStyle = '#7a3a2a'; for (let px = x - 110; px <= x + 104; px += 36) ctx.fillRect(px, G - 132, 7, 72);
+      ctx.fillStyle = '#c0392b'; ctx.fillRect(x - 116, G - 82, 232, 4);
+      ctx.fillStyle = '#2e7d6a'; ctx.fillRect(x - 120, G - 140, 240, 8);
+      ctx.fillStyle = '#3d434c'; ctx.beginPath();
+      ctx.moveTo(x - 168, G - 150); ctx.quadraticCurveTo(x - 150, G - 140, x - 128, G - 140); ctx.lineTo(x + 128, G - 140);
+      ctx.quadraticCurveTo(x + 150, G - 140, x + 168, G - 150); ctx.quadraticCurveTo(x + 110, G - 156, x + 88, G - 192);
+      ctx.lineTo(x - 88, G - 192); ctx.quadraticCurveTo(x - 110, G - 156, x - 168, G - 150); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = '#2b3037'; ctx.fillRect(x - 96, G - 198, 192, 8);
+      ctx.fillStyle = '#3a2a1c'; ctx.fillRect(x - 36, G - 136, 72, 20);
+      ctx.fillStyle = '#e8c870'; ctx.font = F(14, true); ctx.textAlign = 'center'; ctx.fillText(d.sign || '', x, G - 121);
       break;
     }
     case 'stack': {   // 볏짚 더미
@@ -1785,7 +2118,7 @@ function drawPaper(e) {
   ctx.save(); ctx.translate(e.x, e.y); ctx.rotate(Math.sin(e.spin) * 0.5);
   ctx.fillStyle = '#f3e7c8'; ctx.fillRect(-9, -11, 18, 22);
   ctx.strokeStyle = '#8a6a3e'; ctx.lineWidth = 1; ctx.strokeRect(-9, -11, 18, 22);
-  ctx.fillStyle = '#c0392b'; ctx.font = F(14, true); ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('稅', 0, 1);
+  ctx.fillStyle = '#c0392b'; ctx.font = F(14, true); ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(e.glyph || '稅', 0, 1);
   ctx.restore(); ctx.textBaseline = 'alphabetic';
 }
 
@@ -1901,13 +2234,13 @@ function slot(x, name, sub, key, cd, col) {
 function drawQuestTracker() {
   const act = QUESTS.filter(q => QS[q.id] && QS[q.id].state === 'active');
   if (!act.length) return;
-  const h = 26 + act.length * 20;
-  ctx.fillStyle = 'rgba(24,18,14,.7)'; rr(ctx, VW - 262, 10, 252, h, 8); ctx.fill();
-  ctx.textAlign = 'left'; ctx.font = F(13, true); ctx.fillStyle = '#ffd76a'; ctx.fillText('📜 진행 중인 부탁', VW - 250, 29);
+  const h = 26 + act.length * 20, Y = 44;
+  ctx.fillStyle = 'rgba(24,18,14,.7)'; rr(ctx, VW - 262, Y, 252, h, 8); ctx.fill();
+  ctx.textAlign = 'left'; ctx.font = F(13, true); ctx.fillStyle = '#ffd76a'; ctx.fillText('📜 진행 중인 부탁', VW - 250, Y + 19);
   act.forEach((q, i) => {
     const s = QS[q.id], ok = s.count >= q.need;
     ctx.font = F(12, ok); ctx.fillStyle = ok ? '#7fe08a' : '#f3e3c0';
-    ctx.fillText(ok ? `✔ ${q.title} → ${NPCS[turninOf(q)].name}` : `· ${q.title}  ${q.item ? '모은 것' : MON[q.target].name} ${s.count}/${q.need}`, VW - 250, 49 + i * 20);
+    ctx.fillText(ok ? `✔ ${q.title} → ${NPCS[turninOf(q)].name}` : `· ${q.title}  ${q.item ? '모은 것' : MON[q.target].name} ${s.count}/${q.need}`, VW - 250, Y + 39 + i * 20);
   });
 }
 
@@ -1921,6 +2254,87 @@ function drawMinimap() {
   map.portals.forEach(p => { ctx.fillStyle = '#7ec8ff'; ell(ctx, mx + p.x * sc, my - 2, 3, 3); });
   npcsHere().forEach(n => { ctx.fillStyle = '#ffd76a'; ell(ctx, mx + n.x * sc, my - 2, 2.5, 2.5); });
   ctx.fillStyle = '#ff5a4a'; ell(ctx, mx + P.x * sc, my - 2 - (GROUND - P.y) * 0.06, 3.2, 3.2);
+}
+
+/* ---------- 조선 지도 창 ---------- */
+let mapOpen = false;
+function toggleMap() { mapOpen = !mapOpen; $('mapBtn').classList.toggle('on', mapOpen); beep(mapOpen ? 600 : 450, 0.06, 'sine', 0.03); }
+$('mapBtn').addEventListener('click', e => { e.stopPropagation(); if (state === 'play') toggleMap(); });
+// 대략적인 한반도 해안선 (경도, 위도)
+const KOREA = [[124.35,40.05],[124.9,40.45],[125.6,40.85],[126.4,41.35],[126.9,41.75],[127.4,41.45],[128.1,41.45],[128.2,41.95],[128.9,42.05],
+  [129.6,42.4],[130.1,42.65],[130.65,42.35],[129.75,41.75],[129.7,41.2],[129.5,40.85],[129.0,40.55],[128.6,40.3],[128.0,40.0],[127.55,39.75],
+  [127.45,39.3],[127.6,39.05],[128.2,38.65],[128.55,38.25],[128.9,37.8],[129.15,37.45],[129.35,37.0],[129.45,36.5],[129.45,36.0],[129.5,35.6],
+  [129.35,35.25],[129.05,35.08],[128.6,34.9],[128.1,34.88],[127.7,34.72],[127.35,34.55],[126.9,34.4],[126.5,34.32],[126.3,34.6],[126.45,35.0],
+  [126.45,35.55],[126.7,35.95],[126.55,36.35],[126.25,36.65],[126.35,36.95],[126.75,37.05],[126.6,37.45],[126.4,37.7],[126.1,37.75],[125.7,37.8],
+  [125.3,37.75],[124.75,38.05],[125.0,38.45],[125.15,38.7],[125.3,38.85],[125.1,39.3],[125.35,39.55],[124.9,39.65],[124.6,39.85]];
+const PROVINCES = [['함경도', 128.7, 41.0], ['평안도', 125.9, 40.15], ['황해도', 125.65, 38.35], ['강원도', 128.35, 37.85],
+  ['경기도', 127.35, 37.2], ['충청도', 127.0, 36.55], ['전라도', 126.85, 35.05], ['경상도', 128.55, 36.2]];
+const MAP_PLACE = { village: 'hanyang', mountain: 'hanyang', cave: 'hanyang', goeul: 'namwon', dongheon: 'namwon', jeongju: 'jeongju', jinju: 'jinju', jinjuseong: 'jinju' };
+const PLACES = {
+  hanyang: { name: '한양', lon: 126.98, lat: 37.57 },
+  namwon: { name: '남원', lon: 127.39, lat: 35.42 },
+  jeongju: { name: '정주', lon: 125.23, lat: 39.69, event: '1811 홍경래의 난' },
+  jinju: { name: '진주', lon: 128.08, lat: 35.18, event: '1862 진주 농민 봉기' },
+};
+function drawJoseonMap() {
+  const X = VW - 272, Y = 44, W = 262, H = 360;
+  ctx.fillStyle = 'rgba(245,234,206,.97)'; rr(ctx, X, Y, W, H, 10); ctx.fill();
+  ctx.strokeStyle = '#8b6a3e'; ctx.lineWidth = 2; ctx.stroke();
+  ctx.textAlign = 'left'; ctx.font = F(14, true); ctx.fillStyle = '#5b3a1e'; ctx.fillText('🗺 조선 팔도', X + 12, Y + 22);
+  ctx.font = F(10); ctx.fillStyle = '#8b6a3e'; ctx.textAlign = 'right'; ctx.fillText('M: 닫기', X + W - 12, Y + 21);
+  const kx = 23, ky = 29, ox = X + 62, oy = Y + 30;
+  const pr = (lon, lat) => [ox + (lon - 124.1) * kx, oy + (43.1 - lat) * ky];
+  const outline = () => { ctx.beginPath(); KOREA.forEach(([lo, la], i) => { const [px, py] = pr(lo, la); i ? ctx.lineTo(px, py) : ctx.moveTo(px, py); }); ctx.closePath(); };
+  // 바다
+  ctx.fillStyle = '#cfe0e6'; rr(ctx, X + 8, Y + 30, W - 16, H - 70, 6); ctx.fill();
+  // 육지
+  outline(); ctx.fillStyle = '#efe2bf'; ctx.fill();
+  // 삼남 칠하기 (대략 북위 37도 남쪽)
+  ctx.save(); outline(); ctx.clip();
+  const y37 = pr(0, 36.98)[1];
+  ctx.fillStyle = 'rgba(214,120,60,.28)'; ctx.fillRect(X, y37, W, H);
+  ctx.setLineDash([3, 3]); ctx.strokeStyle = 'rgba(160,68,44,.7)'; ctx.lineWidth = 1.2;
+  ctx.beginPath(); ctx.moveTo(X, y37); ctx.lineTo(X + W, y37); ctx.stroke(); ctx.setLineDash([]);
+  ctx.restore();
+  outline(); ctx.strokeStyle = '#7a5a30'; ctx.lineWidth = 1.5; ctx.stroke();
+  const [jx, jy] = pr(126.55, 33.38); ctx.fillStyle = '#efe2bf'; ell(ctx, jx, jy, 9, 4.5); ctx.strokeStyle = '#7a5a30'; ctx.lineWidth = 1; ctx.stroke();
+  // 도 이름
+  ctx.font = F(10); ctx.textAlign = 'center'; ctx.fillStyle = 'rgba(90,64,38,.75)';
+  PROVINCES.forEach(([n, lo, la]) => { const [px, py] = pr(lo, la); ctx.fillText(n, px, py); });
+  // 장소
+  const here = MAP_PLACE[mapId];
+  Object.entries(PLACES).forEach(([id, p]) => {
+    const [px, py] = pr(p.lon, p.lat);
+    if (p.event) {
+      ctx.fillStyle = '#c0392b'; ctx.font = F(15, true); ctx.textAlign = 'center'; ctx.fillText('★', px, py + 5);
+    } else { ctx.fillStyle = '#2b1d12'; ell(ctx, px, py, 3, 3); }
+    const tag = (text, tx, ty, size, col) => {
+      ctx.font = F(size, true); ctx.textAlign = 'left';
+      const tw = ctx.measureText(text).width;
+      ctx.fillStyle = 'rgba(255,250,235,.88)'; ctx.fillRect(tx - 2, ty - size + 1, tw + 4, size + 3);
+      ctx.fillStyle = col; ctx.fillText(text, tx, ty);
+    };
+    if (p.event) {
+      const below = id === 'jinju';
+      tag(p.name, below ? px - 12 : px + 9, below ? py + 17 : py + 4, 11, '#a0442c');
+      ctx.font = F(10, true);
+      const ew = ctx.measureText(p.event).width;
+      tag(p.event, below ? px - ew / 2 : px + 9, below ? py + 30 : py + 17, 10, '#a0442c');
+    } else tag(p.name, px - 30, py + 4, 11, '#2b1d12');
+    if (id === here) {
+      const r = 7 + (frame % 40) / 40 * 8;
+      ctx.strokeStyle = `rgba(220,40,30,${1 - (frame % 40) / 40})`; ctx.lineWidth = 2.5;
+      ctx.beginPath(); ctx.arc(px, py, r, 0, TAU); ctx.stroke();
+      ctx.fillStyle = '#e0302a'; ell(ctx, px, py, 3.5, 3.5);
+    }
+  });
+  // 범례
+  const ly = Y + H - 34;
+  ctx.fillStyle = 'rgba(214,120,60,.45)'; ctx.fillRect(X + 12, ly - 9, 14, 10);
+  ctx.textAlign = 'left'; ctx.font = F(11, true); ctx.fillStyle = '#5b3a1e'; ctx.fillText('삼남 = 충청도·전라도·경상도', X + 32, ly);
+  ctx.fillStyle = '#e0302a'; ell(ctx, X + 19, ly + 12, 3.5, 3.5);
+  ctx.fillStyle = '#5b3a1e'; ctx.fillText(`현재 위치: ${PLACES[here] ? PLACES[here].name : ''}`, X + 32, ly + 16);
+  ctx.font = F(9); ctx.fillStyle = '#9a8060'; ctx.textAlign = 'right'; ctx.fillText('※ 대략적인 지도', X + W - 10, ly + 16);
 }
 
 function drawBossBar() {
@@ -1947,7 +2361,7 @@ function drawToasts() {
 function drawHelp() {
   const a = Math.min(1, helpT / 40);
   ctx.globalAlpha = a;
-  const lines = ['← → 이동 · Space 점프 · 공중에서 Space 이단 점프 · ↓+Space 내려가기', 'Z(Ctrl) 공격(꾹 누르면 연속) · X(Shift) 기술 · A 국밥 먹기', '↑(Enter) NPC와 대화 · 포탈 이동'];
+  const lines = ['← → 이동 · Space 점프 · 공중에서 Space 이단 점프 · ↓+Space 내려가기', 'Z(Ctrl) 공격(꾹 누르면 연속) · X(Shift) 기술 · A 국밥 먹기', '↑(Enter) NPC와 대화 · 포탈 이동 · M 조선 지도'];
   ctx.fillStyle = 'rgba(20,14,10,.78)'; rr(ctx, VW / 2 - 225, 12, 450, 68, 10); ctx.fill();
   ctx.font = F(13, true); ctx.textAlign = 'center'; ctx.fillStyle = '#f3e3c0';
   lines.forEach((l, i) => ctx.fillText(l, VW / 2, 33 + i * 19));
@@ -1976,6 +2390,14 @@ function render() {
     eprojs.forEach(drawPaper);
     fx.forEach(drawFx);
     floats.forEach(drawFloat);
+    if (m.theme === 'winter') {
+      ctx.fillStyle = 'rgba(255,255,255,.85)';
+      for (let i = 0; i < 70; i++) {
+        const sx = cam + ((i * 137.5 + frame * (0.3 + (i % 3) * 0.2) + Math.sin(frame * 0.02 + i) * 20) % (VW + 40) + VW + 40) % (VW + 40) - 20;
+        const sy = (i * 89 + frame * (0.7 + (i % 4) * 0.25)) % VH;
+        ell(ctx, sx, sy, 1.4 + (i % 3) * 0.7, 1.4 + (i % 3) * 0.7);
+      }
+    }
   } else {
     Object.entries(NPCS).filter(([, n]) => n.map === 'village').forEach(([, n]) => drawPerson(ctx, n.x, GROUND, n.look, 1, {}));
   }
@@ -1983,7 +2405,7 @@ function render() {
   ctx.restore();
 
   if (state === 'play') {
-    drawMinimap(); drawSaveBadge(); drawQuestTracker(); drawBossBar(); drawHUD(); drawToasts();
+    drawMinimap(); drawSaveBadge(); if (mapOpen) drawJoseonMap(); else drawQuestTracker(); drawBossBar(); drawHUD(); drawToasts();
     if (helpT > 0 && !dialog) drawHelp();
     if (banner) {
       const a = Math.min(1, banner.life / 30, (170 - banner.life) / 20);
@@ -2222,8 +2644,8 @@ function adminHash(str) {
 }
 const admin = { on: false, god: false, power: false, cls: 'yangban' };
 let adminOpen = false, admFails = 0, admLockUntil = 0;
-const CHAPTER_OF = { q1: '1장 · 한양과 인왕산', q5: '2장 · 삼정의 문란' };
-const AUTO_LV = { q1: 1, q2: 2, q3: 3, q4: 5, q5: 7, q6: 7, q7: 8, q8: 9 };
+const CHAPTER_OF = { q1: '1장 · 한양과 인왕산', q5: '2장 · 삼정의 문란', q9: '3장 · 들고일어난 백성들 (홍경래의 난 · 진주 농민 봉기)' };
+const AUTO_LV = { q1: 1, q2: 2, q3: 3, q4: 5, q5: 7, q6: 7, q7: 8, q8: 9, q9: 10, q10: 11, q11: 11, q12: 12, q13: 12, q14: 13 };
 
 $('admLink').onclick = () => {
   $('loginForm').classList.add('hidden'); $('resume').classList.add('hidden'); $('recent').classList.add('hidden');
