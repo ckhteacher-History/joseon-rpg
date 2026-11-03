@@ -163,6 +163,7 @@
       <div id="admMsg" style="min-height:20px;margin-top:8px;font-size:14px;color:#a0442c;text-align:center"></div>
     </div>
     <button id="admLink">관리자</button>
+    <div id="verLabel" style="position:absolute;bottom:10px;left:70px;font-size:11px;color:#b8a07a"></div>
     <div class="credit" style="position:absolute;bottom:10px;right:16px;font-size:12px;color:#8b6a3e">제작: 역사교사 최경환</div>
   </div>
 
@@ -187,7 +188,7 @@
 
   <div id="admin" class="hidden">
     <div class="adminBox">
-      <div class="ahead"><span>🛠 관리자 모드 — 테스트용 (기록이 저장되지 않아요)</span><button id="admClose" title="닫기 (F2)">✕</button></div>
+      <div class="ahead"><span>🛠 관리자 모드 — 테스트용 (기록이 저장되지 않아요) <small id="admVer" style="opacity:.7;font-weight:400"></small></span><button id="admClose" title="닫기 (F2)">✕</button></div>
       <div class="abody">
         <div class="arow"><b>직업</b><span id="admCls"></span></div>
         <div class="arow"><b>레벨</b><input type="number" id="admLv" min="1" max="40" value="1"><button class="abtn" id="admLvSet">적용</button>
@@ -242,6 +243,9 @@
    비워 두면 '이 기기(브라우저)'에만 저장됩니다.
    ========================================================= */
 const SAVE_URL = '';
+
+// 버전 — 고칠 때마다 바꾸면, 화면에 보이는 버전으로 새 버전이 열렸는지 확인할 수 있어요.
+const VERSION = 'v3.1 (3장 · 조선 지도)';
 
 /* =========================================================
    조선유랑기 — 조선 후기 배경 횡스크롤 RPG
@@ -2676,6 +2680,7 @@ function buildAdminPanel() {
     b.onclick = () => { admin.cls = id; [...cls.children].forEach(x => x.classList.remove('on')); b.classList.add('on'); if (P && P.cid !== id) adminEnsurePlayer(true); };
     cls.appendChild(b);
   });
+  // 맵 이동 버튼은 MAPS에 있는 맵을 전부 자동으로 만듭니다. 새 맵을 MAPS에 추가하면 여기에도 저절로 나타나요.
   const maps = $('admMaps'); maps.innerHTML = '';
   Object.entries(MAPS).forEach(([id, m]) => {
     const b = document.createElement('button'); b.className = 'abtn'; b.textContent = m.name;
@@ -2776,6 +2781,7 @@ Object.entries(CLASSES).forEach(([id, c], i) => {
   $('cards').appendChild(d);
 });
 
+$('verLabel').textContent = VERSION; $('admVer').textContent = VERSION;
 showLogin();
 requestAnimationFrame(loop);
 </script>
