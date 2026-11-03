@@ -132,6 +132,30 @@
   .qtable .qn{color:#8b6a3e;width:34px}
   .qtable .btns{text-align:right;white-space:nowrap}
   .anote{font-size:12px;color:#8b6a3e;margin-top:4px}
+  #noteBtn{position:absolute;right:158px;top:10px;z-index:2;font:700 13px 'Gowun Batang',serif;background:rgba(24,18,14,.8);color:#bfe8a8;
+    border:1.5px solid #6a9a5a;border-radius:8px;padding:5px 10px;cursor:pointer}
+  body:not(.playing) #noteBtn{display:none}
+  #notes{position:absolute;inset:0;background:rgba(10,8,6,.55);display:flex;align-items:center;justify-content:center;z-index:3}
+  .notesBox{width:860px;height:470px;display:flex;flex-direction:column;background:#f5ecd6;border:3px solid #2f5d50;border-radius:14px;overflow:hidden;box-shadow:0 8px 30px rgba(0,0,0,.5)}
+  .nhead{background:#2f5d50;color:#fff;padding:9px 16px;font-weight:700;font-size:17px;display:flex;align-items:center}
+  .nhead span{flex:1} .nhead small{font-weight:400;opacity:.85;margin-left:8px}
+  .nhead button{background:none;border:none;color:#fff;font-size:20px;cursor:pointer}
+  .nbody{flex:1;display:flex;min-height:0}
+  #nList{width:300px;overflow-y:auto;border-right:2px solid #d8c9a6;background:#efe4c8;padding:6px 0}
+  .nch{font-size:13px;font-weight:700;color:#5b4026;padding:8px 14px 4px;border-top:1px solid #d8c9a6}
+  .nch:first-child{border-top:none}
+  .nitem{padding:7px 14px;font-size:14px;cursor:pointer;border-left:4px solid transparent;line-height:1.35}
+  .nitem small{display:block;font-size:11.5px;color:#8b6a3e}
+  .nitem:hover{background:#f7efd9}
+  .nitem.sel{background:#fffaf0;border-left-color:#2f5d50;font-weight:700}
+  .nitem.lock{color:#a8987a;cursor:default}
+  .nitem.lock:hover{background:none}
+  .nitem.new::after{content:'NEW';font-size:10px;background:#c0392b;color:#fff;border-radius:4px;padding:1px 4px;margin-left:6px;vertical-align:middle}
+  #nView{flex:1;overflow-y:auto;padding:20px 26px;font-size:16.5px;line-height:1.75;color:#2b1d12}
+  #nView h3{margin:0 0 4px;font-size:22px;color:#2f5d50}
+  #nView .src{font-size:13px;color:#8b6a3e;margin-bottom:14px}
+  #nView b{color:#2f5d50}
+  #nView .empty{color:#8b6a3e;text-align:center;margin-top:120px;line-height:2}
   #mapBtn{position:absolute;right:10px;top:10px;z-index:2;font:700 13px 'Gowun Batang',serif;background:rgba(24,18,14,.8);color:#ffd76a;
     border:1.5px solid #c9a24a;border-radius:8px;padding:5px 10px;cursor:pointer}
   #mapBtn.on{background:#c9a24a;color:#2b1d12}
@@ -199,6 +223,7 @@
         <div class="arow"><b>레벨</b><input type="number" id="admLv" min="1" max="40" value="1"><button class="abtn" id="admLvSet">적용</button>
           <span style="width:16px"></span>
           <b style="width:auto;margin-left:6px">무기 강화 +</b><input type="number" id="admEnh" min="0" max="15" value="0"><button class="abtn" id="admEnhSet">적용</button>
+          <button class="abtn" id="admNotes">노트 모두 모으기</button>
           <label><input type="checkbox" id="admGod"> 무적</label>
           <label><input type="checkbox" id="admPow"> 공격력 ×10</label>
           <label><input type="checkbox" id="admAuto" checked> 퀘스트에 맞게 레벨 자동 설정</label></div>
@@ -211,6 +236,13 @@
   </div>
   <button id="admBtn" class="hidden">🛠 관리자 (F2)</button>
   <button id="mapBtn">🗺 조선 지도 (M)</button>
+  <button id="noteBtn">📜 노트 (N)</button>
+  <div id="notes" class="hidden">
+    <div class="notesBox">
+      <div class="nhead"><span>📜 역사 노트 보관함 <small id="nCount"></small></span><button id="nClose" title="닫기 (N / Esc)">✕</button></div>
+      <div class="nbody"><div id="nList"></div><div id="nView"></div></div>
+    </div>
+  </div>
 
   <div id="title" class="hidden">
     <h1>조선유랑기</h1>
@@ -250,7 +282,7 @@
 const SAVE_URL = '';
 
 // 버전 — 고칠 때마다 바꾸면, 화면에 보이는 버전으로 새 버전이 열렸는지 확인할 수 있어요.
-const VERSION = 'v3.3 (홍경래 · 유계춘 이야기)';
+const VERSION = 'v3.4 (역사 노트 보관함)';
 
 /* =========================================================
    조선유랑기 — 조선 후기 배경 횡스크롤 RPG
@@ -307,7 +339,7 @@ const KEYMAP = {
   Space: 'jump', KeyC: 'jump', AltLeft: 'jump', AltRight: 'jump',
   KeyZ: 'attack', ControlLeft: 'attack', ControlRight: 'attack',
   KeyX: 'skill', ShiftLeft: 'skill', ShiftRight: 'skill',
-  KeyA: 'potion', KeyH: 'help', KeyM: 'map',
+  KeyA: 'potion', KeyH: 'help', KeyM: 'map', KeyN: 'notes',
 };
 addEventListener('keydown', e => {
   if (admin.on && (e.code === 'F2' || (e.code === 'Escape' && adminOpen))) { e.preventDefault(); toggleAdmin(); return; }
@@ -317,6 +349,11 @@ addEventListener('keydown', e => {
     const k = ['Digit1', 'Digit2', 'Digit3', 'Digit4'].indexOf(e.code), k2 = ['Numpad1', 'Numpad2', 'Numpad3', 'Numpad4'].indexOf(e.code);
     const idx = k >= 0 ? k : k2;
     if (idx >= 0) { e.preventDefault(); answerQuiz(curPage().order[idx]); return; }
+  }
+  if (notesOpen) {
+    if (['Escape', 'KeyN'].includes(e.code)) { e.preventDefault(); closeNotes(); }
+    else if (['ArrowDown', 'ArrowUp'].includes(e.code)) { e.preventDefault(); moveNote(e.code === 'ArrowDown' ? 1 : -1); }
+    return;
   }
   if (forgeOpen) {
     if (['Space', 'Enter', 'KeyZ'].includes(e.code)) { e.preventDefault(); if (!e.repeat) tryEnhance(); }
@@ -922,6 +959,7 @@ function startGame(cid) {
   P = newPlayer(cid);
   for (const k in QS) delete QS[k];
   for (const k in QZ) delete QZ[k];
+  for (const k in NOTES_GOT) delete NOTES_GOT[k];
   ended = false; playFrames = 0;
   state = 'play'; document.body.classList.add('playing');
   enterMap('village', 150);
@@ -967,13 +1005,14 @@ function update() {
     if (trans.t >= 40) trans = null;
     clearPressed(); return;
   }
-  if (adminOpen || forgeOpen) { clearPressed(); return; }
+  if (adminOpen || forgeOpen || notesOpen) { clearPressed(); return; }
   if (dialog) {
     if (pressed.up || pressed.jump || pressed.attack) advanceDialog();
     clearPressed(); return;
   }
   if (pressed.help) helpT = helpT > 0 ? 0 : 600;
   if (pressed.map) toggleMap();
+  if (pressed.notes) { openNotes(); clearPressed(); return; }
   playFrames++;
   if (frame % 600 === 0) saveGame(false);          // 10초마다 기기에 저장
   if (frame % 3600 === 0) saveGame(true);          // 1분마다 서버에도 저장
@@ -1476,6 +1515,7 @@ function showDialogPage() {
   let name = dialog.name, look = dialog.look, text = p;
   if (typeof p === 'object') { name = p.name || name; look = p.look === undefined ? look : p.look; text = p.text; }
   $('dlg').classList.toggle('note', name.includes('역사 노트'));
+  if (name.includes('역사 노트')) collectNote(text);
   $('dlg').classList.toggle('quiz', isQuizPage());
   $('dlgName').textContent = name;
   if (isQuizPage()) {
@@ -2549,7 +2589,7 @@ function drawToasts() {
 function drawHelp() {
   const a = Math.min(1, helpT / 40);
   ctx.globalAlpha = a;
-  const lines = ['← → 이동 · Space 점프 · 공중에서 Space 이단 점프 · ↓+Space 내려가기', 'Z(Ctrl) 공격(꾹 누르면 연속) · X(Shift) 기술 · A 국밥 먹기', '↑(Enter) NPC와 대화 · 포탈 이동 · M 조선 지도'];
+  const lines = ['← → 이동 · Space 점프 · 공중에서 Space 이단 점프 · ↓+Space 내려가기', 'Z(Ctrl) 공격(꾹 누르면 연속) · X(Shift) 기술 · A 국밥 먹기', '↑(Enter) 대화·포탈 · M 조선 지도 · N 역사 노트'];
   ctx.fillStyle = 'rgba(20,14,10,.78)'; rr(ctx, VW / 2 - 225, 12, 450, 68, 10); ctx.fill();
   ctx.font = F(13, true); ctx.textAlign = 'center'; ctx.fillStyle = '#f3e3c0';
   lines.forEach((l, i) => ctx.fillText(l, VW / 2, 33 + i * 19));
@@ -2625,7 +2665,7 @@ function snapshot() {
     v: 1, sid: user.sid, name: user.name, nick: user.nick, cid: P.cid,
     lv: P.lv, exp: P.exp, hp: Math.round(P.hp), mp: Math.round(P.mp), maxHp: P.maxHp, maxMp: P.maxMp, atk: +P.atk.toFixed(1),
     coins: P.coins, potions: P.potions, enh: P.enh, qs: JSON.parse(JSON.stringify(QS)), map: mapId, x: Math.round(P.x),
-    ended, play: playFrames, quiz: Object.keys(QZ), savedAt: Date.now(),
+    ended, play: playFrames, quiz: Object.keys(QZ), notes: Object.keys(NOTES_GOT), savedAt: Date.now(),
   };
 }
 
@@ -2738,6 +2778,10 @@ function resumeGame(sv) {
   ended = !!sv.ended; playFrames = sv.play || 0;
   for (const k in QZ) delete QZ[k];
   (sv.quiz || []).forEach(k => { QZ[k] = 1; });
+  for (const k in NOTES_GOT) delete NOTES_GOT[k];
+  (sv.notes || []).forEach(k => { NOTES_GOT[k] = 1; });
+  // 보관함이 생기기 전에 끝낸 퀘스트의 노트도 넣어 주기
+  NOTE_LIST.forEach(nt => { if (nt.qid && QS[nt.qid] && QS[nt.qid].state === 'done') NOTES_GOT[nt.id] = 1; });
   state = 'play'; document.body.classList.add('playing');
   let m = MAPS[sv.map] ? sv.map : 'village';
   if (m === 'cave' && !QS.q4) m = 'mountain';
@@ -2890,6 +2934,7 @@ function buildAdminPanel() {
   $('admGod').checked = admin.god; $('admPow').checked = admin.power;
   $('admGod').onchange = e => { admin.god = e.target.checked; };
   $('admPow').onchange = e => { admin.power = e.target.checked; };
+  $('admNotes').onclick = () => { adminEnsurePlayer(); NOTE_LIST.forEach(n => { NOTES_GOT[n.id] = 1; }); toast(`역사 노트 ${NOTE_LIST.length}개를 모두 모았어요`, '#9fc3ff'); };
   $('admEnhSet').onclick = () => { adminEnsurePlayer(); P.enh = clamp(+$('admEnh').value || 0, 0, ENH_MAX); $('admEnh').value = P.enh; toast(`무기 강화를 +${P.enh}(으)로 바꿨어요`, '#9fc3ff'); };
   $('admLvSet').onclick = () => { adminEnsurePlayer(); adminSetLevel(+$('admLv').value || 1); toast(`레벨을 ${P.lv}(으)로 바꿨어요`, '#9fc3ff'); };
 }
@@ -2969,6 +3014,83 @@ Object.entries(CLASSES).forEach(([id, c], i) => {
   d.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); startGame(id); } });
   $('cards').appendChild(d);
 });
+
+/* =========================================================
+   역사 노트 보관함 — 대화에서 본 역사 노트를 모아 두고 다시 읽기
+   노트 목록은 퀘스트(QUESTS)와 대화(TALKS)에서 자동으로 만들어져요.
+   ========================================================= */
+const NOTES_GOT = {};
+const NOTE_LIST = [];
+const CH_NAMES = ['1장 · 한양과 인왕산', '2장 · 삼정의 문란', '3장 · 들고일어난 백성들'];
+const MAP_CH = { village: 0, mountain: 0, cave: 0, goeul: 1, dongheon: 1, jeongju: 2, jinju: 2, jinjuseong: 2 };
+const QUEST_CH = id => { const n = +id.slice(1); return n <= 4 ? 0 : n <= 8 ? 1 : 2; };
+const noteTitle = t => { const m = /<b>(.*?)<\/b>/.exec(t); return (m ? m[1] : t.slice(0, 20)).replace(/<[^>]+>/g, ''); };
+const isNotePage = p => p && typeof p === 'object' && p.name && p.name.includes('역사 노트');
+let notesOpen = false, noteSel = null, noteSeen = {};
+(function buildNotes() {
+  const add = (text, ch, src, qid) => { const id = noteTitle(text); if (!NOTE_LIST.some(n => n.id === id)) NOTE_LIST.push({ id, title: id, text, ch, src, qid }); };
+  QUESTS.forEach(q => q.done('yangban').forEach(p => { if (isNotePage(p)) add(p.text, QUEST_CH(q.id), NPCS[turninOf(q)].name, q.id); }));
+  Object.entries(TALKS).forEach(([id, pages]) => pages.forEach(p => { if (isNotePage(p)) add(p.text, MAP_CH[NPCS[id].map] ?? 0, NPCS[id].name, null); }));
+  NOTE_LIST.sort((a, b) => a.ch - b.ch);
+  NOTE_LIST.forEach(n => {
+    if (n.qid) { const q = QUESTS.find(x => x.id === n.qid); n.hint = `「${q.title}」 부탁을 마치면 얻어요`; }
+    else { const npc = Object.entries(TALKS).find(([, pg]) => pg.some(p => isNotePage(p) && noteTitle(p.text) === n.id))[0];
+      n.hint = `${MAPS[NPCS[npc].map].name}에서 💬 표시가 있는 사람과 이야기해 보세요`; }
+  });
+})();
+function collectNote(text) {
+  const id = noteTitle(text);
+  if (!NOTE_LIST.some(n => n.id === id) || NOTES_GOT[id]) return;
+  NOTES_GOT[id] = 1;
+  toast(`📜 역사 노트 보관함에 넣었어요 (${Object.keys(NOTES_GOT).length}/${NOTE_LIST.length})`, '#bfe8a8', 200);
+  saveGame(false);
+}
+function renderNotes() {
+  const got = NOTE_LIST.filter(n => NOTES_GOT[n.id]);
+  $('nCount').textContent = `모은 노트 ${got.length} / ${NOTE_LIST.length}`;
+  const list = $('nList'); list.innerHTML = '';
+  CH_NAMES.forEach((cn, ci) => {
+    const items = NOTE_LIST.filter(n => n.ch === ci);
+    if (!items.length) return;
+    const h = document.createElement('div'); h.className = 'nch';
+    h.textContent = `${cn}  (${items.filter(n => NOTES_GOT[n.id]).length}/${items.length})`; list.appendChild(h);
+    items.forEach(n => {
+      const d = document.createElement('div');
+      if (NOTES_GOT[n.id]) {
+        d.className = 'nitem' + (noteSel === n.id ? ' sel' : '') + (noteSeen[n.id] ? '' : ' new');
+        d.innerHTML = `${escapeHtml(n.title)}<small>${escapeHtml(n.src)}</small>`;
+        d.onclick = () => { noteSel = n.id; renderNotes(); };
+      } else {
+        d.className = 'nitem lock';
+        d.innerHTML = `🔒 아직 모으지 못한 노트<small>${escapeHtml(n.hint)}</small>`;
+      }
+      list.appendChild(d);
+    });
+  });
+  const v = $('nView'), sel = NOTE_LIST.find(n => n.id === noteSel && NOTES_GOT[n.id]);
+  if (sel) {
+    noteSeen[sel.id] = 1;
+    v.innerHTML = `<h3>${escapeHtml(sel.title)}</h3><div class="src">${CH_NAMES[sel.ch]} · ${escapeHtml(sel.src)}에게서 얻은 노트</div><div>${sel.text}</div>`;
+    const it = list.querySelector('.sel'); if (it) it.scrollIntoView({ block: 'nearest' });
+  } else v.innerHTML = got.length
+    ? `<div class="empty">왼쪽에서 노트를 골라 읽어 보세요.<br><small>↑↓ 키로도 넘길 수 있어요.</small></div>`
+    : `<div class="empty">아직 모은 역사 노트가 없어요.<br>NPC의 부탁을 해결하거나 💬 표시가 있는 사람과 이야기하면<br>역사 노트가 이곳에 차곡차곡 쌓여요.</div>`;
+}
+function moveNote(d) {
+  const got = NOTE_LIST.filter(n => NOTES_GOT[n.id]);
+  if (!got.length) return;
+  const i = got.findIndex(n => n.id === noteSel);
+  noteSel = got[clamp(i < 0 ? 0 : i + d, 0, got.length - 1)].id; renderNotes();
+}
+function openNotes() {
+  if (state !== 'play' || dialog || adminOpen || forgeOpen) return;
+  notesOpen = true; $('notes').classList.remove('hidden');
+  if (!noteSel || !NOTES_GOT[noteSel]) { const got = NOTE_LIST.filter(n => NOTES_GOT[n.id]); noteSel = got.length ? got[got.length - 1].id : null; }
+  renderNotes(); beep(500, 0.06, 'sine', 0.03);
+}
+function closeNotes() { notesOpen = false; $('notes').classList.add('hidden'); clearPressed(); if (P) P.atkCd = Math.max(P.atkCd, 15); }
+$('noteBtn').addEventListener('click', e => { e.stopPropagation(); notesOpen ? closeNotes() : openNotes(); });
+$('nClose').onclick = closeNotes;
 
 $('verLabel').textContent = VERSION; $('admVer').textContent = VERSION;
 showLogin();
