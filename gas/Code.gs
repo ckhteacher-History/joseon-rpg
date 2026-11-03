@@ -67,7 +67,7 @@ function doPost(e) {
     const done = Object.keys(d.qs || {}).filter(k => d.qs[k] && d.qs[k].state === 'done').length;
     const rowData = [
       id, "'" + String(d.sid || ''), String(d.name || ''), String(d.nick || '').slice(0, 10),
-      CLASS_NAMES[d.cid] || d.cid || '', Number(d.lv) || 1, done + ' / 4', Number(d.coins) || 0,
+      CLASS_NAMES[d.cid] || d.cid || '', Number(d.lv) || 1, done + '개', Number(d.coins) || 0,
       Math.round((Number(d.play) || 0) / 3600), new Date(), raw,
     ];
     const sh = getSheet_();
