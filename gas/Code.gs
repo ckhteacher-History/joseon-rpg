@@ -12,7 +12,7 @@
  */
 const SHEET_NAME = 'saves';
 const HEADERS = ['ID', '학번', '이름', '닉네임', '직업', '레벨', '끝낸 부탁', '엽전', '플레이 시간(분)', '마지막 저장', '데이터(JSON)'];
-const CLASS_NAMES = { yangban: '양반', jungin: '중인', pyeongmin: '평민', nobi: '노비' };
+const CLASS_NAMES = { yangban: '양반', jungin: '중인', pyeongmin: '상민', nobi: '천민' };
 
 function getSheet_() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
