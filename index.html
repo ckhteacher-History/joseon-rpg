@@ -86,6 +86,31 @@
   #resume .btns{display:flex;gap:10px;justify-content:center}
   #title .hello{font-size:17px;margin:-8px 0 12px;color:#2b1d12}
   #title .hello b{color:#a0442c}
+  /* 관리자 모드 */
+  #admLink{position:absolute;bottom:10px;left:16px;font-size:12px;color:#a08a66;cursor:pointer;background:none;border:none;font-family:inherit}
+  #admLink:hover{color:#a0442c;text-decoration:underline}
+  #admLogin input{letter-spacing:6px;text-align:center}
+  #admin{position:absolute;inset:0;background:rgba(10,8,6,.55);display:flex;align-items:center;justify-content:center;z-index:3}
+  .adminBox{width:820px;max-height:500px;display:flex;flex-direction:column;background:#fbf5e6;border:3px solid #2f3d5a;border-radius:14px;
+    box-shadow:0 8px 30px rgba(0,0,0,.5);color:#2b1d12;overflow:hidden}
+  .ahead{background:#2f3d5a;color:#fff;padding:9px 16px;font-weight:700;font-size:17px;display:flex;align-items:center;gap:10px}
+  .ahead span{flex:1}
+  .ahead button{background:none;border:none;color:#fff;font-size:20px;cursor:pointer}
+  .abody{padding:10px 16px;overflow-y:auto}
+  .arow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px;font-size:14px}
+  .arow > b{width:62px;flex:none}
+  .abtn{font:13px 'Gowun Batang',serif;padding:5px 10px;border-radius:7px;border:1.5px solid #b89a6a;background:#fffdf7;cursor:pointer;color:#2b1d12}
+  .abtn:hover{background:#f3e3c0}
+  .abtn.on{background:#2f3d5a;color:#fff;border-color:#2f3d5a}
+  .arow input[type=number]{width:60px;font:15px 'Gowun Batang',serif;padding:4px;border:1.5px solid #b89a6a;border-radius:6px;-webkit-user-select:text;user-select:text}
+  .arow label{display:flex;align-items:center;gap:4px;cursor:pointer}
+  .qtable{width:100%;border-collapse:collapse;font-size:13.5px;margin:2px 0 8px}
+  .qtable td{padding:4px 6px;border-bottom:1px solid #e6d6b0}
+  .qtable tr.ch td{background:#efe2c2;font-weight:700;color:#5b4026}
+  .qtable .qn{color:#8b6a3e;width:34px}
+  .qtable .btns{text-align:right;white-space:nowrap}
+  .anote{font-size:12px;color:#8b6a3e;margin-top:4px}
+  #admBtn{position:absolute;left:14px;top:64px;z-index:2;font:700 12px 'Gowun Batang',serif;background:#2f3d5a;color:#fff;border:none;border-radius:6px;padding:4px 9px;cursor:pointer;opacity:.9}
   #rotate{display:none;position:fixed;inset:0;background:#1a1410;color:#f3e3c0;z-index:9;align-items:center;justify-content:center;font-size:20px;text-align:center;line-height:1.7}
   @media (orientation:portrait) and (pointer:coarse){#rotate{display:flex}}
 </style>
@@ -110,8 +135,34 @@
       <div style="margin-top:10px"><button class="btn sub2" id="btnBack" style="font-size:13px;padding:5px 12px">← 다른 사람으로 하기</button></div>
     </div>
     <div id="recent" class="hidden"><div class="rt">이 기기에 저장된 기록 — 누르면 바로 불러와요</div><div id="recentList"></div></div>
+    <div class="loginBox hidden" id="admLogin">
+      <div style="text-align:center;font-weight:700;font-size:17px;margin-bottom:10px">🛠 관리자 모드</div>
+      <div class="row"><label for="admPw">비밀번호</label><input id="admPw" type="password" inputmode="numeric" maxlength="12" autocomplete="off"></div>
+      <div class="btns" style="display:flex;gap:8px"><button class="btn" id="admOk" style="flex:1">들어가기</button><button class="btn sub2" id="admCancel">취소</button></div>
+      <div id="admMsg" style="min-height:20px;margin-top:8px;font-size:14px;color:#a0442c;text-align:center"></div>
+    </div>
+    <button id="admLink">관리자</button>
     <div class="credit" style="position:absolute;bottom:10px;right:16px;font-size:12px;color:#8b6a3e">제작: 역사교사 최경환</div>
   </div>
+
+  <div id="admin" class="hidden">
+    <div class="adminBox">
+      <div class="ahead"><span>🛠 관리자 모드 — 테스트용 (기록이 저장되지 않아요)</span><button id="admClose" title="닫기 (F2)">✕</button></div>
+      <div class="abody">
+        <div class="arow"><b>직업</b><span id="admCls"></span></div>
+        <div class="arow"><b>레벨</b><input type="number" id="admLv" min="1" max="40" value="1"><button class="abtn" id="admLvSet">적용</button>
+          <span style="width:16px"></span>
+          <label><input type="checkbox" id="admGod"> 무적</label>
+          <label><input type="checkbox" id="admPow"> 공격력 ×10</label>
+          <label><input type="checkbox" id="admAuto" checked> 퀘스트에 맞게 레벨 자동 설정</label></div>
+        <div class="arow"><b>맵 이동</b><span id="admMaps"></span></div>
+        <div class="arow" style="margin-bottom:2px"><b>퀘스트</b><span style="font-size:12.5px;color:#8b6a3e">앞의 퀘스트는 모두 끝낸 상태로 만들고, 해당 NPC 앞으로 이동해요.</span></div>
+        <table class="qtable" id="admQuests"></table>
+        <div class="anote">· 받기 전: NPC에게 말을 걸면 부탁을 받는 장면부터 · 진행 중: 막 수락한 상태 · 보고 직전: 목표를 다 채우고 NPC에게 보고만 하면 되는 상태<br>· 게임 중 <b>F2</b> 키나 왼쪽 위 <b>🛠 관리자</b> 버튼으로 이 창을 다시 열 수 있어요.</div>
+      </div>
+    </div>
+  </div>
+  <button id="admBtn" class="hidden">🛠 관리자 (F2)</button>
 
   <div id="title" class="hidden">
     <h1>조선유랑기</h1>
@@ -208,6 +259,9 @@ const KEYMAP = {
   KeyA: 'potion', KeyH: 'help',
 };
 addEventListener('keydown', e => {
+  if (admin.on && (e.code === 'F2' || (e.code === 'Escape' && adminOpen))) { e.preventDefault(); toggleAdmin(); return; }
+  if (e.target && e.target.tagName === 'INPUT') return;
+  if (adminOpen) return;
   if (state === 'login') return;
   if (state === 'title') {
     const n = ['Digit1', 'Digit2', 'Digit3', 'Digit4'].indexOf(e.code);
@@ -579,6 +633,7 @@ function update() {
     if (trans.t >= 40) trans = null;
     clearPressed(); return;
   }
+  if (adminOpen) { clearPressed(); return; }
   if (dialog) {
     if (pressed.up || pressed.jump || pressed.attack) advanceDialog();
     clearPressed(); return;
@@ -667,6 +722,7 @@ function revivePlayer() {
 }
 
 function roll(mult) {
+  if (admin.power) mult *= 10;
   let v = P.atk * mult * rnd(0.88, 1.12);
   const crit = Math.random() < 0.12;
   if (crit) v *= 1.6;
@@ -796,6 +852,7 @@ const expNeed = lv => Math.round(30 + lv * lv * 18);
 
 function hurtPlayer(dmg, fromX) {
   if (P.inv > 0 || P.dead) return;
+  if (admin.god) { P.inv = 30; addFloat(P.x, P.y - 66, '무적', 'info'); return; }
   dmg = Math.max(1, Math.round(dmg * rnd(0.85, 1.15)));
   P.hp -= dmg; P.inv = 70;
   P.vx = (P.x < fromX ? -1 : 1) * 5; P.vy = -5; P.onGround = false;
@@ -1891,7 +1948,7 @@ function snapshot() {
 
 let pushing = false, pushQueued = null;
 function saveGame(toServer, keepalive) {
-  if (!P || !user || state !== 'play') return;
+  if (!P || !user || state !== 'play' || admin.on) return;
   const d = snapshot();
   lsPut(user.key, d);
   if (SAVE_URL && toServer) pushServer(d, keepalive);
@@ -2011,6 +2068,128 @@ $('btnNew').onclick = () => {
   pendingSave = null; goClassSelect();
 };
 $('btnBack').onclick = () => { pendingSave = null; user = null; $('inNick').value = ''; showLogin(); };
+
+/* =========================================================
+   관리자 모드 — 비밀번호를 넣으면 원하는 퀘스트로 바로 이동 (테스트용)
+   비밀번호 자체는 코드에 없고, 해시값만 있습니다.
+   비밀번호를 바꾸려면: 브라우저 콘솔에서 adminHash('새비밀번호') 결과를 ADMIN_HASH에 넣으세요.
+   ========================================================= */
+const ADMIN_HASH = 'fd2227d0';
+function adminHash(str) {
+  let x = 0x811c9dc5;
+  for (const ch of 'joseon-rpg-admin:' + str) { x = (x ^ ch.charCodeAt(0)) >>> 0; x = Math.imul(x, 0x01000193) >>> 0; }
+  for (let i = 0; i < 5000; i++) { x = (x ^ (x >>> 13)) >>> 0; x = Math.imul(x, 0x5bd1e995) >>> 0; x = (x ^ (x >>> 15)) >>> 0; }
+  return x.toString(16);
+}
+const admin = { on: false, god: false, power: false, cls: 'yangban' };
+let adminOpen = false, admFails = 0, admLockUntil = 0;
+const CHAPTER_OF = { q1: '1장 · 한양과 인왕산', q5: '2장 · 삼정의 문란' };
+const AUTO_LV = { q1: 1, q2: 2, q3: 3, q4: 5, q5: 7, q6: 7, q7: 8, q8: 9 };
+
+$('admLink').onclick = () => {
+  $('loginForm').classList.add('hidden'); $('resume').classList.add('hidden'); $('recent').classList.add('hidden');
+  $('admLogin').classList.remove('hidden'); $('admMsg').textContent = ''; $('admPw').value = '';
+  setTimeout(() => $('admPw').focus(), 30);
+};
+$('admCancel').onclick = () => { $('admLogin').classList.add('hidden'); showLogin(); };
+function tryAdmin() {
+  if (Date.now() < admLockUntil) { $('admMsg').textContent = '잠시 후 다시 시도하세요.'; return; }
+  if (adminHash($('admPw').value.trim()) !== ADMIN_HASH) {
+    admFails++; $('admPw').value = '';
+    if (admFails >= 5) { admLockUntil = Date.now() + 30000; admFails = 0; $('admMsg').textContent = '5번 틀렸어요. 30초 뒤에 다시 시도하세요.'; }
+    else $('admMsg').textContent = '비밀번호가 틀렸어요.';
+    return;
+  }
+  admin.on = true;
+  user = { sid: 'admin', name: '관리자', nick: '관리자', key: null };
+  $('admLogin').classList.add('hidden');
+  buildAdminPanel(); openAdmin();
+}
+$('admOk').onclick = tryAdmin;
+$('admPw').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); tryAdmin(); } });
+
+function buildAdminPanel() {
+  const cls = $('admCls'); cls.innerHTML = '';
+  Object.entries(CLASSES).forEach(([id, c]) => {
+    const b = document.createElement('button'); b.className = 'abtn' + (admin.cls === id ? ' on' : ''); b.textContent = `${c.name} ${c.hanja}`;
+    b.onclick = () => { admin.cls = id; [...cls.children].forEach(x => x.classList.remove('on')); b.classList.add('on'); if (P && P.cid !== id) adminEnsurePlayer(true); };
+    cls.appendChild(b);
+  });
+  const maps = $('admMaps'); maps.innerHTML = '';
+  Object.entries(MAPS).forEach(([id, m]) => {
+    const b = document.createElement('button'); b.className = 'abtn'; b.textContent = m.name;
+    b.onclick = () => { adminEnsurePlayer(); enterMap(id, 150); closeAdmin(); };
+    maps.appendChild(b);
+  });
+  const tb = $('admQuests'); tb.innerHTML = '';
+  QUESTS.forEach((q, i) => {
+    if (CHAPTER_OF[q.id]) { const tr = tb.insertRow(); tr.className = 'ch'; const td = tr.insertCell(); td.colSpan = 3; td.textContent = CHAPTER_OF[q.id]; }
+    const tr = tb.insertRow();
+    tr.insertCell().outerHTML = `<td class="qn">${q.id.toUpperCase()}</td>`;
+    const goal = q.target ? (q.item ? `${q.item} ${q.need}개` : `${MON[q.target].name} ${q.need}`) : `${NPCS[q.turnin].name}에게 가기`;
+    tr.insertCell().innerHTML = `<b>${escapeHtml(q.title)}</b> <span style="color:#8b6a3e">— ${NPCS[q.npc].name} · ${goal}</span>`;
+    const td = tr.insertCell(); td.className = 'btns';
+    [['before', '받기 전'], ['active', '진행 중'], ['ready', '보고 직전']].forEach(([st, label]) => {
+      const b = document.createElement('button'); b.className = 'abtn'; b.textContent = label; b.style.marginLeft = '4px';
+      b.onclick = () => adminJump(i, st);
+      td.appendChild(b);
+    });
+  });
+  $('admGod').checked = admin.god; $('admPow').checked = admin.power;
+  $('admGod').onchange = e => { admin.god = e.target.checked; };
+  $('admPow').onchange = e => { admin.power = e.target.checked; };
+  $('admLvSet').onclick = () => { adminEnsurePlayer(); adminSetLevel(+$('admLv').value || 1); toast(`레벨을 ${P.lv}(으)로 바꿨어요`, '#9fc3ff'); };
+}
+
+function adminEnsurePlayer(force) {
+  if (dialog) { dialog = null; $('dlg').classList.add('hidden'); }
+  if (!P || force) {
+    P = newPlayer(admin.cls);
+    if (!map || state !== 'play') { state = 'play'; enterMap('village', 150); }
+  }
+  state = 'play'; document.body.classList.add('playing');
+  $('login').classList.add('hidden'); $('title').classList.add('hidden');
+  $('admBtn').classList.remove('hidden');
+}
+function adminSetLevel(lv) {
+  lv = clamp(Math.round(lv), 1, 40);
+  const c = P.c;
+  P.lv = lv; P.exp = 0;
+  P.maxHp = Math.round(c.hp + c.hpUp * (lv - 1)); P.maxMp = Math.round(c.mp + c.mpUp * (lv - 1)); P.atk = c.atk + c.atkUp * (lv - 1);
+  P.hp = P.maxHp; P.mp = P.maxMp; P.skillCd = 0;
+  $('admLv').value = lv;
+}
+function adminJump(idx, stage) {
+  adminEnsurePlayer(P && P.cid !== admin.cls);
+  const q = QUESTS[idx];
+  for (const k in QS) delete QS[k];
+  QUESTS.slice(0, idx).forEach(x => { QS[x.id] = { state: 'done', count: x.need }; });
+  if (stage === 'active') QS[q.id] = { state: 'active', count: 0 };
+  if (stage === 'ready') QS[q.id] = { state: 'active', count: q.need };
+  ended = idx >= 4;
+  if ($('admAuto').checked) adminSetLevel(AUTO_LV[q.id] || P.lv);
+  P.potions = Math.max(P.potions, 5); P.coins = Math.max(P.coins, 100);
+  const npcId = stage === 'ready' ? turninOf(q) : q.npc;
+  const n = NPCS[npcId];
+  enterMap(n.map, clamp(n.x - 70, 40, MAPS[n.map].w - 40));
+  P.dir = 1;
+  closeAdmin();
+  toast(`[관리자] ${q.id.toUpperCase()} 「${q.title}」 ${{ before: '받기 전', active: '진행 중', ready: '보고 직전' }[stage]} 상태`, '#9fc3ff', 220);
+}
+function openAdmin() {
+  adminOpen = true; $('admin').classList.remove('hidden');
+  if (P) $('admLv').value = P.lv;
+  [...$('admCls').children].forEach((b, i) => b.classList.toggle('on', Object.keys(CLASSES)[i] === (P ? P.cid : admin.cls)));
+  if (P) admin.cls = P.cid;
+}
+function closeAdmin() {
+  adminOpen = false; $('admin').classList.add('hidden');
+  if (!P) { showLogin(); admin.on = false; }
+  clearPressed();
+}
+function toggleAdmin() { adminOpen ? closeAdmin() : openAdmin(); }
+$('admClose').onclick = closeAdmin;
+$('admBtn').onclick = () => openAdmin();
 
 /* ---------- 루프 ---------- */
 let last = performance.now(), acc = 0;
