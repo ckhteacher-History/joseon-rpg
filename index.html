@@ -86,6 +86,23 @@
   #resume .btns{display:flex;gap:10px;justify-content:center}
   #title .hello{font-size:17px;margin:-8px 0 12px;color:#2b1d12}
   #title .hello b{color:#a0442c}
+  /* 대장간(무기 강화) */
+  #forge{position:absolute;inset:0;background:rgba(10,8,6,.5);display:flex;align-items:center;justify-content:center;z-index:3}
+  .forgeBox{width:420px;background:#2a1e16;border:3px solid #c9a24a;border-radius:14px;color:#f3e3c0;box-shadow:0 8px 30px rgba(0,0,0,.6);overflow:hidden}
+  .forgeHead{background:#4a2e1c;padding:9px 16px;font-weight:700;font-size:17px;display:flex;align-items:center}
+  .forgeHead span{flex:1}
+  .forgeHead button{background:none;border:none;color:#f3e3c0;font-size:20px;cursor:pointer}
+  .forgeBody{padding:14px 18px 16px;text-align:center}
+  #fgCanvas{width:120px;height:120px;background:radial-gradient(circle,#5a3a22 0%,#2a1e16 70%);border-radius:50%;display:block;margin:0 auto 6px}
+  #fgName{font-size:24px;font-weight:700;color:#ffd76a}
+  #fgStat{font-size:14px;margin:4px 0 10px;color:#e8d6b0}
+  .fgGrid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:12px}
+  .fgGrid div{background:#3a2a1e;border-radius:8px;padding:6px 4px;font-size:12px;color:#cdb88e}
+  .fgGrid b{display:block;font-size:17px;color:#fff3dc;margin-top:2px}
+  #fgBtn{width:100%;font-size:18px;padding:11px}
+  #fgMsg{min-height:30px;margin-top:10px;font-size:18px;font-weight:700}
+  #fgMsg.ok{color:#ffd76a} #fgMsg.fail{color:#a8a8a8} #fgMsg.work{color:#ff9a4a}
+  .fgHint{font-size:11.5px;color:#9a8a6a;margin-top:4px}
   /* 관리자 모드 */
   #admLink{position:absolute;bottom:10px;left:16px;font-size:12px;color:#a08a66;cursor:pointer;background:none;border:none;font-family:inherit}
   #admLink:hover{color:#a0442c;text-decoration:underline}
@@ -145,6 +162,25 @@
     <div class="credit" style="position:absolute;bottom:10px;right:16px;font-size:12px;color:#8b6a3e">제작: 역사교사 최경환</div>
   </div>
 
+  <div id="forge" class="hidden">
+    <div class="forgeBox">
+      <div class="forgeHead"><span>⚒ 대장간 — 무기 강화</span><button id="fgClose" title="닫기 (Esc)">✕</button></div>
+      <div class="forgeBody">
+        <canvas id="fgCanvas" width="240" height="240"></canvas>
+        <div id="fgName"></div>
+        <div id="fgStat"></div>
+        <div class="fgGrid">
+          <div>강화 비용<b id="fgCost"></b></div>
+          <div>성공 확률<b id="fgRate"></b></div>
+          <div>가진 엽전<b id="fgCoins"></b></div>
+        </div>
+        <button class="btn" id="fgBtn">⚒ 강화하기</button>
+        <div id="fgMsg"></div>
+        <div class="fgHint">실패해도 강화 단계는 그대로예요. 엽전만 사라져요. · Space/Enter: 강화 · Esc: 닫기</div>
+      </div>
+    </div>
+  </div>
+
   <div id="admin" class="hidden">
     <div class="adminBox">
       <div class="ahead"><span>🛠 관리자 모드 — 테스트용 (기록이 저장되지 않아요)</span><button id="admClose" title="닫기 (F2)">✕</button></div>
@@ -152,6 +188,7 @@
         <div class="arow"><b>직업</b><span id="admCls"></span></div>
         <div class="arow"><b>레벨</b><input type="number" id="admLv" min="1" max="40" value="1"><button class="abtn" id="admLvSet">적용</button>
           <span style="width:16px"></span>
+          <b style="width:auto;margin-left:6px">무기 강화 +</b><input type="number" id="admEnh" min="0" max="15" value="0"><button class="abtn" id="admEnhSet">적용</button>
           <label><input type="checkbox" id="admGod"> 무적</label>
           <label><input type="checkbox" id="admPow"> 공격력 ×10</label>
           <label><input type="checkbox" id="admAuto" checked> 퀘스트에 맞게 레벨 자동 설정</label></div>
@@ -262,6 +299,11 @@ addEventListener('keydown', e => {
   if (admin.on && (e.code === 'F2' || (e.code === 'Escape' && adminOpen))) { e.preventDefault(); toggleAdmin(); return; }
   if (e.target && e.target.tagName === 'INPUT') return;
   if (adminOpen) return;
+  if (forgeOpen) {
+    if (['Space', 'Enter', 'KeyZ'].includes(e.code)) { e.preventDefault(); if (!e.repeat) tryEnhance(); }
+    else if (['Escape', 'ArrowUp', 'KeyX'].includes(e.code)) { e.preventDefault(); closeForge(); }
+    return;
+  }
   if (state === 'login') return;
   if (state === 'title') {
     const n = ['Digit1', 'Digit2', 'Digit3', 'Digit4'].indexOf(e.code);
@@ -340,7 +382,7 @@ const MAPS = {
       { x: 1790, y: 410, w: 130, kind: 'bench' },
     ],
     decor: [
-      { t: 'tree', x: 110, s: 1.1 }, { t: 'stall', x: 330, c: '#b8483a' }, { t: 'stall', x: 620, c: '#3a6ab8' },
+      { t: 'tree', x: 110, s: 1.1 }, { t: 'stall', x: 330, c: '#b8483a' }, { t: 'stall', x: 620, c: '#3a6ab8' }, { t: 'forge', x: 990 },
       { t: 'seodang', x: 1150 }, { t: 'tree', x: 1390, s: 0.9 }, { t: 'choga', x: 1580 },
       { t: 'jumak', x: 2010 }, { t: 'giwa', x: 2330 }, { t: 'jangseung', x: 2560 },
     ],
@@ -425,6 +467,7 @@ const NPCS = {
   bobusang: { name: '보부상 김씨', map: 'village', x: 470, look: 'bobusang' },
   hunjang: { name: '서당 훈장', map: 'village', x: 1150, look: 'hunjang' },
   jumo: { name: '주막 주모', map: 'village', x: 2010, look: 'jumo' },
+  smith: { name: '대장장이 강씨', map: 'village', x: 880, look: 'smith' },
   pocha: { name: '착호갑사 박 포수', map: 'mountain', x: 240, look: 'pocha' },
   elder: { name: '고을 어른 김 노인', map: 'goeul', x: 380, look: 'elder' },
   widow: { name: '박씨 아낙', map: 'goeul', x: 700, look: 'widow' },
@@ -578,7 +621,7 @@ function newPlayer(cid) {
   return {
     cid, c, x: 150, y: GROUND, vx: 0, vy: 0, dir: 1, onGround: true, plat: null, drop: 0,
     lv: 1, exp: 0, hp: c.hp, maxHp: c.hp, mp: c.mp, maxMp: c.mp, atk: c.atk,
-    coins: 20, potions: 2, inv: 0, canDJ: false, spin: 0, atkCd: 0, atkAnim: 0, atkLen: 14, skillCd: 0, dead: 0, walkT: 0,
+    coins: 20, potions: 2, enh: 0, inv: 0, canDJ: false, spin: 0, atkCd: 0, atkAnim: 0, atkLen: 14, skillCd: 0, dead: 0, walkT: 0,
   };
 }
 
@@ -633,7 +676,7 @@ function update() {
     if (trans.t >= 40) trans = null;
     clearPressed(); return;
   }
-  if (adminOpen) { clearPressed(); return; }
+  if (adminOpen || forgeOpen) { clearPressed(); return; }
   if (dialog) {
     if (pressed.up || pressed.jump || pressed.attack) advanceDialog();
     clearPressed(); return;
@@ -690,6 +733,7 @@ function updatePlayer() {
     }
   }
   if (P.spin > 0) P.spin--;
+  if (P.enh >= 10 && frame % 6 === 0) fx.push({ type: 'p', x: P.x + P.dir * rnd(10, 28), y: P.y - rnd(20, 50), vx: 0, vy: -0.6, life: 26, max: 26, color: '#ffe27a', s: 2 });
   if (P.drop > 0) P.drop--;
   P.vy = Math.min(P.vy + GRAV, 13);
   const py = P.y;
@@ -723,6 +767,7 @@ function revivePlayer() {
 
 function roll(mult) {
   if (admin.power) mult *= 10;
+  mult *= enhMult();
   let v = P.atk * mult * rnd(0.88, 1.12);
   const crit = Math.random() < 0.12;
   if (crit) v *= 1.6;
@@ -1045,6 +1090,7 @@ function npcStatus(npcId) {
 }
 
 function talk(npcId) {
+  if (npcId === 'smith') { openForge(); return; }
   const n = NPCS[npcId], q = questFor(npcId), A = ADDR[P.cid];
   let pages = [], onEnd = null;
   if (q && !questUnlocked(q)) pages = [q.lock];
@@ -1140,6 +1186,7 @@ const LOOKS = {
   elder: { robe: '#eae4d4', line: '#c8bfa8', pants: '#e0d9c6', shoe: '#7a6a50', belt: '#8a7a5a', hat: 'headband', hair: '#d8d8d8', beard: true, prop: 'cane' },
   widow: { robe: '#f6f3ec', line: '#d6cfbf', pants: '#f6f3ec', shoe: '#cfc6b2', belt: '#d6cfbf', hat: 'bun', skirt: '#ece7dc', collar: '#ddd' },
   farmer: { robe: '#e3d6b8', line: '#c0ac84', pants: '#d8c9a6', shoe: '#b89a62', belt: '#7a5a35', hat: 'paraengi', patch: true },
+  smith: { robe: '#d8c9a6', line: '#b09a70', pants: '#6b5a40', shoe: '#3a2a1e', belt: '#3a2a1e', hat: 'headband', apron: '#5a3a22', mustache: true },
   eosa: { robe: '#cfc6ae', line: '#a89e84', pants: '#cfc6ae', shoe: '#5a4a38', belt: '#6b5a40', hat: 'gat', long: true, patch: true, prop: 'mapae' },
 };
 
@@ -1199,7 +1246,7 @@ function drawPerson(g, x, y, look, dir, o = {}) {
   g.beginPath(); g.moveTo(-3, -38); g.lineTo(5, -29); g.stroke();
   if (L.skirt) { g.strokeStyle = L.belt; g.lineWidth = 2; g.beginPath(); g.moveTo(4, -30); g.lineTo(8, -22); g.moveTo(4, -30); g.lineTo(2, -22); g.stroke(); }
   else { g.fillStyle = L.belt; g.fillRect(-11, -28, 22, 3); }
-  if (L.apron) { g.fillStyle = '#f7f1e3'; g.fillRect(-8, -26, 16, 20); }
+  if (L.apron) { g.fillStyle = typeof L.apron === 'string' ? L.apron : '#f7f1e3'; g.fillRect(-8, -30, 16, 26); }
   if (L.patch) { g.fillStyle = '#7d6e56'; g.fillRect(-7, -24, 6, 5); g.fillRect(3, -35, 5, 4); }
   if (look === 'pocha') { g.fillStyle = '#b3392f'; g.fillRect(-11, -38, 4, 32); }
   if (L.prop === 'mapae') {
@@ -1215,7 +1262,9 @@ function drawPerson(g, x, y, look, dir, o = {}) {
   const hx = sx + Math.cos(a) * 13, hy = sy + Math.sin(a) * 13;
   if (o.weapon) {
     const wa = o.atk > 0 ? a * 0.87 - 0.46 : -0.9;
-    g.save(); g.translate(hx, hy); g.rotate(wa); drawWeapon(g, o.weapon); g.restore();
+    g.save(); g.translate(hx, hy); g.rotate(wa);
+    if (o.enh >= 3) { g.shadowColor = o.enh >= 10 ? '#ffcf3a' : o.enh >= 6 ? '#c06aff' : '#5ab0ff'; g.shadowBlur = 6 + Math.min(o.enh, 15) * 0.8; }
+    drawWeapon(g, o.weapon); g.restore();
   }
   g.strokeStyle = L.robe; g.lineWidth = 6; g.beginPath(); g.moveTo(sx, sy); g.lineTo(hx, hy); g.stroke();
   g.fillStyle = '#f2d4b2'; ell(g, hx, hy, 3.4, 3.4);
@@ -1573,6 +1622,25 @@ function drawDecor(d) {
       }
       break;
     }
+    case 'forge': {   // 대장간 화덕과 모루
+      ctx.fillStyle = '#8a8478'; ctx.beginPath(); ctx.moveTo(x - 10, G); ctx.lineTo(x - 6, G - 60); ctx.quadraticCurveTo(x + 22, G - 84, x + 50, G - 60); ctx.lineTo(x + 54, G); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = '#6b665c'; ctx.fillRect(x + 14, G - 110, 16, 40);
+      const fl = Math.sin(frame * 0.25) * 3;
+      const gr = ctx.createRadialGradient(x + 22, G - 26, 2, x + 22, G - 26, 40);
+      gr.addColorStop(0, 'rgba(255,170,60,.9)'); gr.addColorStop(1, 'rgba(255,120,40,0)');
+      ctx.fillStyle = gr; ell(ctx, x + 22, G - 26, 40, 40);
+      ctx.fillStyle = '#2a1a10'; ctx.beginPath(); ctx.arc(x + 22, G - 18, 16, Math.PI, 0); ctx.fill();
+      ctx.fillStyle = '#ff9a3a'; ctx.beginPath(); ctx.moveTo(x + 12, G - 18); ctx.quadraticCurveTo(x + 18, G - 34 - fl, x + 22, G - 28); ctx.quadraticCurveTo(x + 28, G - 36 + fl, x + 32, G - 18); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = 'rgba(200,200,200,.35)'; ell(ctx, x + 22 + Math.sin(frame * 0.03) * 6, G - 124 - (frame % 60) * 0.4, 7, 5);
+      // 모루
+      ctx.fillStyle = '#3e4148'; ctx.fillRect(x - 56, G - 30, 34, 9); ctx.fillRect(x - 46, G - 21, 14, 21);
+      ctx.beginPath(); ctx.moveTo(x - 56, G - 30); ctx.lineTo(x - 66, G - 27); ctx.lineTo(x - 56, G - 23); ctx.fill();
+      // 간판
+      ctx.fillStyle = '#6b4a2b'; ctx.fillRect(x - 60, G - 128, 4, 98);
+      ctx.fillStyle = '#3a2a1c'; ctx.fillRect(x - 56, G - 124, 46, 22);
+      ctx.fillStyle = '#e8c870'; ctx.font = F(14, true); ctx.textAlign = 'center'; ctx.fillText('대장간', x - 33, G - 108);
+      break;
+    }
     case 'stack': {   // 볏짚 더미
       ctx.fillStyle = '#d9b860'; ctx.beginPath(); ctx.moveTo(x - 30, G); ctx.quadraticCurveTo(x - 32, G - 50, x, G - 70); ctx.quadraticCurveTo(x + 32, G - 50, x + 30, G); ctx.closePath(); ctx.fill();
       ctx.strokeStyle = '#a8873a'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x - 27, G - 28); ctx.lineTo(x + 27, G - 28); ctx.moveTo(x - 20, G - 50); ctx.lineTo(x + 20, G - 50); ctx.stroke();
@@ -1660,6 +1728,10 @@ function drawNPC(n) {
   ctx.fillStyle = 'rgba(0,0,0,.6)'; rr(ctx, n.x - tw / 2, GROUND + 5, tw, 18, 4); ctx.fill();
   ctx.fillStyle = '#ffe28a'; ctx.fillText(n.name, n.x, GROUND + 18);
   const st = npcStatus(n.id), by = GROUND - 96 + Math.sin(frame * 0.08) * 3;
+  if (n.id === 'smith') {
+    ctx.fillStyle = 'rgba(0,0,0,.35)'; ell(ctx, n.x, by - 7, 13, 13);
+    ctx.font = F(18, true); ctx.textAlign = 'center'; ctx.fillStyle = '#ffd76a'; ctx.fillText('⚒', n.x, by);
+  }
   if (st) {
     const sym = { avail: '!', ready: '?', progress: '…' }[st], col = { avail: '#ffcf3a', ready: '#7fe08a', progress: '#cccccc' }[st];
     ctx.fillStyle = 'rgba(0,0,0,.35)'; ell(ctx, n.x, by - 7, 12, 12);
@@ -1684,7 +1756,7 @@ function drawPlayer() {
     ctx.beginPath(); ctx.arc(P.x, P.y - 30, 34, 0, TAU * 0.7); ctx.stroke();
   }
   drawPerson(ctx, P.x, P.y, P.c.look, P.dir, {
-    t: P.walkT, walk: P.onGround && Math.abs(P.vx) > 0.4, weapon: P.c.weapon,
+    t: P.walkT, walk: P.onGround && Math.abs(P.vx) > 0.4, weapon: P.c.weapon, enh: P.enh,
     atk: P.atkAnim > 0 ? P.atkAnim / P.atkLen : 0, ranged: P.c.type === 'ranged', alpha: blink ? 0.45 : 1, hurt: P.inv > 50,
   });
   ctx.restore();
@@ -1807,6 +1879,7 @@ function drawHUD() {
   // 국밥 · 기술
   slot(490, '국밥', `×${P.potions}`, 'A', 0, '#e8d6a0');
   slot(575, c.skill.name, `MP ${c.skill.mp}`, 'X', P.skillCd / c.skill.cd, P.mp >= c.skill.mp ? '#ffd76a' : '#888');
+  slot(660, `${WEAPON_NAME[c.weapon]} +${P.enh}`, `공격 +${P.enh * 10}%`, '⚒', 0, P.enh >= 10 ? '#ffcf3a' : P.enh >= 6 ? '#d9a6ff' : P.enh >= 3 ? '#8ac6ff' : '#e8d6a0');
   // EXP
   const need = expNeed(P.lv);
   ctx.fillStyle = '#120c08'; ctx.fillRect(0, 536, VW, 4);
@@ -1941,7 +2014,7 @@ function snapshot() {
   return {
     v: 1, sid: user.sid, name: user.name, nick: user.nick, cid: P.cid,
     lv: P.lv, exp: P.exp, hp: Math.round(P.hp), mp: Math.round(P.mp), maxHp: P.maxHp, maxMp: P.maxMp, atk: +P.atk.toFixed(1),
-    coins: P.coins, potions: P.potions, qs: JSON.parse(JSON.stringify(QS)), map: mapId, x: Math.round(P.x),
+    coins: P.coins, potions: P.potions, enh: P.enh, qs: JSON.parse(JSON.stringify(QS)), map: mapId, x: Math.round(P.x),
     ended, play: playFrames, savedAt: Date.now(),
   };
 }
@@ -2031,7 +2104,7 @@ async function doLogin() {
   if (save && CLASSES[save.cid]) {
     pendingSave = save;
     $('resumeInfo').innerHTML = `<b>${escapeHtml(user.nick)}</b> 님의 기록이 있어요!<br>` +
-      `Lv.${save.lv} ${CLASSES[save.cid].name} · 엽전 ${save.coins}닢 · 끝낸 부탁 ${doneCount(save.qs)}/${QUESTS.length}` +
+      `Lv.${save.lv} ${CLASSES[save.cid].name} · ${WEAPON_NAME[CLASSES[save.cid].weapon]} +${save.enh || 0} · 엽전 ${save.coins}닢 · 끝낸 부탁 ${doneCount(save.qs)}/${QUESTS.length}` +
       (serverOk ? '' : '<br><small style="color:#a0442c">서버에 연결하지 못해 이 기기 기록을 불러왔어요.</small>');
     $('loginForm').classList.add('hidden'); $('recent').classList.add('hidden'); $('resume').classList.remove('hidden');
     $('btnResume').focus();
@@ -2048,7 +2121,7 @@ function goClassSelect() {
 function resumeGame(sv) {
   $('login').classList.add('hidden');
   P = newPlayer(sv.cid);
-  ['lv', 'exp', 'hp', 'mp', 'maxHp', 'maxMp', 'atk', 'coins', 'potions'].forEach(k => { if (typeof sv[k] === 'number') P[k] = sv[k]; });
+  ['lv', 'exp', 'hp', 'mp', 'maxHp', 'maxMp', 'atk', 'coins', 'potions', 'enh'].forEach(k => { if (typeof sv[k] === 'number') P[k] = sv[k]; });
   P.hp = Math.max(P.hp, Math.round(P.maxHp * 0.5));
   for (const k in QS) delete QS[k];
   Object.assign(QS, sv.qs || {});
@@ -2068,6 +2141,72 @@ $('btnNew').onclick = () => {
   pendingSave = null; goClassSelect();
 };
 $('btnBack').onclick = () => { pendingSave = null; user = null; $('inNick').value = ''; showLogin(); };
+
+/* =========================================================
+   무기 강화 — 한양 장터 대장장이 강씨
+   ========================================================= */
+const WEAPON_NAME = { brush: '붓', needle: '침', sickle: '낫', club: '몽둥이' };
+const ENH_MAX = 15;
+const enhCost = n => Math.round(30 * Math.pow(1.45, n) / 10) * 10;     // +0→+1: 30닢, 단계마다 약 1.45배
+const enhRate = n => Math.max(0.3, 0.95 - 0.07 * n);                    // 95%부터 단계마다 7%씩, 최저 30%
+const enhMult = () => 1 + 0.1 * (P ? P.enh || 0 : 0);                   // 강화 1단계마다 공격력 +10%
+let forgeOpen = false, forgeBusy = false;
+
+function openForge() {
+  forgeOpen = true; $('forge').classList.remove('hidden');
+  $('fgMsg').textContent = ''; $('fgMsg').className = '';
+  updateForge();
+}
+function closeForge() {
+  if (forgeBusy) return;
+  forgeOpen = false; $('forge').classList.add('hidden');
+  P.atkCd = Math.max(P.atkCd, 15); clearPressed(); saveGame(true);
+}
+function drawForgeWeapon() {
+  const g = $('fgCanvas').getContext('2d');
+  g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, 240, 240);
+  g.setTransform(4, 0, 0, 4, 0, 0); g.translate(30, 32); g.rotate(-0.75);
+  if (P.enh >= 3) { g.shadowColor = P.enh >= 10 ? '#ffcf3a' : P.enh >= 6 ? '#c06aff' : '#5ab0ff'; g.shadowBlur = 10 + P.enh; }
+  g.translate(-16, 0); drawWeapon(g, P.c.weapon);
+}
+function updateForge() {
+  const n = P.enh, w = WEAPON_NAME[P.c.weapon];
+  $('fgName').textContent = `${w} +${n}`;
+  drawForgeWeapon();
+  if (n >= ENH_MAX) {
+    $('fgStat').textContent = `공격력 +${n * 10}% · 최고 단계에 도달했어요!`;
+    $('fgCost').textContent = '-'; $('fgRate').textContent = '-'; $('fgBtn').disabled = true;
+  } else {
+    $('fgStat').textContent = `공격력 +${n * 10}% → 성공하면 +${(n + 1) * 10}%`;
+    $('fgCost').textContent = enhCost(n) + '닢';
+    $('fgRate').textContent = Math.round(enhRate(n) * 100) + '%';
+    $('fgBtn').disabled = forgeBusy;
+  }
+  $('fgCoins').textContent = P.coins + '닢';
+  $('fgCoins').style.color = n < ENH_MAX && P.coins < enhCost(n) ? '#ff8a6a' : '';
+}
+function tryEnhance() {
+  if (forgeBusy || P.enh >= ENH_MAX) return;
+  const cost = enhCost(P.enh), msg = $('fgMsg');
+  if (P.coins < cost) { msg.className = 'fail'; msg.textContent = `엽전이 ${cost - P.coins}닢 모자라요.`; return; }
+  P.coins -= cost; forgeBusy = true; $('fgBtn').disabled = true; updateForge();
+  msg.className = 'work'; msg.textContent = '땅!';
+  [0, 280, 560].forEach((t, i) => setTimeout(() => { beep(880 - i * 60, 0.08, 'square', 0.05, -400); msg.textContent = '땅! '.repeat(i + 1).trim(); }, t));
+  setTimeout(() => {
+    const ok = Math.random() < enhRate(P.enh);
+    if (ok) {
+      P.enh++;
+      msg.className = 'ok'; msg.textContent = `✨ 강화 성공! ${WEAPON_NAME[P.c.weapon]} +${P.enh}`;
+      SFX.lvl();
+    } else {
+      msg.className = 'fail'; msg.textContent = `강화 실패… 엽전 ${cost}닢이 사라졌어요. (+${P.enh} 그대로)`;
+      beep(200, 0.35, 'sawtooth', 0.04, -120);
+    }
+    forgeBusy = false; updateForge(); saveGame(true);
+  }, 900);
+}
+$('fgBtn').onclick = tryEnhance;
+$('fgClose').onclick = closeForge;
 
 /* =========================================================
    관리자 모드 — 비밀번호를 넣으면 원하는 퀘스트로 바로 이동 (테스트용)
@@ -2138,6 +2277,7 @@ function buildAdminPanel() {
   $('admGod').checked = admin.god; $('admPow').checked = admin.power;
   $('admGod').onchange = e => { admin.god = e.target.checked; };
   $('admPow').onchange = e => { admin.power = e.target.checked; };
+  $('admEnhSet').onclick = () => { adminEnsurePlayer(); P.enh = clamp(+$('admEnh').value || 0, 0, ENH_MAX); $('admEnh').value = P.enh; toast(`무기 강화를 +${P.enh}(으)로 바꿨어요`, '#9fc3ff'); };
   $('admLvSet').onclick = () => { adminEnsurePlayer(); adminSetLevel(+$('admLv').value || 1); toast(`레벨을 ${P.lv}(으)로 바꿨어요`, '#9fc3ff'); };
 }
 
@@ -2178,7 +2318,7 @@ function adminJump(idx, stage) {
 }
 function openAdmin() {
   adminOpen = true; $('admin').classList.remove('hidden');
-  if (P) $('admLv').value = P.lv;
+  if (P) { $('admLv').value = P.lv; $('admEnh').value = P.enh; }
   [...$('admCls').children].forEach((b, i) => b.classList.toggle('on', Object.keys(CLASSES)[i] === (P ? P.cid : admin.cls)));
   if (P) admin.cls = P.cid;
 }
