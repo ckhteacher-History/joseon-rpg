@@ -250,7 +250,7 @@
 const SAVE_URL = '';
 
 // 버전 — 고칠 때마다 바꾸면, 화면에 보이는 버전으로 새 버전이 열렸는지 확인할 수 있어요.
-const VERSION = 'v3.2 (역사 퀴즈 · 장터 사람들)';
+const VERSION = 'v3.3 (홍경래 · 유계춘 이야기)';
 
 /* =========================================================
    조선유랑기 — 조선 후기 배경 횡스크롤 RPG
@@ -563,7 +563,8 @@ const NPCS = {
   farmer: { name: '소작농 최 서방', map: 'goeul', x: 1020, look: 'farmer' },
   merchant: { name: '평안도 상인 이씨', map: 'jeongju', x: 380, look: 'merchant' },
   jwoman: { name: '정주 아낙', map: 'jeongju', x: 780, look: 'jwoman' },
-  yu: { name: '유계춘', map: 'jinju', x: 380, look: 'yu', real: true },
+  yu: { name: '유계춘', map: 'jinju', x: 380, look: 'yu', real: true, talk: true },
+  honggr: { name: '평서대원수 홍경래', map: 'jeongju', x: 2990, look: 'honggr', talk: true, real: true },
   chogun: { name: '초군(나무꾼) 돌쇠', map: 'jinju', x: 760, look: 'chogun' },
 };
 
@@ -571,6 +572,23 @@ const note = text => ({ name: '📜 역사 노트', look: null, text });
 
 /* ---------- 장터 사람들의 이야기 (퀘스트 없음) ---------- */
 const TALKS = {
+  honggr: [
+    `멈추시오! …아, 백성이로구려. 놀라게 해서 미안하오. 나는 평서대원수 <b>홍경래</b>요.`,
+    `나는 평안도 용강에서 나고 자랐소. 글을 읽고 과거도 보았지만, 서북 사람이 높은 벼슬에 오르기란 하늘의 별 따기였지. 평안도 사람이라면 양반이라도 업신여김을 받았소.`,
+    `게다가 세도가들은 벼슬을 사고팔고, 관리들은 백성을 쥐어짰소. 흉년이 들어 굶어 죽는 사람이 나와도 세금은 줄지 않았지.`,
+    `그래서 십 년 넘게 동지들을 모으며 준비했소. <b>우군칙</b>, <b>김사용</b> 같은 이들과 함께 <b>가산 다복동</b>에서 군사를 일으켰지. 땅 없는 농민, 광산에서 일하던 사람들, 장사꾼들까지 우리와 함께했소.`,
+    `한때는 청천강 북쪽의 여러 고을을 차지했지만, 관군에 밀려 지금은 이 <b>정주성</b>에서 버티고 있소. 성 안의 백성들도 함께 성을 지키고 있다오.`,
+    `우리가 이기든 지든, 서북 사람을 업신여기고 백성을 쥐어짜는 이 세상이 옳지 않다는 것만은 모두가 알게 될 것이오.`,
+    note(`<b>홍경래(?~1812)</b> — 평안도 용강 출신의 몰락 양반으로, 과거에 뜻을 이루지 못한 뒤 10여 년 동안 봉기를 준비했어요. 1811년 12월 가산 다복동에서 봉기해 청천강 이북의 여러 고을을 차지했지만, 정주성에서 넉 달 가까이 버티다 1812년 4월 관군에 진압되었고 이때 목숨을 잃었어요.<br><b>생각해 보기</b>: 이 사건을 '홍경래의 난'이라고 부르기도 하고 '평안도 농민 전쟁'이라고 부르기도 해요. 이름에 따라 사건을 보는 눈이 어떻게 달라질까요?`),
+  ],
+  yu: [
+    `또 왔구려. 진주 이야기를 좀 더 들려주리다.`,
+    `나는 몰락한 양반이지만, 예전부터 고을 사람들의 억울한 일을 대신 글로 써서 관아에 호소해 왔소. 이번에도 처음에는 글로 바로잡아 보려 했지. 하지만 관아는 들은 척도 하지 않았소.`,
+    `그래서 마을마다 <b>통문</b>을 돌려 사람들을 모았소. 통문은 여럿이 함께 읽고 뜻을 모으자고 돌리는 글이오. 한글로 <b>노래</b>를 지어 퍼뜨리기도 했지. 글을 모르는 사람도 따라 부를 수 있게 말이오.`,
+    `나무를 해다 파는 초군들, 땅 없는 농민들이 하나둘 모였소. 마침내 백성들이 진주성으로 몰려가 경상우병사 백낙신에게 억울함을 따졌고, 백성을 괴롭히던 아전들을 벌주었지.`,
+    `이 일로 나는 무사하지 못할지도 모르오. 그래도 백성이 한목소리를 내면 나라도 귀를 기울일 수밖에 없다는 걸 보여 주었으니, 후회는 없소.`,
+    note(`<b>유계춘(?~1862)</b> — 진주의 몰락 양반으로, 통문과 한글 노래로 농민들을 모아 1862년 진주 농민 봉기를 이끌었어요. 봉기 뒤 정부의 조사로 붙잡혀 처형되었어요. 진주에서 시작된 봉기는 삼남 곳곳으로 번져 임술 농민 봉기로 이어졌어요.`),
+  ],
   sijeon: [
     `어서 오시오. 나는 종로 운종가에서 비단을 파는 <b>시전</b> 상인이오. 그중에서도 가장 큰 여섯 가게, <b>육의전</b>에 속하지.`,
     `시전은 나라에 세금과 물품을 바치는 대신 특권을 받았소. 그게 바로 <b>금난전권</b>, 허가 없이 장사하는 <b>난전</b>을 단속할 수 있는 권리라오.`,
@@ -1397,10 +1415,11 @@ function npcStatus(npcId) {
 
 function talk(npcId) {
   if (npcId === 'smith') { openForge(); return; }
-  if (TALKS[npcId]) { const n0 = NPCS[npcId]; openDialog(n0.name + (n0.real ? ' (실존 인물)' : ''), n0.look, TALKS[npcId].slice()); return; }
+  const hasQuest = QUESTS.some(x => x.npc === npcId || x.turnin === npcId);
+  if (TALKS[npcId] && !hasQuest) { const n0 = NPCS[npcId]; openDialog(n0.name + (n0.real ? ' (실존 인물)' : ''), n0.look, TALKS[npcId].slice()); return; }
   const n = NPCS[npcId], q = questFor(npcId), A = ADDR[P.cid];
   let pages = [], onEnd = null;
-  if (q && !questUnlocked(q)) pages = [q.lock];
+  if (q && !questUnlocked(q)) pages = TALKS[npcId] ? [q.lock].concat(TALKS[npcId]) : [q.lock];
   else if (q && !QS[q.id]) {
     const qzs = (QUIZZES[q.id] || []).filter(z => !QZ[z.id]);
     pages = qzs.length
@@ -1426,7 +1445,7 @@ function talk(npcId) {
     };
   } else {
     const all = QUESTS.filter(x => x.npc === npcId).flatMap(x => x.idle);
-    pages = [all[Math.floor(Math.random() * all.length)] || '…'];
+    pages = TALKS[npcId] ? TALKS[npcId].slice() : [all[Math.floor(Math.random() * all.length)] || '…'];
   }
 
   if (npcId === 'jumo') {
@@ -1537,6 +1556,7 @@ const LOOKS = {
   yeogak: { robe: '#7a8a9a', line: '#5a6a7a', pants: '#d8d0c0', shoe: '#3a2a1e', belt: '#3a4a5a', hat: 'paraengi', apron: '#5a4a3a' },
   mandeok: { robe: '#f2e2c8', line: '#d0bc98', pants: '#3a5a8a', shoe: '#6b3b3b', belt: '#c0392b', hat: 'bun', skirt: '#3a5a8a' },
   chae: { robe: '#2f5f8a', line: '#1f4060', pants: '#e9e3d4', shoe: '#1f1f1f', belt: '#d4a73a', hat: 'samo', long: true, beard: true, hair: '#cfcfcf', hyungbae: true },
+  honggr: { robe: '#6a2e2a', line: '#4a1e1a', pants: '#e0d8c8', shoe: '#1f1f1f', belt: '#d4a73a', hat: 'jeollip', long: true, mustache: true },
   eosa: { robe: '#cfc6ae', line: '#a89e84', pants: '#cfc6ae', shoe: '#5a4a38', belt: '#6b5a40', hat: 'gat', long: true, patch: true, prop: 'mapae' },
 };
 
@@ -2225,7 +2245,7 @@ function drawNPC(n) {
     ctx.fillStyle = '#fff'; ctx.fillText('실존 인물', n.x, GROUND + 36);
   }
   const st = npcStatus(n.id), by = GROUND - 96 + Math.sin(frame * 0.08) * 3;
-  if (n.talk) {
+  if (n.talk && !st) {
     ctx.fillStyle = 'rgba(0,0,0,.3)'; ell(ctx, n.x, by - 7, 12, 12);
     ctx.font = F(15, true); ctx.textAlign = 'center'; ctx.fillText('💬', n.x, by - 1);
   }
