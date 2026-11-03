@@ -45,6 +45,11 @@
   #dlgText b{color:#a0442c}
   #dlg.note #dlgText{font-size:15.5px}
   #dlg.note #dlgText b{color:#2f5d50}
+  .qzq{font-weight:700;margin-bottom:8px}
+  .qzc{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+  .qbtn{font:15px 'Gowun Batang',serif;text-align:left;padding:7px 10px;border-radius:8px;border:1.5px solid #b89a6a;background:#fffdf7;color:#2b1d12;cursor:pointer}
+  .qbtn:hover{background:#f3e3c0;border-color:#a0442c}
+  #dlg.quiz{cursor:default}
   #dlgHint{position:absolute;right:14px;bottom:6px;font-size:13px;color:#8b6a3e;animation:blink 1s infinite}
   @keyframes blink{50%{opacity:.35}}
 
@@ -245,7 +250,7 @@
 const SAVE_URL = '';
 
 // 버전 — 고칠 때마다 바꾸면, 화면에 보이는 버전으로 새 버전이 열렸는지 확인할 수 있어요.
-const VERSION = 'v3.1 (3장 · 조선 지도)';
+const VERSION = 'v3.2 (역사 퀴즈 · 장터 사람들)';
 
 /* =========================================================
    조선유랑기 — 조선 후기 배경 횡스크롤 RPG
@@ -308,6 +313,11 @@ addEventListener('keydown', e => {
   if (admin.on && (e.code === 'F2' || (e.code === 'Escape' && adminOpen))) { e.preventDefault(); toggleAdmin(); return; }
   if (e.target && e.target.tagName === 'INPUT') return;
   if (adminOpen) return;
+  if (dialog && isQuizPage()) {
+    const k = ['Digit1', 'Digit2', 'Digit3', 'Digit4'].indexOf(e.code), k2 = ['Numpad1', 'Numpad2', 'Numpad3', 'Numpad4'].indexOf(e.code);
+    const idx = k >= 0 ? k : k2;
+    if (idx >= 0) { e.preventDefault(); answerQuiz(curPage().order[idx]); return; }
+  }
   if (forgeOpen) {
     if (['Space', 'Enter', 'KeyZ'].includes(e.code)) { e.preventDefault(); if (!e.repeat) tryEnhance(); }
     else if (['Escape', 'ArrowUp', 'KeyX'].includes(e.code)) { e.preventDefault(); closeForge(); }
@@ -398,6 +408,7 @@ const MAPS = {
     decor: [
       { t: 'tree', x: 110, s: 1.1 }, { t: 'stall', x: 330, c: '#b8483a' }, { t: 'stall', x: 620, c: '#3a6ab8' }, { t: 'forge', x: 990 },
       { t: 'seodang', x: 1150 }, { t: 'tree', x: 1390, s: 0.9 }, { t: 'choga', x: 1580 },
+      { t: 'flag', x: 1660, text: '客主' }, { t: 'flag', x: 1790, text: '旅閣' },
       { t: 'jumak', x: 2010 }, { t: 'giwa', x: 2330 }, { t: 'jangseung', x: 2560 },
     ],
     portals: [
@@ -539,17 +550,113 @@ const NPCS = {
   hunjang: { name: '서당 훈장', map: 'village', x: 1150, look: 'hunjang' },
   jumo: { name: '주막 주모', map: 'village', x: 2010, look: 'jumo' },
   smith: { name: '대장장이 강씨', map: 'village', x: 880, look: 'smith' },
+  // 1장 장터 사람들 — 퀘스트 없이 대화로 역사를 알려 주는 NPC
+  sijeon: { name: '시전 상인 윤씨', map: 'village', x: 250, look: 'sijeon', talk: true },
+  nanjeon: { name: '난전 상인 박씨', map: 'village', x: 650, look: 'nanjeon', talk: true },
+  gaekju: { name: '객주 주인 한씨', map: 'village', x: 1580, look: 'gaekju', talk: true },
+  yeogak: { name: '여각 주인 최씨', map: 'village', x: 1745, look: 'yeogak', talk: true },
+  mandeok: { name: '김만덕', map: 'village', x: 1885, look: 'mandeok', talk: true, real: true },
+  chae: { name: '좌의정 채제공', map: 'village', x: 2235, look: 'chae', talk: true, real: true },
   pocha: { name: '착호갑사 박 포수', map: 'mountain', x: 240, look: 'pocha' },
   elder: { name: '고을 어른 김 노인', map: 'goeul', x: 380, look: 'elder' },
   widow: { name: '박씨 아낙', map: 'goeul', x: 700, look: 'widow' },
   farmer: { name: '소작농 최 서방', map: 'goeul', x: 1020, look: 'farmer' },
   merchant: { name: '평안도 상인 이씨', map: 'jeongju', x: 380, look: 'merchant' },
   jwoman: { name: '정주 아낙', map: 'jeongju', x: 780, look: 'jwoman' },
-  yu: { name: '유계춘', map: 'jinju', x: 380, look: 'yu' },
+  yu: { name: '유계춘', map: 'jinju', x: 380, look: 'yu', real: true },
   chogun: { name: '초군(나무꾼) 돌쇠', map: 'jinju', x: 760, look: 'chogun' },
 };
 
 const note = text => ({ name: '📜 역사 노트', look: null, text });
+
+/* ---------- 장터 사람들의 이야기 (퀘스트 없음) ---------- */
+const TALKS = {
+  sijeon: [
+    `어서 오시오. 나는 종로 운종가에서 비단을 파는 <b>시전</b> 상인이오. 그중에서도 가장 큰 여섯 가게, <b>육의전</b>에 속하지.`,
+    `시전은 나라에 세금과 물품을 바치는 대신 특권을 받았소. 그게 바로 <b>금난전권</b>, 허가 없이 장사하는 <b>난전</b>을 단속할 수 있는 권리라오.`,
+    `그런데 한양에 사람이 늘고 물건을 사고파는 일이 많아지니, 허가 없이 장사하는 <b>사상</b>들이 사방에서 생겨났소.`,
+    `게다가 신해년(1791)에 나라에서 우리 육의전만 빼고 다른 시전의 금난전권을 없애 버렸지 뭐요. 우리 육의전은 아직 버티고 있지만… 세상이 바뀌고 있소.`,
+    note(`<b>시전과 금난전권</b> — 시전은 한양 종로 등에 나라의 허가를 받고 자리 잡은 상점이에요. 나라에 물품을 대는 대신 허가 없는 상인(난전)을 단속하는 <b>금난전권</b>을 가졌어요. 시전 가운데 가장 큰 여섯 가게(비단·무명·명주·종이·모시·어물)를 <b>육의전</b>이라고 해요.`),
+  ],
+  nanjeon: [
+    `쉿! 시전 사람들 눈에 띄면 곤란하오…. 아, 이제 괜찮지. 몸에 밴 버릇이라오.`,
+    `예전엔 허가 없이 물건을 팔면 시전 상인들이 "난전이다!" 하고 물건을 빼앗아 갔다오. <b>금난전권</b> 때문이지.`,
+    `그런데 신해년(1791)에 정조 임금께서 채제공 대감의 건의를 받아들여, 육의전 말고는 금난전권을 없애셨소. 이걸 <b>신해통공</b>이라 하오. 덕분에 나 같은 장사꾼도 떳떳하게 장사할 수 있게 됐지!`,
+    `요즘 한양에는 종루 말고도 <b>이현(배오개)</b>, <b>칠패</b> 같은 시장이 크게 섰다오. 사고팔 데가 많아지니 장사할 맛이 나는구려.`,
+    note(`<b>사상의 성장</b> — 조선 후기에는 나라의 허가 없이 장사하는 <b>사상(私商)</b>이 크게 늘었어요. 신해통공(1791)으로 육의전을 뺀 시전의 금난전권이 없어지면서 자유로운 상업 활동이 활발해졌고, 한양에는 종루·이현·칠패 같은 시장이 번성했어요.`),
+  ],
+  gaekju: [
+    `어서 오시오! 먼 길 온 장사꾼이오? 여기는 <b>객주</b>요.`,
+    `객주는 지방에서 올라온 상인들의 물건을 맡아 대신 팔아 주거나, 사고팔 사람을 이어 주고 수수료를 받는 곳이오.`,
+    `그뿐인가. 상인들이 묵을 방도 내주고, 물건을 쌓아 둘 창고도 빌려주지. 돈이 급한 상인에게는 돈을 빌려주고, <b>어음</b>을 써 주기도 한다오.`,
+    `말하자면 우리 객주는 숙박, 창고, 중개에 은행 노릇까지 하는 셈이오. 장사가 커지면서 이런 일이 꼭 필요해졌지.`,
+    note(`<b>객주와 여각</b> — 조선 후기 상업이 발달하자, 상인의 물건을 맡아 팔아 주거나 거래를 이어 주는 <b>객주</b>와 <b>여각</b>이 생겨났어요. 이들은 숙박, 물건 보관, 운송, 돈 빌려주기와 어음 발행 같은 금융 일까지 맡았어요.`),
+  ],
+  yeogak: [
+    `허허, 나는 한강 <b>마포 나루</b>에서 여각을 하는 사람이오. 오늘은 장터 구경을 나왔지.`,
+    `여각도 객주처럼 상인들의 물건을 맡아 팔아 주고 잠자리를 내준다오. 다만 여각은 주로 배로 실어 오는 <b>곡물, 소금, 생선</b>처럼 무겁고 큰 물건을 다루지.`,
+    `그래서 큰 창고에 말을 매어 둘 마구간까지 갖추고 있소. 지방 포구에서 올라온 배들이 우리 여각에 짐을 풀지.`,
+    `한강에서는 <b>경강상인</b>들이 배로 곡물과 소금, 어물을 실어 나르며 큰돈을 벌고 있소. 개성의 <b>송상</b>, 의주의 <b>만상</b>, 동래의 <b>내상</b>도 이름난 큰 상인들이지.`,
+    note(`<b>포구 상업과 큰 상인들</b> — 조선 후기에는 강과 바다의 포구가 상업의 중심지로 떠올랐어요. 한강의 경강상인은 배로 곡물·소금·어물을 운송해 부를 쌓았고, 개성의 송상은 인삼과 전국 지점(송방)으로, 의주의 만상은 청과의 무역으로, 동래의 내상은 일본과의 무역으로 이름을 떨쳤어요.`),
+  ],
+  mandeok: [
+    `어머, 한양 사람들은 참 바쁘게도 다니는구려. 나는 제주에서 온 <b>김만덕</b>이라 하오.`,
+    `나는 제주에서 <b>객주</b>를 차려, 제주의 미역·말총 같은 물건을 육지에 팔고 육지의 쌀과 옷감을 들여와 팔며 재산을 모았소.`,
+    `그런데 몇 해 전 제주에 큰 흉년이 들어 많은 사람이 굶주렸다오. 그래서 모은 재산을 털어 육지에서 쌀을 사다가 굶주린 사람들에게 나누어 주었지.`,
+    `그 소식을 들으신 임금님(정조)께서 소원을 물으시기에, 한양과 금강산을 구경하고 싶다고 했소. 그때는 제주 여인이 바다를 건너 육지로 나가는 게 금지되어 있었거든. 그래서 지금 이렇게 한양 구경을 하고 있다오!`,
+    note(`<b>김만덕(1739~1812)</b> — 제주의 여성 상인으로, 객주를 운영하며 큰 재산을 모았어요. 1790년대 제주에 큰 흉년이 들자 재산을 털어 쌀을 사서 굶주린 백성을 구했어요. 정조는 그 공을 높이 사 소원을 들어주었고, 김만덕은 한양과 금강산을 구경했어요.`),
+  ],
+  chae: [
+    `허허, 장터가 북적이니 보기 좋구려. 나는 이 나라의 좌의정 <b>채제공</b>이오.`,
+    `몇 해 전만 해도 한양의 장사꾼들은 시전 상인들의 <b>금난전권</b> 때문에 마음껏 장사하지 못했소. 시전에 속하지 않은 사람이 물건을 팔면 '난전'이라며 단속을 당했지.`,
+    `그 바람에 물건값은 오르고, 가난한 백성과 작은 장사꾼들만 힘들어졌소. 그래서 전하께 아뢰었지. 육의전 말고는 금난전권을 없애 누구나 장사할 수 있게 하자고 말이오.`,
+    `신해년(1791)에 내려진 이 조치를 <b>신해통공</b>이라 하오. 장사의 길을 두루 통하게 했다는 뜻이지. 이제 한양의 장사는 더욱 활발해질 것이오.`,
+    note(`<b>신해통공(1791)</b> — 정조 때 좌의정 채제공의 건의로, 육의전을 뺀 시전 상인들의 금난전권을 없앤 조치예요. 이로써 사상들의 자유로운 상업 활동이 가능해졌고, 한양의 상업이 더욱 발달했어요.`),
+  ],
+};
+
+/* ---------- 역사 퀴즈 — 퀘스트를 받기 전에 NPC가 냅니다. c[0]이 정답이고, 보기 순서는 게임에서 섞여요. ---------- */
+const QUIZZES = {
+  q1: [{ id: 'q1a', q: '조선 후기 전국 곳곳에서 닷새마다 열리던 시장은?', c: ['장시', '시전', '객주', '육의전'],
+    hint: '보부상들이 짐을 지고 돌아다니던 지방의 시장이오. 닷새마다 열렸지.',
+    explain: '장시는 보통 닷새마다 열렸고, 18세기 중엽에는 전국에 1,000여 곳이나 되었소. 시전·육의전은 한양의 허가받은 상점이고, 객주는 상인의 물건을 맡아 팔아 주던 곳이오.' }],
+  q2: [{ id: 'q2a', q: '1791년 정조 때, 육의전을 뺀 시전 상인들의 금난전권을 없애 누구나 자유롭게 장사할 수 있게 한 조치는?', c: ['신해통공', '대동법', '균역법', '영정법'],
+    hint: '신해년(1791)에 내려진 조치요. 장터에 계신 <b>채제공 대감</b>이나 <b>난전 상인</b>에게 들어 보시오!',
+    explain: '신해통공은 좌의정 채제공의 건의로 내려졌소. 금난전권은 시전 상인이 허가 없는 상인(난전)을 단속하던 권리였지. 대동법·균역법·영정법은 세금 제도요.' }],
+  q3: [{ id: 'q3a', q: '숙종 때부터 전국에 널리 쓰인 동전은?', c: ['상평통보', '건원중보', '해동통보', '당백전'],
+    hint: '보부상 김씨가 사례로 준 엽전 이름을 떠올려 보시오.',
+    explain: '상평통보는 숙종 때부터 전국에 널리 쓰였소. 건원중보·해동통보는 고려의 화폐이고, 당백전은 훗날 흥선 대원군 때 만든 화폐요.' }],
+  q4: [
+    { id: 'q4a', q: '조선에서 호랑이를 잡기 위해 따로 둔 군사는?', c: ['착호갑사', '별기군', '훈련도감', '장용영'],
+      hint: '"범을 잡는(捉虎) 갑사"라는 뜻이오. 바로 내 직책이지!',
+      explain: '착호갑사는 호랑이 피해가 컸던 조선에서 범을 잡으려고 둔 군사요. 훈련도감·장용영은 다른 군영이고, 별기군은 훗날의 신식 군대요.' },
+    { id: 'q4b', q: '조선 후기 부유한 상민이 양반 행세를 하려고 사기도 했던, 이름 칸이 비어 있는 임명장은?', c: ['공명첩', '호패', '마패', '족보'],
+      hint: '"이름(名)이 비어(空) 있는 문서(帖)"라는 뜻이오.',
+      explain: '나라 살림이 어려워지자 이름 칸을 비운 임명장인 공명첩을 팔기도 했소. 족보를 사거나 고치는 일도 있었지만, 임명장은 공명첩이오.' },
+  ],
+  q6: [{ id: 'q6a', q: '다음 중 삼정에 해당하지 않는 것은?', c: ['대동법', '전정', '군정', '환곡'],
+    hint: '삼정은 땅의 세금, 군역 대신 내는 옷감, 곡식 빌려주기였소. 특산물 대신 쌀을 내게 한 제도는 무엇이었지?',
+    explain: '대동법은 특산물(공납) 대신 쌀 등으로 내게 한 제도요. 삼정은 전정·군정·환곡이지.' }],
+  q7: [{ id: 'q7a', q: '군대에 가는 대신 내던 옷감(무명·삼베)을 무엇이라 할까?', c: ['군포', '공명첩', '환곡', '호패'],
+    hint: '군(軍)에 내는 옷감(布)이라오.',
+    explain: '군포는 군역 대신 내는 옷감이오. 영조 때 균역법으로 1년에 2필에서 1필로 줄었지만, 관리들의 수탈은 계속되었소.' }],
+  q8: [{ id: 'q8a', q: '환곡은 어떤 제도일까?', c: ['봄에 곡식을 빌려주고 가을에 이자를 붙여 돌려받는 제도', '토지에 매기는 세금', '군대에 가는 대신 옷감을 내는 제도', '특산물 대신 쌀을 내게 한 제도'],
+    hint: '"돌아오는(還) 곡식(穀)"이라는 뜻이오.',
+    explain: '환곡은 원래 굶주린 농민을 돕는 제도였지만, 높은 이자와 억지로 빌려주는 일 때문에 가장 큰 수탈 수단이 되었소.' }],
+  q10: [{ id: 'q10a', q: '순조 때부터 안동 김씨 같은 몇몇 외척 가문이 권력을 독차지한 정치를 무엇이라 할까?', c: ['세도 정치', '탕평 정치', '붕당 정치', '수렴청정'],
+    hint: '세력(勢)을 쥔 몇몇 가문이 나라를 쥐락펴락한 정치요.',
+    explain: '세도 정치 아래에서 벼슬을 사고파는 일이 흔해졌고 수탈이 심해졌소. 탕평 정치는 영조·정조가 여러 붕당을 고루 쓰려 한 정치요.' }],
+  q11: [{ id: 'q11a', q: '홍경래의 난이 일어난 지역은?', c: ['평안도', '경상도', '전라도', '함경도'],
+    hint: '오른쪽 위 <b>조선 지도(M 키)</b>를 열어 별(★) 표시를 찾아보시오.',
+    explain: '홍경래의 난은 1811년 평안도에서 일어났소. 서북 지역에 대한 차별이 큰 원인이었지.' }],
+  q13: [{ id: 'q13a', q: '지금 우리가 있는 진주는 조선 팔도 가운데 어느 도에 있을까?', c: ['경상도', '전라도', '충청도', '평안도'],
+    hint: '<b>조선 지도(M 키)</b>에서 빨간 점(현재 위치)을 찾아보시오.',
+    explain: '진주는 경상도에 있소. 경상도는 충청도·전라도와 함께 삼남이라 불렸지.' }],
+  q14: [{ id: 'q14a', q: '홍경래와 유계춘처럼, 벼슬을 하지 못해 가난해진 양반을 무엇이라 부를까?', c: ['몰락 양반', '중인', '서얼', '향리'],
+    hint: '양반이지만 집안이 기울어 농사꾼과 다름없이 사는 처지라오. 바로 나처럼!',
+    explain: '조선 후기에는 몰락 양반이 많았소. 글을 아는 이들이 앞장서고 농민들이 함께하면서 큰 봉기가 일어났지.' }],
+};
+const QZ = {};   // 맞힌 퀴즈 기록
 const QUESTS = [
   {
     id: 'q1', npc: 'bobusang', title: '장시 가는 길', target: 'boar', need: 5, reward: { exp: 80, coins: 40 },
@@ -796,13 +903,14 @@ function startGame(cid) {
   $('title').classList.add('hidden');
   P = newPlayer(cid);
   for (const k in QS) delete QS[k];
+  for (const k in QZ) delete QZ[k];
   ended = false; playFrames = 0;
   state = 'play'; document.body.classList.add('playing');
   enterMap('village', 150);
   helpT = 720;
   saveGame(true);
   openDialog('이야기', null, [
-    `때는 19세기 조선. 장시가 열리고 엽전이 돌지만, 세상은 어지럽기만 하다…`,
+    `때는 18세기 말, 정조 임금이 다스리던 조선. 장시가 열리고 엽전이 돌며 한양 장터는 사람들로 북적인다…`,
     `<b>${P.c.name}</b> <b>${escapeHtml(user.nick)}</b>, 당신은 오늘 한양 장터에서 길을 나선다. 머리 위에 <b>!</b> 표시가 뜬 사람에게 다가가 <b>↑ 키</b>(모바일은 <b>대화</b>)로 말을 걸어 보자.`,
   ]);
 }
@@ -1289,11 +1397,16 @@ function npcStatus(npcId) {
 
 function talk(npcId) {
   if (npcId === 'smith') { openForge(); return; }
+  if (TALKS[npcId]) { const n0 = NPCS[npcId]; openDialog(n0.name + (n0.real ? ' (실존 인물)' : ''), n0.look, TALKS[npcId].slice()); return; }
   const n = NPCS[npcId], q = questFor(npcId), A = ADDR[P.cid];
   let pages = [], onEnd = null;
   if (q && !questUnlocked(q)) pages = [q.lock];
   else if (q && !QS[q.id]) {
-    pages = q.offer(A);
+    const qzs = (QUIZZES[q.id] || []).filter(z => !QZ[z.id]);
+    pages = qzs.length
+      ? [qzs.length > 1 ? `부탁하기 전에 ${qzs.length}가지만 물어보겠소. 다 맞혀야 믿고 맡길 수 있겠구려!` : `부탁하기 전에 하나 물어보겠소. 맞혀 보시오!`]
+          .concat(qzs.map(z => ({ quiz: z })), [`좋소! 이제 믿고 부탁하겠소.`], q.offer(A))
+      : q.offer(A);
     onEnd = () => { QS[q.id] = { state: 'active', count: 0 }; SFX.quest(); toast(`퀘스트 수락: ${q.title}`, '#ffd76a', 200); saveGame(true); q.onAccept && q.onAccept(); };
   } else if (q && (QS[q.id].count < q.need || turninOf(q) !== npcId)) pages = [q.progress(QS[q.id].count, q.need)];
   else if (q) {
@@ -1328,7 +1441,7 @@ function talk(npcId) {
     }
   }
   if (!pages.length || pages[0] === undefined) pages = ['…'];
-  openDialog(n.name, n.look, pages, onEnd, q && !QS[q.id] && questUnlocked(q));
+  openDialog(n.name + (n.real ? ' (실존 인물)' : ''), n.look, pages, onEnd, q && !QS[q.id] && questUnlocked(q));
 }
 
 /* ---------- 대화창 ---------- */
@@ -1336,15 +1449,27 @@ function openDialog(name, look, pages, onEnd, isOffer) {
   dialog = { name, look, pages, i: 0, onEnd, isOffer };
   showDialogPage(); clearPressed();
 }
+const curPage = () => dialog && dialog.pages[dialog.i];
+const isQuizPage = () => { const p = curPage(); return !!(p && typeof p === 'object' && p.quiz); };
+function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
 function showDialogPage() {
   const p = dialog.pages[dialog.i];
   let name = dialog.name, look = dialog.look, text = p;
   if (typeof p === 'object') { name = p.name || name; look = p.look === undefined ? look : p.look; text = p.text; }
   $('dlg').classList.toggle('note', name.includes('역사 노트'));
+  $('dlg').classList.toggle('quiz', isQuizPage());
   $('dlgName').textContent = name;
-  $('dlgText').innerHTML = text;
+  if (isQuizPage()) {
+    const z = p.quiz; p.order = p.order || shuffle([0, 1, 2, 3]);
+    $('dlgText').innerHTML = `<div class="qzq">📝 ${z.q}</div><div class="qzc">` +
+      p.order.map((o, k) => `<button class="qbtn" data-o="${o}">${k + 1}. ${z.c[o]}</button>`).join('') + `</div>`;
+    $('dlgText').querySelectorAll('.qbtn').forEach(b => {
+      b.addEventListener('pointerdown', e => e.stopPropagation());
+      b.addEventListener('click', e => { e.stopPropagation(); answerQuiz(+b.dataset.o); });
+    });
+  } else $('dlgText').innerHTML = text;
   const last = dialog.i === dialog.pages.length - 1;
-  $('dlgHint').textContent = last ? (dialog.isOffer ? '부탁을 들어준다 ▶' : '닫기 ▶') : '다음 ▶';
+  $('dlgHint').textContent = isQuizPage() ? '답을 누르거나 숫자 키 1~4' : last ? (dialog.isOffer ? '부탁을 들어준다 ▶' : '닫기 ▶') : '다음 ▶';
   const g = $('dlgPor').getContext('2d');
   g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, 200, 220);
   if (look) { g.setTransform(2.6, 0, 0, 2.6, 0, 0); drawPerson(g, 38, 80, look, 1, { t: 0 }); }
@@ -1354,8 +1479,23 @@ function showDialogPage() {
   }
   $('dlg').classList.remove('hidden');
 }
+function answerQuiz(o) {
+  if (!isQuizPage()) return;
+  const z = curPage().quiz;
+  if (o === 0) {
+    QZ[z.id] = 1;
+    SFX.quest();
+    dialog.pages[dialog.i] = { text: `⭕ <b>정답이오!</b> ${z.explain}` };
+    saveGame(false);
+  } else {
+    beep(220, 0.3, 'sawtooth', 0.04, -100);
+    dialog.pages.splice(dialog.i + 1, 0, { quiz: z });
+    dialog.pages[dialog.i] = { text: `❌ <b>아쉽소!</b> 힌트를 주리다. ${z.hint}<br><small>다시 풀어 보시오.</small>` };
+  }
+  showDialogPage();
+}
 function advanceDialog() {
-  if (!dialog) return;
+  if (!dialog || isQuizPage()) return;
   dialog.i++;
   if (dialog.i >= dialog.pages.length) {
     const f = dialog.onEnd; dialog = null;
@@ -1364,7 +1504,7 @@ function advanceDialog() {
     f && f();
   } else showDialogPage();
 }
-$('dlg').addEventListener('pointerdown', e => { e.preventDefault(); advanceDialog(); });
+$('dlg').addEventListener('pointerdown', e => { if (e.target.closest('.qbtn')) return; e.preventDefault(); advanceDialog(); });
 
 /* =========================================================
    그리기 — 인물
@@ -1391,6 +1531,12 @@ const LOOKS = {
   yu: { robe: '#e6e0d0', line: '#c4bca8', pants: '#ddd6c4', shoe: '#3a2a1e', belt: '#6a5a40', hat: 'gat', long: true, patch: true, mustache: true },
   chogun: { robe: '#d8c9a6', line: '#b09a70', pants: '#c9b890', shoe: '#9a7a4a', belt: '#6b4a2b', hat: 'headband', patch: true, prop: 'jige' },
   haesuin: { robe: '#4a3f5a', line: '#2f2840', pants: '#d8d0c0', shoe: '#1f1f1f', belt: '#8b2b2b', hat: 'tanggeon', mustache: true },
+  sijeon: { robe: '#7a4a6a', line: '#5a3050', pants: '#e9e3d4', shoe: '#2a2a2a', belt: '#d4a73a', hat: 'gat', long: true, mustache: true },
+  nanjeon: { robe: '#d6c8a4', line: '#b09a70', pants: '#c8b890', shoe: '#9a7a4a', belt: '#6b4a2b', hat: 'headband', patch: true, prop: 'jige' },
+  gaekju: { robe: '#b89a6a', line: '#8a6a40', pants: '#e0d6c0', shoe: '#3a2a1e', belt: '#5a3a22', hat: 'gat', long: true, mustache: true },
+  yeogak: { robe: '#7a8a9a', line: '#5a6a7a', pants: '#d8d0c0', shoe: '#3a2a1e', belt: '#3a4a5a', hat: 'paraengi', apron: '#5a4a3a' },
+  mandeok: { robe: '#f2e2c8', line: '#d0bc98', pants: '#3a5a8a', shoe: '#6b3b3b', belt: '#c0392b', hat: 'bun', skirt: '#3a5a8a' },
+  chae: { robe: '#2f5f8a', line: '#1f4060', pants: '#e9e3d4', shoe: '#1f1f1f', belt: '#d4a73a', hat: 'samo', long: true, beard: true, hair: '#cfcfcf', hyungbae: true },
   eosa: { robe: '#cfc6ae', line: '#a89e84', pants: '#cfc6ae', shoe: '#5a4a38', belt: '#6b5a40', hat: 'gat', long: true, patch: true, prop: 'mapae' },
 };
 
@@ -1927,6 +2073,15 @@ function drawDecor(d) {
       }
       break;
     }
+    case 'flag': {   // 가게 깃발
+      ctx.fillStyle = '#6b4a2b'; ctx.fillRect(x, G - 128, 5, 128);
+      const wv = Math.sin(frame * 0.06 + x) * 2;
+      ctx.fillStyle = '#f7f1e3'; ctx.beginPath(); ctx.moveTo(x + 5, G - 124); ctx.lineTo(x + 33, G - 124 + wv); ctx.lineTo(x + 33, G - 76 + wv); ctx.lineTo(x + 5, G - 76); ctx.closePath(); ctx.fill();
+      ctx.strokeStyle = '#2f5d50'; ctx.lineWidth = 2; ctx.stroke();
+      ctx.fillStyle = '#2f5d50'; ctx.font = F(14, true); ctx.textAlign = 'center';
+      [...d.text].forEach((ch, i) => ctx.fillText(ch, x + 19, G - 105 + i * 20 + wv / 2));
+      break;
+    }
     case 'forge': {   // 대장간 화덕과 모루
       ctx.fillStyle = '#8a8478'; ctx.beginPath(); ctx.moveTo(x - 10, G); ctx.lineTo(x - 6, G - 60); ctx.quadraticCurveTo(x + 22, G - 84, x + 50, G - 60); ctx.lineTo(x + 54, G); ctx.closePath(); ctx.fill();
       ctx.fillStyle = '#6b665c'; ctx.fillRect(x + 14, G - 110, 16, 40);
@@ -2063,8 +2218,17 @@ function drawNPC(n) {
   ctx.font = F(12, true); ctx.textAlign = 'center';
   const tw = ctx.measureText(n.name).width + 12;
   ctx.fillStyle = 'rgba(0,0,0,.6)'; rr(ctx, n.x - tw / 2, GROUND + 5, tw, 18, 4); ctx.fill();
-  ctx.fillStyle = '#ffe28a'; ctx.fillText(n.name, n.x, GROUND + 18);
+  ctx.fillStyle = n.real ? '#9fe0ff' : '#ffe28a'; ctx.fillText(n.name, n.x, GROUND + 18);
+  if (n.real) {
+    ctx.font = F(10, true); const bw = ctx.measureText('실존 인물').width + 8;
+    ctx.fillStyle = '#2f5d7a'; rr(ctx, n.x - bw / 2, GROUND + 25, bw, 14, 4); ctx.fill();
+    ctx.fillStyle = '#fff'; ctx.fillText('실존 인물', n.x, GROUND + 36);
+  }
   const st = npcStatus(n.id), by = GROUND - 96 + Math.sin(frame * 0.08) * 3;
+  if (n.talk) {
+    ctx.fillStyle = 'rgba(0,0,0,.3)'; ell(ctx, n.x, by - 7, 12, 12);
+    ctx.font = F(15, true); ctx.textAlign = 'center'; ctx.fillText('💬', n.x, by - 1);
+  }
   if (n.id === 'smith') {
     ctx.fillStyle = 'rgba(0,0,0,.35)'; ell(ctx, n.x, by - 7, 13, 13);
     ctx.font = F(18, true); ctx.textAlign = 'center'; ctx.fillStyle = '#ffd76a'; ctx.fillText('⚒', n.x, by);
@@ -2441,7 +2605,7 @@ function snapshot() {
     v: 1, sid: user.sid, name: user.name, nick: user.nick, cid: P.cid,
     lv: P.lv, exp: P.exp, hp: Math.round(P.hp), mp: Math.round(P.mp), maxHp: P.maxHp, maxMp: P.maxMp, atk: +P.atk.toFixed(1),
     coins: P.coins, potions: P.potions, enh: P.enh, qs: JSON.parse(JSON.stringify(QS)), map: mapId, x: Math.round(P.x),
-    ended, play: playFrames, savedAt: Date.now(),
+    ended, play: playFrames, quiz: Object.keys(QZ), savedAt: Date.now(),
   };
 }
 
@@ -2552,6 +2716,8 @@ function resumeGame(sv) {
   for (const k in QS) delete QS[k];
   Object.assign(QS, sv.qs || {});
   ended = !!sv.ended; playFrames = sv.play || 0;
+  for (const k in QZ) delete QZ[k];
+  (sv.quiz || []).forEach(k => { QZ[k] = 1; });
   state = 'play'; document.body.classList.add('playing');
   let m = MAPS[sv.map] ? sv.map : 'village';
   if (m === 'cave' && !QS.q4) m = 'mountain';
@@ -2731,6 +2897,9 @@ function adminJump(idx, stage) {
   const q = QUESTS[idx];
   for (const k in QS) delete QS[k];
   QUESTS.slice(0, idx).forEach(x => { QS[x.id] = { state: 'done', count: x.need }; });
+  // 퀴즈: 앞 퀘스트는 맞힌 것으로, 이 퀘스트는 '받기 전'이면 다시 풀 수 있게
+  for (const k in QZ) delete QZ[k];
+  QUESTS.slice(0, stage === 'before' ? idx : idx + 1).forEach(x => (QUIZZES[x.id] || []).forEach(z => { QZ[z.id] = 1; }));
   if (stage === 'active') QS[q.id] = { state: 'active', count: 0 };
   if (stage === 'ready') QS[q.id] = { state: 'active', count: q.need };
   ended = idx >= 4;
