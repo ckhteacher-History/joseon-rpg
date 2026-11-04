@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>조선유랑기 — 조선 후기 RPG</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -71,12 +71,19 @@
   @keyframes blink{50%{opacity:.35}}
 
   /* 모바일 터치 버튼 */
-  #touch{display:none;position:fixed;inset:0;pointer-events:none;z-index:5}
+  #touch{display:none;position:fixed;top:env(safe-area-inset-top);bottom:env(safe-area-inset-bottom);left:env(safe-area-inset-left);right:env(safe-area-inset-right);pointer-events:none;z-index:5}
   body.touch #touch{display:block}
   #touch button{pointer-events:auto;position:absolute;width:62px;height:62px;border-radius:50%;border:2px solid rgba(255,240,210,.65);
     background:rgba(40,26,14,.5);color:#fff3dc;font:700 15px 'Gowun Batang',serif;touch-action:none;padding:0}
   #touch button.on{background:rgba(201,162,74,.75)}
+  #joy{pointer-events:auto;position:absolute;left:22px;bottom:26px;width:150px;height:150px;border-radius:50%;touch-action:none;
+    background:radial-gradient(circle,rgba(40,26,14,.25) 40%,rgba(40,26,14,.55));border:2px solid rgba(255,240,210,.55)}
+  #joyArrows{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);text-align:center;color:rgba(255,243,220,.6);font-size:18px;pointer-events:none}
+  #joyKnob{position:absolute;left:50%;top:50%;width:64px;height:64px;margin:-32px 0 0 -32px;border-radius:50%;pointer-events:none;
+    background:radial-gradient(circle at 40% 35%,#f3dca0,#b88a3a);border:2px solid rgba(255,240,210,.85);box-shadow:0 3px 10px rgba(0,0,0,.45)}
+  #joy.on #joyKnob{background:radial-gradient(circle at 40% 35%,#ffe9b0,#d9a24a)}
   body.touch:not(.playing) #touch{display:none}
+  body.touch.modal #touch{display:none}
 
   /* 로그인 */
   #login{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#2b1d12;
@@ -202,6 +209,14 @@
   #nView h3{margin:0 0 4px;font-size:22px;color:#2f5d50}
   #nView .src{font-size:13px;color:#8b6a3e;margin-bottom:14px}
   #nView b{color:#2f5d50}
+  figure.nPor,figure.ePor{padding:0}
+  .nPor{float:right;margin:0 0 10px 18px;width:170px;text-align:center}
+  .nPor canvas{width:170px;height:187px;display:block;background:radial-gradient(circle at 50% 60%,#fffaf0,#e8d9b4);border:3px solid #c9b48a;border-radius:50% 50% 12px 12px}
+  .nPor figcaption,.ePor figcaption{font-size:14px;font-weight:700;color:#2f5d50;margin-top:4px;line-height:1.35}
+  .nPor small,.ePor small{display:block;font-size:11.5px;font-weight:400;color:#8b6a3e}
+  .ePor{float:right;margin:0 0 6px 14px;width:96px;text-align:center}
+  .ePor canvas{width:96px;height:106px;display:block;background:radial-gradient(circle at 50% 60%,#fffaf0,#e8d9b4);border:2px solid #c9b48a;border-radius:50% 50% 10px 10px}
+  .ePor figcaption{font-size:12px}
   #nView .empty{color:#8b6a3e;text-align:center;margin-top:120px;line-height:2}
   #mapBtn{position:absolute;right:10px;top:10px;z-index:2;font:700 13px 'Gowun Batang',serif;background:rgba(24,18,14,.8);color:#ffd76a;
     border:1.5px solid #c9a24a;border-radius:8px;padding:5px 10px;cursor:pointer}
@@ -329,15 +344,13 @@
 </div>
 
 <div id="touch">
-  <button data-k="left"  style="left:10px;bottom:56px">◀</button>
-  <button data-k="right" style="left:84px;bottom:56px">▶</button>
-  <button data-k="down"  style="left:52px;bottom:128px;width:48px;height:48px;font-size:13px">▼</button>
+  <div id="joy"><div id="joyArrows">◀　　　▶</div><div id="joyKnob"></div></div>
   <button data-k="jump"  style="right:10px;bottom:56px">점프</button>
   <button data-k="attack" style="right:84px;bottom:50px;width:70px;height:70px">공격</button>
   <button data-k="skill" style="right:20px;bottom:130px">기술</button>
   <button data-k="up"    style="right:94px;bottom:136px">대화</button>
   <button data-k="potion" style="right:166px;bottom:56px;width:50px;height:50px;font-size:13px">국밥</button>
-  <button data-k="recall" style="left:10px;bottom:200px;width:50px;height:50px;font-size:12px;line-height:1.1">한양<br>귀환</button>
+  <button data-k="recall" style="left:14px;bottom:196px;width:50px;height:50px;font-size:12px;line-height:1.1">한양<br>귀환</button>
 </div>
 <div id="rotate">📱 화면을 가로로 돌려 주세요<br><small>조선유랑기는 가로 화면에서 즐길 수 있어요</small></div>
 
@@ -351,7 +364,7 @@
 const SAVE_URL = '';
 
 // 버전 — 고칠 때마다 바꾸면, 화면에 보이는 버전으로 새 버전이 열렸는지 확인할 수 있어요.
-const VERSION = 'v6.9 (귀환 확인 창 · 모바일 화면 맞춤)';
+const VERSION = 'v7.0 (노트 인물 그림 · 모바일 조이스틱·전체화면)';
 
 /* =========================================================
    조선유랑기 — 조선 후기 배경 횡스크롤 RPG
@@ -366,15 +379,27 @@ const hash = n => { const s = Math.sin(n * 12.9898) * 43758.5453; return s - Mat
 const F = (s, b) => `${b ? 'bold ' : ''}${s}px "Gowun Batang","Nanum Myeongjo",serif`;
 
 /* ---------- 화면 크기 ---------- */
-let K = 1;
+let K = 1, saProbe = null;
+function safeArea() {
+  if (!saProbe) {
+    saProbe = document.createElement('div');
+    saProbe.style.cssText = 'position:fixed;left:0;top:0;visibility:hidden;pointer-events:none;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)';
+    document.body.appendChild(saProbe);
+  }
+  const cs = getComputedStyle(saProbe), n = v => parseFloat(v) || 0;
+  return { t: n(cs.paddingTop), r: n(cs.paddingRight), b: n(cs.paddingBottom), l: n(cs.paddingLeft) };
+}
 function resize() {
   // 모바일은 주소창·툴바 때문에 innerHeight가 실제 보이는 화면보다 클 수 있어요 → visualViewport 기준으로 맞춤
   const vv = window.visualViewport;
   const w = vv ? vv.width : innerWidth, h = vv ? vv.height : innerHeight;
-  const ox = vv ? vv.offsetLeft : 0, oy = vv ? vv.offsetTop : 0;
-  const s = Math.min(w / VW, h / VH);
+  let ox = vv ? vv.offsetLeft : 0, oy = vv ? vv.offsetTop : 0;
+  // 노치·홈 바 영역(safe area)은 피해서 그려요
+  const sa = safeArea(); ox += sa.l; oy += sa.t;
+  const W = Math.max(100, w - sa.l - sa.r), H = Math.max(100, h - sa.t - sa.b);
+  const s = Math.min(W / VW, H / VH);
   const st = $('stage');
-  st.style.left = (ox + (w - VW * s) / 2) + 'px'; st.style.top = (oy + (h - VH * s) / 2) + 'px';
+  st.style.left = (ox + (W - VW * s) / 2) + 'px'; st.style.top = (oy + (H - VH * s) / 2) + 'px';
   st.style.transform = `scale(${s})`;
   const dpr = window.devicePixelRatio || 1;
   K = s * dpr;
@@ -468,6 +493,42 @@ document.querySelectorAll('#touch button').forEach(b => {
   b.addEventListener('pointerdown', on); b.addEventListener('pointerup', off);
   b.addEventListener('pointercancel', off); b.addEventListener('pointerleave', off);
 });
+
+// 조이스틱: 좌우로 밀면 이동, 아래로 깊게 당기면 ↓(발판 아래로 내려가기)
+(function joystick() {
+  const base = $('joy'), knob = $('joyKnob'); if (!base) return;
+  let pid = null;
+  const set = (k, v) => { if (v && !keys[k]) pressed[k] = true; keys[k] = v; };
+  const move = e => {
+    const r = base.getBoundingClientRect(), R = r.width / 2;
+    let dx = e.clientX - (r.left + R), dy = e.clientY - (r.top + R);
+    const max = R * 0.62, d = Math.hypot(dx, dy); if (d > max) { dx *= max / d; dy *= max / d; }
+    dy = Math.max(-max * 0.35, dy);   // 위쪽으로는 조금만 (좌우 조이스틱)
+    knob.style.transform = `translate(${dx}px,${dy}px)`;
+    set('left', dx < -R * 0.18); set('right', dx > R * 0.18); set('down', dy > R * 0.42);
+  };
+  const end = e => { if (e.pointerId !== pid) return; pid = null; base.classList.remove('on'); knob.style.transform = ''; set('left', false); set('right', false); set('down', false); };
+  base.addEventListener('pointerdown', e => { e.preventDefault(); pid = e.pointerId; base.setPointerCapture(pid); base.classList.add('on'); move(e); });
+  base.addEventListener('pointermove', e => { if (e.pointerId === pid) { e.preventDefault(); move(e); } });
+  base.addEventListener('pointerup', end); base.addEventListener('pointercancel', end);
+})();
+
+// 모바일: 게임을 시작할 때 전체 화면으로 (지원하는 브라우저에서만)
+function goFullscreen() {
+  if (!document.body.classList.contains('touch')) return;
+  const el = document.documentElement, fs = document.fullscreenElement || document.webkitFullscreenElement;
+  if (fs) return;
+  const req = el.requestFullscreen || el.webkitRequestFullscreen;
+  if (!req) return;
+  try {
+    const p = req.call(el, { navigationUI: 'hide' });
+    const lock = () => { try { screen.orientation && screen.orientation.lock && screen.orientation.lock('landscape').catch(() => {}); } catch (e) {} };
+    if (p && p.then) p.then(lock).catch(() => {}); else lock();
+  } catch (e) {}
+}
+['btnLogin', 'btnResume', 'btnNew'].forEach(id => { const b = document.getElementById(id); if (b) b.addEventListener('click', goFullscreen); });
+document.addEventListener('fullscreenchange', () => [50, 300].forEach(t => setTimeout(resize, t)));
+document.addEventListener('webkitfullscreenchange', () => [50, 300].forEach(t => setTimeout(resize, t)));
 
 /* =========================================================
    데이터: 직업 · 몬스터 · 맵 · NPC · 퀘스트
@@ -1489,6 +1550,7 @@ function makeMon(s) {
    ========================================================= */
 function update() {
   frame++;
+  { const m = !!(notesOpen || endingOpen || forgeOpen || adminOpen || recallOpen); if (m !== document.body.classList.contains('modal')) document.body.classList.toggle('modal', m); }
   if (state !== 'play') { titleCam = (titleCam + 0.6) % (MAPS.village.w - VW); return; }
 
   if (trans) {
@@ -4133,7 +4195,7 @@ Object.entries(CLASSES).forEach(([id, c], i) => {
   const g = d.querySelector('canvas').getContext('2d');
   g.setTransform(2.5, 0, 0, 2.5, 0, 0);
   drawPerson(g, 40, 80, c.look, 1, { weapon: c.weapon });
-  d.addEventListener('click', () => startGame(id));
+  d.addEventListener('click', () => { goFullscreen(); startGame(id); });
   d.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); startGame(id); } });
   $('cards').appendChild(d);
 });
@@ -4211,9 +4273,9 @@ const noteTitle = t => { const m = /<b>(.*?)<\/b>/.exec(t); return (m ? m[1] : t
 const isNotePage = p => p && typeof p === 'object' && p.name && p.name.includes('역사 노트');
 let notesOpen = false, noteSel = null, noteSeen = {};
 (function buildNotes() {
-  const add = (text, ch, src, qid, mapId) => { const id = noteTitle(text); if (!NOTE_LIST.some(n => n.id === id)) NOTE_LIST.push({ id, title: id, text, ch, src, qid, map: mapId }); };
-  QUESTS.forEach(q => q.done('yangban').forEach(p => { if (isNotePage(p)) add(p.text, QUEST_CH(q.id), NPCS[turninOf(q)].name, q.id, NPCS[turninOf(q)].map); }));
-  Object.entries(TALKS).forEach(([id, pages]) => pages.forEach(p => { if (isNotePage(p)) add(p.text, MAP_CH[NPCS[id].map] ?? 0, NPCS[id].name, null, NPCS[id].map); }));
+  const add = (text, ch, src, qid, mapId, npc) => { const id = noteTitle(text); if (!NOTE_LIST.some(n => n.id === id)) NOTE_LIST.push({ id, title: id, text, ch, src, qid, map: mapId, npc }); };
+  QUESTS.forEach(q => q.done('yangban').forEach(p => { if (isNotePage(p)) add(p.text, QUEST_CH(q.id), NPCS[turninOf(q)].name, q.id, NPCS[turninOf(q)].map, turninOf(q)); }));
+  Object.entries(TALKS).forEach(([id, pages]) => pages.forEach(p => { if (isNotePage(p)) add(p.text, MAP_CH[NPCS[id].map] ?? 0, NPCS[id].name, null, NPCS[id].map, id); }));
   NOTE_LIST.sort((a, b) => a.ch - b.ch);
   NOTE_LIST.forEach(n => {
     if (n.qid) { const q = QUESTS.find(x => x.id === n.qid); n.hint = `「${q.title}」 부탁을 마치면 얻어요`; }
@@ -4255,11 +4317,25 @@ function renderNotes() {
   const v = $('nView'), sel = NOTE_LIST.find(n => n.id === noteSel && NOTES_GOT[n.id]);
   if (sel) {
     noteSeen[sel.id] = 1;
-    v.innerHTML = `<h3>${escapeHtml(sel.title)}</h3><div class="src">${CH_NAMES[sel.ch]} · ${escapeHtml(sel.src)}에게서 얻은 노트</div><div>${sel.text}</div>`;
+    v.innerHTML = notePortraitHtml(sel, 'nPor') + `<h3>${escapeHtml(sel.title)}</h3><div class="src">${CH_NAMES[sel.ch]} · ${escapeHtml(sel.src)}에게서 얻은 노트</div><div>${sel.text}</div>`;
+    paintNotePortraits(v);
     const it = list.querySelector('.sel'); if (it) it.scrollIntoView({ block: 'nearest' });
   } else v.innerHTML = got.length
     ? `<div class="empty">왼쪽에서 노트를 골라 읽어 보세요.<br><small>↑↓ 키로도 넘길 수 있어요.</small></div>`
     : `<div class="empty">아직 모은 역사 노트가 없어요.<br>NPC의 부탁을 해결하거나 💬 표시가 있는 사람과 이야기하면<br>역사 노트가 이곳에 차곡차곡 쌓여요.</div>`;
+}
+// 노트를 준 NPC의 모습을 노트 옆에 그려 줘요
+function notePortraitHtml(n, cls) {
+  const npc = n.npc && NPCS[n.npc];
+  if (!npc || !npc.look) return '';
+  return `<figure class="${cls}"><canvas width="200" height="220" data-look="${npc.look}"></canvas><figcaption>${escapeHtml(npc.name)}${npc.real ? '<small>실존 인물</small>' : ''}<small>${escapeHtml(MAPS[npc.map].name)}</small></figcaption></figure>`;
+}
+function paintNotePortraits(root) {
+  root.querySelectorAll('canvas[data-look]').forEach(c => {
+    const g = c.getContext('2d'); g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, 200, 220);
+    g.setTransform(2.6, 0, 0, 2.6, 0, 0);
+    try { drawPerson(g, 38, 80, c.dataset.look, 1, { t: 0 }); } catch (e) {}
+  });
 }
 function moveNote(d) {
   const got = NOTE_LIST.filter(n => NOTES_GOT[n.id]);
@@ -4326,7 +4402,8 @@ function renderEnding(tab) {
       if (!items.length) return;
       const h = document.createElement('div'); h.className = 'ech'; h.textContent = `${cn} (${items.length}/${NOTE_LIST.filter(n => n.ch === ci).length})`; body.appendChild(h);
       items.forEach(n => { const d = document.createElement('div'); d.className = 'enote';
-        d.innerHTML = `<h4>${escapeHtml(n.title)}</h4><div class="src">${escapeHtml(n.src)}에게서 얻은 노트</div><div>${n.text}</div>`; body.appendChild(d); });
+        d.innerHTML = notePortraitHtml(n, 'ePor') + `<h4>${escapeHtml(n.title)}</h4><div class="src">${escapeHtml(n.src)}에게서 얻은 노트</div><div>${n.text}</div><div style="clear:both"></div>`; body.appendChild(d); });
+    paintNotePortraits(body);
     });
   } else {
     const grid = document.createElement('div'); grid.className = 'dexGrid'; body.appendChild(grid);
