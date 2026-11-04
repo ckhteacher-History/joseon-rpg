@@ -364,7 +364,7 @@
 const SAVE_URL = '';
 
 // 버전 — 고칠 때마다 바꾸면, 화면에 보이는 버전으로 새 버전이 열렸는지 확인할 수 있어요.
-const VERSION = 'v7.4 (주모 퀴즈 교과서 힌트)';
+const VERSION = 'v7.5 (국밥 안내 문구)';
 
 /* =========================================================
    조선유랑기 — 조선 후기 배경 횡스크롤 RPG
@@ -1768,7 +1768,7 @@ function doSkill() {
 
 function usePotion() {
   if (P.potions <= 0) { toast('국밥이 없다. 주막에서 사 오자.', '#ccc', 70); return; }
-  if (P.hp >= P.maxHp) { toast('배가 부르다.', '#ccc', 50); return; }
+  if (P.hp >= P.maxHp) { toast('이미 HP가 최대입니다.', '#ccc', 70); return; }
   P.potions--;
   const h = Math.round(P.maxHp * 0.45) + 20;
   P.hp = Math.min(P.maxHp, P.hp + h);
