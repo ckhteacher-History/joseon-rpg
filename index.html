@@ -334,7 +334,7 @@
 const SAVE_URL = '';
 
 // 버전 — 고칠 때마다 바꾸면, 화면에 보이는 버전으로 새 버전이 열렸는지 확인할 수 있어요.
-const VERSION = 'v6.2 (무기 강화 수식어)';
+const VERSION = 'v6.3 (현판 한글 · 안내 대화 바로 넘기기)';
 
 /* =========================================================
    조선유랑기 — 조선 후기 배경 횡스크롤 RPG
@@ -694,10 +694,10 @@ const MAPS = {
       { x: 3700, y: 286, w: 220 }, { x: 3980, y: 372, w: 180 },
     ],
     decor: [
-      { t: 'hall', x: 250, hw: 100, floors: 2, sign: '敦化門', gate: true }, { t: 'bridge', x: 760 },
-      { t: 'hall', x: 1330, hw: 150, floors: 2, sign: '仁政殿', base: true }, { t: 'hall', x: 1900, hw: 100, floors: 1, sign: '宣政殿', blue: true, base: true },
-      { t: 'hall', x: 2420, hw: 120, floors: 1, sign: '熙政堂', base: true },
-      { t: 'tree', x: 2700, s: 1.2 }, { t: 'pond', x: 3240 }, { t: 'hall', x: 3560, hw: 80, floors: 2, sign: '宙合樓', base: true },
+      { t: 'hall', x: 250, hw: 100, floors: 2, sign: '敦化門', ko: '돈화문', gate: true }, { t: 'bridge', x: 760 },
+      { t: 'hall', x: 1330, hw: 150, floors: 2, sign: '仁政殿', ko: '인정전', base: true }, { t: 'hall', x: 1900, hw: 100, floors: 1, sign: '宣政殿', ko: '선정전', blue: true, base: true },
+      { t: 'hall', x: 2420, hw: 120, floors: 1, sign: '熙政堂', ko: '희정당', base: true },
+      { t: 'tree', x: 2700, s: 1.2 }, { t: 'pond', x: 3240 }, { t: 'hall', x: 3560, hw: 80, floors: 2, sign: '宙合樓', ko: '주합루', base: true },
       { t: 'tree', x: 3900, s: 1.1 }, { t: 'tree', x: 4150, s: 1 },
     ],
     portals: [
@@ -715,7 +715,7 @@ const MAPS = {
   bibyeonsa: {
     name: '비변사 — 세도 가문의 권력 한복판', w: 1600, theme: 'palace', dark: 'night',
     platforms: [{ x: 300, y: 380, w: 170, kind: 'bench' }, { x: 1120, y: 380, w: 170, kind: 'bench' }],
-    decor: [{ t: 'hall', x: 800, hw: 160, floors: 1, sign: '備邊司', base: true }, { t: 'tree', x: 160, s: 1 }],
+    decor: [{ t: 'hall', x: 800, hw: 160, floors: 1, sign: '備邊司', ko: '비변사', base: true }, { t: 'tree', x: 160, s: 1 }],
     portals: [{ x: 60, to: 'changdeok', tx: 4120, label: '◀ 창덕궁 후원' }],
     spawns: [{ t: 'sedo', a: 300, b: 1520, y: GROUND }],
   },
@@ -2035,9 +2035,9 @@ function travel(to, x) {
   const k = checkpointNeeded(to);
   if (k < 0) { trans = { to, x, t: 0 }; return; }
   openDialog('📜 두루마리의 물음', null, [
-    `잠깐! 다음 이야기로 넘어가기 전에, <b>${CH_NAMES[k]}</b>에서 사람들의 이야기를 잘 들었는지 확인할게요.`,
+    QK(`잠깐! 다음 이야기로 넘어가기 전에, <b>${CH_NAMES[k]}</b>에서 사람들의 이야기를 잘 들었는지 확인할게요.`),
     { quiz: pickCheckpoint(k), cp: k },
-    `좋아요! 이제 다음 이야기로 떠나요. 📜`,
+    QK(`좋아요! 이제 다음 이야기로 떠나요. 📜`),
   ], () => { trans = { to, x, t: 0 }; });
 }
 
@@ -2061,9 +2061,9 @@ function notesLockPages(q) {
   const need = notesNeeded(q), miss = need.filter(n => !NOTES_GOT[n.id]);
   const where = q.needNotes.ch !== undefined ? CH_NAMES[q.needNotes.ch] : MAPS[q.needNotes.map].name;
   return [
-    `다음 이야기를 들려주고 싶지만… 먼저 <b>${where}</b>의 역사 노트를 모두 모아 오시오. 지금 <b>${need.length - miss.length} / ${need.length}</b>개를 모았구려.`,
-    `아직 모으지 못한 노트는 이렇소.<br>` + miss.slice(0, 4).map(n => `· ${n.hint}`).join('<br>') + (miss.length > 4 ? `<br>· …그 밖에 ${miss.length - 4}개` : '') +
-      `<br><small>오른쪽 위 📜 노트(N)에서도 확인할 수 있소.</small>`,
+    QK(`다음 이야기를 들려주고 싶지만… 먼저 <b>${where}</b>의 역사 노트를 모두 모아 오시오. 지금 <b>${need.length - miss.length} / ${need.length}</b>개를 모았구려.`),
+    QK(`아직 모으지 못한 노트는 이렇소.<br>` + miss.slice(0, 4).map(n => `· ${n.hint}`).join('<br>') + (miss.length > 4 ? `<br>· …그 밖에 ${miss.length - 4}개` : '') +
+      `<br><small>오른쪽 위 📜 노트(N)에서도 확인할 수 있소.</small>`),
   ];
 }
 function npcStatus(npcId) {
@@ -2080,16 +2080,16 @@ function talk(npcId) {
   if (TALKS[npcId] && !hasQuest) { const n0 = NPCS[npcId]; openDialog(n0.name + (n0.real ? ' (실존 인물)' : ''), n0.look, TALKS[npcId].slice()); return; }
   const n = NPCS[npcId], q = questFor(npcId), A = ADDR[P.cid];
   let pages = [], onEnd = null;
-  if (q && !questUnlocked(q)) pages = TALKS[npcId] ? [q.lock].concat(TALKS[npcId]) : [q.lock];
+  if (q && !questUnlocked(q)) pages = TALKS[npcId] ? [QK(q.lock || '…')].concat(TALKS[npcId]) : [QK(q.lock || '…')];
   else if (q && !QS[q.id] && !notesReady(q)) pages = notesLockPages(q);
   else if (q && !QS[q.id]) {
     const qzs = (QUIZZES[q.id] || []).filter(z => !QZ[z.id]);
     pages = qzs.length
-      ? [qzs.length > 1 ? `부탁하기 전에 ${qzs.length}가지만 물어보겠소. 다 맞혀야 믿고 맡길 수 있겠구려!` : `부탁하기 전에 하나 물어보겠소. 맞혀 보시오!`]
-          .concat(qzs.map(z => ({ quiz: z })), [`좋소! 이제 믿고 부탁하겠소.`], q.offer(A))
+      ? [QK(qzs.length > 1 ? `부탁하기 전에 ${qzs.length}가지만 물어보겠소. 다 맞혀야 믿고 맡길 수 있겠구려!` : `부탁하기 전에 하나 물어보겠소. 맞혀 보시오!`)]
+          .concat(qzs.map(z => ({ quiz: z })), [QK(`좋소! 이제 믿고 부탁하겠소.`)], q.offer(A))
       : q.offer(A);
     onEnd = () => { QS[q.id] = { state: 'active', count: 0 }; SFX.quest(); toast(`퀘스트 수락: ${q.title}`, '#ffd76a', 200); saveGame(true); q.onAccept && q.onAccept(); };
-  } else if (q && (QS[q.id].count < q.need || turninOf(q) !== npcId)) pages = [q.progress(QS[q.id].count, q.need)];
+  } else if (q && (QS[q.id].count < q.need || turninOf(q) !== npcId)) pages = [QK(q.progress(QS[q.id].count, q.need))];
   else if (q) {
     pages = q.done(P.cid);
     onEnd = () => {
@@ -2109,7 +2109,7 @@ function talk(npcId) {
     };
   } else {
     const all = QUESTS.filter(x => x.npc === npcId).flatMap(x => x.idle);
-    pages = TALKS[npcId] ? TALKS[npcId].slice() : [all[Math.floor(Math.random() * all.length)] || '…'];
+    pages = TALKS[npcId] ? TALKS[npcId].slice() : [QK(all[Math.floor(Math.random() * all.length)] || '…')];
   }
 
   if (npcId === 'jumo') {
@@ -2118,8 +2118,8 @@ function talk(npcId) {
     if (shopTalk) {
       const n2 = Math.min(3, Math.floor(P.coins / 10));
       pages = pages.concat(n2 > 0
-        ? [`국밥 한 그릇에 엽전 10닢이오. 든든하게 <b>${n2}그릇</b> 싸 드리리다! (<b>A 키</b>로 먹기)`]
-        : [`국밥 한 그릇에 엽전 10닢인데… 엽전이 모자라구려. 산짐승을 잡으면 엽전이 떨어질 거요.`]);
+        ? [QK(`국밥 한 그릇에 엽전 10닢이오. 든든하게 <b>${n2}그릇</b> 싸 드리리다! (<b>A 키</b>로 먹기)`)]
+        : [QK(`국밥 한 그릇에 엽전 10닢인데… 엽전이 모자라구려. 산짐승을 잡으면 엽전이 떨어질 거요.`)]);
       onEnd = () => { prev && prev(); if (n2 > 0) { P.coins -= n2 * 10; P.potions += n2; SFX.coin(); toast(`국밥 ${n2}그릇을 샀다 (엽전 -${n2 * 10})`, '#fff'); saveGame(true); } };
     }
   }
@@ -2166,7 +2166,7 @@ function showDialogPage() {
   const nextLabel = isQuizPage() ? (p.quiz.a ? '답을 적고 Enter 또는 확인' : '답을 누르거나 숫자 키 1~4') : last ? (dialog.isOffer ? '부탁을 들어준다 ▶' : '닫기 ▶') : '다음 ▶';
   // 읽기 시간: 쪽마다 최소 2초가 지나야 넘길 수 있어요 (관리자 모드는 바로 넘김)
   dialog.shownAt = performance.now();
-  const wait = isQuizPage() || admin.on ? 0 : DLG_MIN_MS;
+  const wait = pageWait();
   const hint = $('dlgHint'), bar = $('dlgBar');
   clearTimeout(dialog.hintTimer);
   bar.style.transition = 'none'; bar.style.width = '0';
@@ -2218,10 +2218,12 @@ function answerQuiz(o) {
   }
   showDialogPage();
 }
-const DLG_MIN_MS = 2000;   // 대화 한 쪽을 넘기기 전 최소 읽기 시간
+const DLG_MIN_MS = 2000;   // 대화 한 쪽을 넘기기 전 최소 읽기 시간 (역사 내용이 있는 쪽만)
+const QK = t => ({ text: t, quick: true });   // 역사 내용이 없는 안내용 쪽 → 기다리지 않고 바로 넘김
+const pageWait = () => { const p = curPage(); return isQuizPage() || admin.on || (p && p.quick) ? 0 : DLG_MIN_MS; };
 function advanceDialog() {
   if (!dialog || isQuizPage()) return;
-  if (!admin.on && performance.now() - (dialog.shownAt || 0) < DLG_MIN_MS) return;
+  if (performance.now() - (dialog.shownAt || 0) < pageWait()) return;
   dialog.i++;
   if (dialog.i >= dialog.pages.length) {
     const f = dialog.onEnd; dialog = null;
@@ -3093,6 +3095,12 @@ function drawDecor(d) {
       ctx.fillStyle = '#2a1e14'; ctx.fillRect(x - 40, sy, 80, 22);
       ctx.strokeStyle = '#c9a24a'; ctx.lineWidth = 1.5; ctx.strokeRect(x - 38, sy + 2, 76, 18);
       ctx.fillStyle = '#ffd76a'; ctx.font = F(14, true); ctx.textAlign = 'center'; ctx.fillText(d.sign || '', x, sy + 16);
+      if (d.ko) {   // 현판 아래 한글 이름
+        ctx.font = F(12, true); const kw = ctx.measureText(d.ko).width + 14;
+        ctx.fillStyle = 'rgba(255,248,230,.92)'; rr(ctx, x - kw / 2, sy + 25, kw, 17, 5); ctx.fill();
+        ctx.strokeStyle = '#8b6a3e'; ctx.lineWidth = 1; ctx.stroke();
+        ctx.fillStyle = '#2b1d12'; ctx.fillText(d.ko, x, sy + 38);
+      }
       break;
     }
     case 'bridge': {   // 금천교 (돌다리)
@@ -3816,7 +3824,7 @@ const WEAPON_TIERS = {
   brush: [['족제비털 붓', '족제비털 붓'], ['강직한 선비의 붓', '선비의 붓'], ['찬란히 빛나는 붓', '빛나는 붓'], ['일필휘지 명필의 붓', '명필의 붓'], ['천하를 호령하는 신필(神筆)', '신필(神筆)']],
   needle: [['은빛 날 선 침', '은빛 침'], ['명의의 금침(金鍼)', '금침(金鍼)'], ['기혈을 꿰뚫는 신통한 침', '신통한 침'], ['허준도 탐낼 명침', '명침(名鍼)'], ['백 가지 병을 다스리는 신침(神鍼)', '신침(神鍼)']],
   sickle: [['숫돌에 벼린 낫', '벼린 낫'], ['대장장이가 두드린 강철 낫', '강철 낫'], ['서슬 퍼런 낫', '서슬 퍼런 낫'], ['들판을 휩쓰는 풍년 낫', '풍년 낫'], ['하늘을 가르는 천하제일 낫', '천하제일 낫']],
-  club: [['단단한 박달나무 몽둥이', '박달 몽둥이'], ['쇠테 두른 몽둥이', '쇠테 몽둥이'], ['불끈 성난 몽둥이', '성난 몽둥이'], ['바위도 부수는 무쇠 몽둥이', '무쇠 몽둥이'], ['신분의 벽도 깨는 전설의 몽둥이', '전설의 몽둥이']],
+  club: [['단단한 박달나무 몽둥이', '박달 몽둥이'], ['옹이 박힌 참나무 몽둥이', '참나무 몽둥이'], ['쇠테 두른 몽둥이', '쇠테 몽둥이'], ['무쇠 몽둥이', '무쇠 몽둥이'], ['전설의 몽둥이', '전설의 몽둥이']],
 };
 const wTier = n => n < 6 ? -1 : Math.min(4, Math.floor((n - 6) / 2));
 const weaponName = (w, n, short) => { const t = wTier(n || 0); return t < 0 ? WEAPON_NAME[w] : WEAPON_TIERS[w][t][short ? 1 : 0]; };
