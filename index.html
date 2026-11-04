@@ -139,6 +139,9 @@
   .qtable .qn{color:#8b6a3e;width:34px}
   .qtable .btns{text-align:right;white-space:nowrap}
   .anote{font-size:12px;color:#8b6a3e;margin-top:4px}
+  #bgmBtn{position:absolute;right:258px;top:10px;z-index:2;font:700 13px 'Gowun Batang',serif;background:rgba(24,18,14,.8);color:#f3e3c0;
+    border:1.5px solid #8b6a3e;border-radius:8px;padding:5px 9px;cursor:pointer}
+  body:not(.playing) #bgmBtn{display:none}
   #noteBtn{position:absolute;right:158px;top:10px;z-index:2;font:700 13px 'Gowun Batang',serif;background:rgba(24,18,14,.8);color:#bfe8a8;
     border:1.5px solid #6a9a5a;border-radius:8px;padding:5px 10px;cursor:pointer}
   body:not(.playing) #noteBtn{display:none}
@@ -245,6 +248,7 @@
   <button id="admBtn" class="hidden">🛠 관리자 (F2)</button>
   <button id="mapBtn">🗺 조선 지도 (M)</button>
   <button id="noteBtn">📜 노트 (N)</button>
+  <button id="bgmBtn" title="배경 음악 켜기/끄기 (B)">🔊 음악</button>
   <div id="notes" class="hidden">
     <div class="notesBox">
       <div class="nhead"><span>📜 역사 노트 보관함 <small id="nCount"></small></span><button id="nClose" title="닫기 (N / Esc)">✕</button></div>
@@ -290,7 +294,7 @@
 const SAVE_URL = '';
 
 // 버전 — 고칠 때마다 바꾸면, 화면에 보이는 버전으로 새 버전이 열렸는지 확인할 수 있어요.
-const VERSION = 'v5.0 (5장 · 세도 정치의 그늘)';
+const VERSION = 'v5.1 (배경 음악)';
 
 /* =========================================================
    조선유랑기 — 조선 후기 배경 횡스크롤 RPG
@@ -347,7 +351,7 @@ const KEYMAP = {
   Space: 'jump', KeyC: 'jump', AltLeft: 'jump', AltRight: 'jump',
   KeyZ: 'attack', ControlLeft: 'attack', ControlRight: 'attack',
   KeyX: 'skill', ShiftLeft: 'skill', ShiftRight: 'skill',
-  KeyA: 'potion', KeyH: 'help', KeyM: 'map', KeyN: 'notes', KeyE: 'forge',
+  KeyA: 'potion', KeyH: 'help', KeyM: 'map', KeyN: 'notes', KeyE: 'forge', KeyB: 'bgm',
 };
 addEventListener('keydown', e => {
   if (admin.on && (e.code === 'F2' || (e.code === 'Escape' && adminOpen))) { e.preventDefault(); toggleAdmin(); return; }
@@ -1315,6 +1319,7 @@ function enterMap(id, x) {
   banner = { text: map.name, life: 170 };
   camX = clamp(P.x - VW / 2, 0, map.w - VW);
   if (state === 'play') saveGame(true);
+  playBgm(id);
   const boss = mons.find(m => m.d.boss && !m.dead);
   if (boss) setTimeout(() => { SFX.roar(); shake = 14; toast(boss.d.intro, '#ff8a5a', 220); }, 500);
 }
@@ -1348,6 +1353,7 @@ function update() {
   }
   if (pressed.help) helpT = helpT > 0 ? 0 : 600;
   if (pressed.map) toggleMap();
+  if (pressed.bgm) toggleBgm();
   if (pressed.notes) { openNotes(); clearPressed(); return; }
   if (pressed.forge) { openForge(nearSmith()); clearPressed(); return; }
   playFrames++;
@@ -3197,7 +3203,7 @@ function drawToasts() {
 function drawHelp() {
   const a = Math.min(1, helpT / 40);
   ctx.globalAlpha = a;
-  const lines = ['← → 이동 · Space 점프 · 공중에서 Space 이단 점프 · ↓+Space 내려가기', 'Z(Ctrl) 공격(꾹 누르면 연속) · X(Shift) 기술 · A 국밥 먹기', '↑(Enter) 대화·포탈 · M 지도 · N 노트 · E 무기 강화'];
+  const lines = ['← → 이동 · Space 점프 · 공중에서 Space 이단 점프 · ↓+Space 내려가기', 'Z(Ctrl) 공격(꾹 누르면 연속) · X(Shift) 기술 · A 국밥 먹기', '↑(Enter) 대화·포탈 · M 지도 · N 노트 · E 강화 · B 음악'];
   ctx.fillStyle = 'rgba(20,14,10,.78)'; rr(ctx, VW / 2 - 225, 12, 450, 68, 10); ctx.fill();
   ctx.font = F(13, true); ctx.textAlign = 'center'; ctx.fillStyle = '#f3e3c0';
   lines.forEach((l, i) => ctx.fillText(l, VW / 2, 33 + i * 19));
@@ -3636,6 +3642,60 @@ Object.entries(CLASSES).forEach(([id, c], i) => {
   d.addEventListener('click', () => startGame(id));
   d.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); startGame(id); } });
   $('cards').appendChild(d);
+});
+
+/* =========================================================
+   배경 음악 (BGM) — bgm 폴더의 mp3를 맵마다 틀어 줍니다.
+   새 곡을 넣으려면 bgm 폴더에 파일을 올리고 BGM_FILES에 '맵 이름: 파일 경로'를 적으면 돼요.
+   곡이 없는 맵은 BGM_FALLBACK에 적힌 비슷한 분위기의 맵 곡을 빌려 씁니다.
+   ========================================================= */
+const BGM_FILES = {
+  village: 'bgm/hanyang.mp3',        // 한양 장터 — Cozy Town Loop
+  mountain: 'bgm/inwang.mp3',        // 인왕산 산길 — 평온한 마을의 아침
+  cave: 'bgm/tiger_cave.mp3',        // 호랑이 굴 — 암굴의 심장
+  goeul: 'bgm/namwon.mp3',           // 남원 고을 — Twilight Village
+  dongheon: 'bgm/dongheon.mp3',      // 남원 관아 동헌 — 무도회 전도
+  jeongju: 'bgm/jeongju_1811.mp3',   // 1811 평안도 정주 — 장례의 박자
+};
+const BGM_FALLBACK = { jinju: 'jeongju', jinjuseong: 'dongheon', daegu: 'goeul', byeok: 'dongheon', changdeok: 'village', bibyeonsa: 'dongheon' };
+const BGM_VOL = 0.45;
+let bgmOn = (() => { try { return localStorage.getItem('joseonRPG_bgm') !== 'off'; } catch (e) { return true; } })();
+let bgmCur = null, bgmSrc = null;
+function fadeAudio(a, to, ms, done) {
+  if (!a) return;
+  const from = a.volume, t0 = performance.now();
+  clearInterval(a._fade);
+  a._fade = setInterval(() => {
+    const k = Math.min(1, (performance.now() - t0) / ms);
+    a.volume = Math.max(0, Math.min(1, from + (to - from) * k));
+    if (k >= 1) { clearInterval(a._fade); done && done(); }
+  }, 40);
+}
+function playBgm(mapKey) {
+  const src = BGM_FILES[mapKey] || BGM_FILES[BGM_FALLBACK[mapKey]] || null;
+  if (src === bgmSrc) { if (bgmOn && bgmCur && bgmCur.paused) bgmCur.play().catch(() => {}); return; }
+  bgmSrc = src;
+  const old = bgmCur;
+  if (old) fadeAudio(old, 0, 900, () => old.pause());
+  if (!src) { bgmCur = null; return; }
+  const a = new Audio(src); a.loop = true; a.volume = 0; a.preload = 'auto';
+  bgmCur = a;
+  if (bgmOn) { a.play().catch(() => {}); fadeAudio(a, BGM_VOL, 1500); }
+}
+function toggleBgm() {
+  bgmOn = !bgmOn;
+  try { localStorage.setItem('joseonRPG_bgm', bgmOn ? 'on' : 'off'); } catch (e) {}
+  $('bgmBtn').textContent = bgmOn ? '🔊 음악' : '🔇 음악';
+  if (!bgmCur) return;
+  if (bgmOn) { bgmCur.play().catch(() => {}); fadeAudio(bgmCur, BGM_VOL, 600); }
+  else fadeAudio(bgmCur, 0, 400, () => bgmCur && bgmCur.pause());
+}
+$('bgmBtn').textContent = bgmOn ? '🔊 음악' : '🔇 음악';
+$('bgmBtn').addEventListener('click', e => { e.stopPropagation(); toggleBgm(); });
+document.addEventListener('visibilitychange', () => {
+  if (!bgmCur) return;
+  if (document.visibilityState === 'hidden') bgmCur.pause();
+  else if (bgmOn && state === 'play') bgmCur.play().catch(() => {});
 });
 
 /* =========================================================
