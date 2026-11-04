@@ -369,7 +369,7 @@
 const SAVE_URL = '';
 
 // 버전 — 고칠 때마다 바꾸면, 화면에 보이는 버전으로 새 버전이 열렸는지 확인할 수 있어요.
-const VERSION = 'v7.9 (배달·호위 퀘스트)';
+const VERSION = 'v8.0 (보스 맵 부하 몬스터)';
 
 /* =========================================================
    조선유랑기 — 조선 후기 배경 횡스크롤 RPG
@@ -661,6 +661,7 @@ const MAPS = {
     decor: [{ t: 'torch', x: 260 }, { t: 'torch', x: 700 }, { t: 'torch', x: 1150 }, { t: 'bones', x: 1320 }],
     portals: [{ x: 60, to: 'mountain', tx: 3440, label: '◀ 인왕산 산길' }],
     spawns: [{ t: 'tiger', a: 300, b: 1440, y: GROUND }],
+    minions: ['boar', 'noru', 'bandit'],   // 보스와 함께 나오는 부하 (종류마다 5마리, 다시 살아나지 않음)
   },
   goeul: {
     name: '남원 고을', w: 3300, theme: 'goeul',
@@ -693,6 +694,7 @@ const MAPS = {
     decor: [{ t: 'giwa', x: 800, sign: '東 軒' }, { t: 'giwa', x: 1380, sign: '穀 倉' }, { t: 'tree', x: 220, s: 1 }],
     portals: [{ x: 60, to: 'goeul', tx: 3140, label: '◀ 남원 고을' }],
     spawns: [{ t: 'satto', a: 300, b: 1540, y: GROUND }],
+    minions: ['ajeon', 'tamgwan'],   // 보스와 함께 나오는 부하 (종류마다 5마리, 다시 살아나지 않음)
   },
 
   /* ---------- 3장 ---------- */
@@ -748,6 +750,7 @@ const MAPS = {
     decor: [{ t: 'tree', x: 200, s: 1 }, { t: 'pavilion', x: 1180, sign: '矗石樓' }],
     portals: [{ x: 60, to: 'jinju', tx: 3140, label: '◀ 진주 고을' }],
     spawns: [{ t: 'gotgan', a: 300, b: 1540, y: GROUND }],
+    minions: ['tamgwan2', 'pojol'],   // 보스와 함께 나오는 부하 (종류마다 5마리, 다시 살아나지 않음)
   },
 
   /* ---------- 4장 ---------- */
@@ -780,6 +783,7 @@ const MAPS = {
     decor: [{ t: 'tree', x: 180, s: 1 }, { t: 'rock', x: 1450, s: 1.2 }],
     portals: [{ x: 60, to: 'daegu', tx: 3620, label: '◀ 대구 향촌' }],
     spawns: [{ t: 'byeok', a: 400, b: 1450, y: GROUND }],
+    minions: ['jom', 'wijo', 'chuno'],   // 보스와 함께 나오는 부하 (종류마다 5마리, 다시 살아나지 않음)
   },
 
   /* ---------- 5장 ---------- */
@@ -814,6 +818,7 @@ const MAPS = {
     decor: [{ t: 'hall', x: 800, hw: 160, floors: 1, sign: '備邊司', ko: '비변사', base: true }, { t: 'tree', x: 160, s: 1 }],
     portals: [{ x: 60, to: 'changdeok', tx: 4120, label: '◀ 창덕궁 후원' }],
     spawns: [{ t: 'sedo', a: 300, b: 1520, y: GROUND }],
+    minions: ['sinha', 'noemul', 'samjeong'],   // 보스와 함께 나오는 부하 (종류마다 5마리, 다시 살아나지 않음)
   },
 };
 
@@ -1543,12 +1548,19 @@ function startGame(cid) {
   ]);
 }
 
+const MINION_N = 5;
 function enterMap(id, x) {
   mapId = id; map = MAPS[id];
   P.x = x; P.y = GROUND; P.vx = P.vy = 0; P.onGround = true; P.plat = null;
   if (id === 'daegu') syncEscort();
   P.ptT = 0; P.ptHold = map.portals.find(p => Math.abs(p.x - x) < 50) || null;   // 도착하자마자 다시 이동하지 않도록
   mons = map.spawns.map(makeMon);
+  if (map.minions) map.minions.forEach(t => {   // 보스 맵: 앞 맵의 몬스터들이 종류마다 5마리씩 함께 덤벼요 (죽으면 다시 안 나옴)
+    for (let i = 0; i < MINION_N; i++) {
+      const m = makeMon({ t, a: 380, b: map.w - 80, y: GROUND });
+      m.noRespawn = true; m.angry = true; mons.push(m);
+    }
+  });
   projs = []; eprojs = []; coins = []; fx = []; floats = [];
   banner = { text: map.name, life: 170 };
   camX = clamp(P.x - VW / 2, 0, map.w - VW);
@@ -1912,7 +1924,7 @@ function updateMonsters() {
   for (const m of mons) {
     if (m.dead) {
       if (m.fade > 0) m.fade--;
-      if (--m.respawn <= 0) {
+      if (!m.noRespawn && --m.respawn <= 0) {
         Object.assign(m, makeMon(m.s), { spawnA: 0 });
       }
       continue;
