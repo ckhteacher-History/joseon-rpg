@@ -364,7 +364,7 @@
 const SAVE_URL = '';
 
 // 버전 — 고칠 때마다 바꾸면, 화면에 보이는 버전으로 새 버전이 열렸는지 확인할 수 있어요.
-const VERSION = 'v7.2 (주모 산적 퀘스트 처음부터)';
+const VERSION = 'v7.3 (인물마다 다른 얼굴)';
 
 /* =========================================================
    조선유랑기 — 조선 후기 배경 횡스크롤 RPG
@@ -2413,6 +2413,116 @@ const LOOKS = {
 function ell(g, x, y, rx, ry) { g.beginPath(); g.ellipse(x, y, rx, ry, 0, 0, TAU); g.fill(); }
 function rr(g, x, y, w, h, r) { g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); }
 
+
+// 인물마다 다른 얼굴: 피부색(skin) · 눈(eye) · 눈썹(brow) · 입(mouth) · 특징(x: 주름·점·흉터·안경 등)
+const SKIN = { fair: '#f6dcc0', base: '#f2d4b2', warm: '#e8c39e', tan: '#d9ac80', dark: '#c6976a' };
+const FACES = {
+  yangban: { skin: 'fair', eye: 'dot', brow: 'thin', mouth: 'smile' },
+  jungin: { eye: 'round', brow: 'arch', mouth: 'smile' },
+  pyeongmin: { skin: 'tan', eye: 'big', brow: 'thick', mouth: 'grin' },
+  nobi: { skin: 'dark', eye: 'dot', brow: 'stern', mouth: 'flat', x: ['freckle'] },
+  bobusang: { skin: 'tan', eye: 'smile', brow: 'thick', mouth: 'grin', x: ['stubble'] },
+  hunjang: { eye: 'sleepy', brow: 'thick', browC: '#e8e8e8', mouth: 'flat', x: ['wrinkle'] },
+  jumo: { skin: 'warm', eye: 'smile', brow: 'arch', mouth: 'open', x: ['blush', 'mole'] },
+  smith: { skin: 'dark', eye: 'sharp', brow: 'thick', mouth: 'flat', x: ['scar', 'sweat'] },
+  sijeon: { skin: 'fair', eye: 'narrow', brow: 'raised', mouth: 'smirk', x: ['mole'] },
+  nanjeon: { skin: 'tan', eye: 'big', brow: 'raised', mouth: 'grin', x: ['freckle'] },
+  gaekju: { skin: 'warm', eye: 'smile', brow: 'arch', mouth: 'smile', x: ['blush', 'chin'] },
+  yeogak: { skin: 'warm', eye: 'sharp', brow: 'raised', mouth: 'smirk' },
+  mandeok: { skin: 'warm', eye: 'lash', brow: 'arch', mouth: 'smile', x: ['blush'] },
+  chae: { eye: 'dot', brow: 'stern', browC: '#d0d0d0', mouth: 'flat', x: ['wrinkle'] },
+  pocha: { skin: 'tan', eye: 'sharp', brow: 'thick', mouth: 'flat', x: ['scar', 'stubble'] },
+  elder: { skin: 'warm', eye: 'smile', brow: 'thick', browC: '#e6e6e6', mouth: 'smile', x: ['wrinkle'] },
+  widow: { skin: 'fair', eye: 'sad', brow: 'worried', mouth: 'frown', x: ['tear'] },
+  farmer: { skin: 'tan', eye: 'dot', brow: 'worried', mouth: 'frown', x: ['sweat', 'stubble'] },
+  merchant: { skin: 'warm', eye: 'dot', brow: 'raised', mouth: 'o', x: ['glasses'] },
+  jwoman: { skin: 'warm', eye: 'big', brow: 'worried', mouth: 'flat' },
+  yu: { skin: 'tan', eye: 'sharp', brow: 'stern', mouth: 'flat', x: ['stubble'] },
+  hobang: { eye: 'narrow', brow: 'thin', mouth: 'flat', x: ['bags'] },
+  gwonban: { skin: 'fair', eye: 'narrow', brow: 'thick', mouth: 'smirk', x: ['chin', 'blush'] },
+  hyangban: { eye: 'dot', brow: 'stern', browC: '#b0b0b0', mouth: 'frown', x: ['wrinkle'] },
+  janban: { eye: 'sad', brow: 'worried', mouth: 'flat', x: ['bags'] },
+  sinhyang: { skin: 'warm', eye: 'smile', brow: 'raised', mouth: 'grin', x: ['blush', 'mole'] },
+  yeokgwan: { eye: 'round', brow: 'arch', mouth: 'smile', x: ['glasses'] },
+  seoeol: { skin: 'fair', eye: 'big', brow: 'worried', mouth: 'flat' },
+  jeomsun: { skin: 'tan', eye: 'big', brow: 'worried', mouth: 'flat', x: ['freckle', 'sweat'] },
+  seungji: { eye: 'narrow', brow: 'raised', mouth: 'flat' },
+  sanggung: { skin: 'fair', eye: 'sleepy', brow: 'thin', browC: '#9a9a9a', mouth: 'flat', x: ['wrinkle'] },
+  yusaeng: { skin: 'fair', eye: 'sad', brow: 'worried', mouth: 'frown', x: ['bags', 'tear'] },
+  seori: { eye: 'shifty', brow: 'thin', mouth: 'smirk', x: ['bags'] },
+  king: { skin: 'fair', eye: 'sad', brow: 'worried', mouth: 'flat' },
+  honggr: { skin: 'tan', eye: 'sharp', brow: 'thick', mouth: 'open', x: ['scar', 'stubble'] },
+  chogun: { skin: 'dark', eye: 'big', brow: 'thick', mouth: 'grin', x: ['freckle'] },
+  eosa: { skin: 'warm', eye: 'sharp', brow: 'stern', mouth: 'smirk' },
+  ajeon: { eye: 'shifty', brow: 'thin', mouth: 'smirk' },
+  tamgwan: { skin: 'warm', eye: 'narrow', brow: 'raised', mouth: 'smirk', x: ['chin'] },
+  satto: { skin: 'warm', eye: 'narrow', brow: 'thick', mouth: 'grin', x: ['chin', 'blush'] },
+  haesuin: { eye: 'sharp', brow: 'stern', mouth: 'smirk', x: ['scar'] },
+  wijo: { eye: 'shifty', brow: 'raised', mouth: 'smirk', x: ['mole'] },
+  chuno: { skin: 'tan', eye: 'sharp', brow: 'thick', mouth: 'flat', x: ['scar', 'stubble'] },
+  sedo: { skin: 'fair', eye: 'narrow', brow: 'thick', browC: '#cfcfcf', mouth: 'smirk', x: ['chin'] },
+  geogan: { skin: 'warm', eye: 'smile', brow: 'raised', mouth: 'grin', x: ['mole', 'chin'] },
+  cheongji: { skin: 'tan', eye: 'sharp', brow: 'stern', mouth: 'flat' },
+};
+function drawFace(g, look, L) {
+  const F_ = FACES[look] || {}, X = F_.x || [], dk = '#1d1a18';
+  const e1 = 2, e2 = 7.5, ey = -47;
+  if (!L.face) {
+    // 눈
+    g.fillStyle = dk; g.strokeStyle = dk; g.lineWidth = 1.4; g.lineCap = 'round';
+    switch (F_.eye || 'dot') {
+      case 'big': [e1, e2].forEach(x => { g.fillStyle = '#fff'; ell(g, x, ey, 2.3, 2.8); g.fillStyle = dk; ell(g, x + 0.4, ey + 0.2, 1.6, 2.1); g.fillStyle = '#fff'; ell(g, x + 0.9, ey - 0.7, 0.6, 0.6); }); break;
+      case 'round': [e1, e2].forEach(x => { ell(g, x, ey, 1.9, 2.2); g.fillStyle = '#fff'; ell(g, x + 0.6, ey - 0.7, 0.5, 0.5); g.fillStyle = dk; }); break;
+      case 'smile': g.beginPath(); [e1, e2].forEach(x => { g.moveTo(x - 2, ey + 0.6); g.quadraticCurveTo(x, ey - 2.4, x + 2, ey + 0.6); }); g.stroke(); break;
+      case 'narrow': g.beginPath(); [e1, e2].forEach(x => { g.moveTo(x - 1.8, ey); g.lineTo(x + 1.8, ey); }); g.stroke(); break;
+      case 'sleepy': [e1, e2].forEach(x => { ell(g, x, ey + 0.4, 1.5, 1.4); }); g.lineWidth = 1.2; g.beginPath(); [e1, e2].forEach(x => { g.moveTo(x - 2, ey - 0.6); g.lineTo(x + 2, ey - 0.6); }); g.stroke(); break;
+      case 'sharp': [e1, e2].forEach(x => ell(g, x, ey, 1.5, 2)); g.lineWidth = 1.3; g.beginPath(); g.moveTo(e1 - 2, ey - 2.6); g.lineTo(e1 + 2, ey - 1.4); g.moveTo(e2 - 2, ey - 1.4); g.lineTo(e2 + 2, ey - 2.6); g.stroke(); break;
+      case 'sad': [e1, e2].forEach(x => ell(g, x, ey + 0.3, 1.5, 2)); g.lineWidth = 1.1; g.beginPath(); g.moveTo(e1 - 2, ey - 1.6); g.lineTo(e1 + 1.6, ey - 2.6); g.moveTo(e2 - 1.6, ey - 2.6); g.lineTo(e2 + 2, ey - 1.6); g.stroke(); break;
+      case 'shifty': [e1, e2].forEach(x => { g.fillStyle = '#fff'; ell(g, x, ey, 2, 1.7); g.fillStyle = dk; ell(g, x + 1, ey + 0.2, 1.1, 1.4); }); break;
+      case 'lash': [e1, e2].forEach(x => ell(g, x, ey, 1.6, 2.3)); g.lineWidth = 1; g.beginPath(); [e1, e2].forEach(x => { g.moveTo(x + 1.2, ey - 1.6); g.lineTo(x + 2.6, ey - 2.6); g.moveTo(x + 1.5, ey - 0.6); g.lineTo(x + 3, ey - 1); }); g.stroke(); break;
+      default: ell(g, e2, ey, 1.6, 2.4); ell(g, e1, ey, 1.6, 2.4);
+    }
+    // 눈썹
+    if (F_.brow) {
+      g.strokeStyle = F_.browC || dk; g.lineWidth = F_.brow === 'thick' ? 2.3 : F_.brow === 'thin' ? 1 : 1.5;
+      const by = -50.6; g.beginPath();
+      switch (F_.brow) {
+        case 'worried': g.moveTo(e1 - 2, by + 0.6); g.lineTo(e1 + 2, by - 1); g.moveTo(e2 - 2, by - 1); g.lineTo(e2 + 2, by + 0.6); break;
+        case 'stern': g.moveTo(e1 - 2, by - 1); g.lineTo(e1 + 2, by + 0.5); g.moveTo(e2 - 2, by + 0.5); g.lineTo(e2 + 2, by - 1); break;
+        case 'raised': [e1, e2].forEach(x => { g.moveTo(x - 2, by - 0.4); g.quadraticCurveTo(x, by - 2.6, x + 2, by - 0.8); }); break;
+        case 'arch': [e1, e2].forEach(x => { g.moveTo(x - 2, by + 0.2); g.quadraticCurveTo(x, by - 1.6, x + 2, by + 0.2); }); break;
+        default: [e1, e2].forEach(x => { g.moveTo(x - 2, by); g.lineTo(x + 2, by); });
+      }
+      g.stroke();
+    }
+  }
+  // 볼 · 특징
+  g.fillStyle = X.includes('blush') ? 'rgba(235,110,95,.55)' : 'rgba(230,120,100,.35)'; ell(g, 9, -42.5, X.includes('blush') ? 3.2 : 2.6, 1.9);
+  if (X.includes('wrinkle')) { g.strokeStyle = 'rgba(110,70,40,.55)'; g.lineWidth = 0.8; g.beginPath(); g.moveTo(0, -52.6); g.quadraticCurveTo(5, -53.6, 10, -52.6); g.moveTo(10.6, -45.5); g.lineTo(12, -46.5); g.moveTo(10.4, -44); g.lineTo(11.8, -44.4); g.stroke(); }
+  if (X.includes('bags')) { g.strokeStyle = 'rgba(110,70,60,.55)'; g.lineWidth = 0.8; g.beginPath(); [e1, e2].forEach(x => { g.moveTo(x - 1.6, ey + 2.6); g.quadraticCurveTo(x, ey + 3.6, x + 1.6, ey + 2.6); }); g.stroke(); }
+  if (X.includes('freckle')) { g.fillStyle = 'rgba(140,80,40,.6)'; [[8, -43.6], [10, -43], [9, -42]].forEach(([a, b]) => ell(g, a, b, 0.55, 0.55)); }
+  if (X.includes('mole')) { g.fillStyle = '#3a2418'; ell(g, 10.3, -40.8, 0.9, 0.9); }
+  if (X.includes('scar')) { g.strokeStyle = '#a0463a'; g.lineWidth = 1; g.beginPath(); g.moveTo(9.5, -46); g.lineTo(11.5, -41.5); g.moveTo(9.9, -44.2); g.lineTo(11.4, -44.6); g.moveTo(10.4, -42.6); g.lineTo(11.9, -43); g.stroke(); }
+  if (X.includes('stubble')) { g.fillStyle = 'rgba(50,40,35,.22)'; g.beginPath(); g.ellipse(6.5, -39.5, 6, 3.6, 0, 0, TAU); g.fill(); }
+  if (X.includes('chin')) { g.strokeStyle = 'rgba(120,80,50,.5)'; g.lineWidth = 0.9; g.beginPath(); g.moveTo(2, -36.6); g.quadraticCurveTo(7, -34.8, 11, -37.4); g.stroke(); }
+  // 입 (콧수염이 있으면 조금 아래로)
+  if (!L.face && !L.mask) {
+    const my = L.mustache ? -38.6 : -39.8; g.strokeStyle = '#6a2a22'; g.fillStyle = '#6a2a22'; g.lineWidth = 1.2; g.lineCap = 'round';
+    g.beginPath();
+    switch (F_.mouth) {
+      case 'smile': g.moveTo(4.6, my - 0.6); g.quadraticCurveTo(7.2, my + 1.6, 9.8, my - 0.6); g.stroke(); break;
+      case 'grin': g.moveTo(4.4, my - 0.8); g.quadraticCurveTo(7.2, my + 3, 10, my - 0.8); g.closePath(); g.fill(); g.fillStyle = '#fff'; g.fillRect(5.4, my - 0.7, 3.8, 1); break;
+      case 'flat': g.moveTo(5, my); g.lineTo(9.2, my); g.stroke(); break;
+      case 'frown': g.moveTo(4.8, my + 0.8); g.quadraticCurveTo(7.2, my - 1.2, 9.6, my + 0.8); g.stroke(); break;
+      case 'smirk': g.moveTo(5, my + 0.2); g.quadraticCurveTo(8, my + 0.6, 10.4, my - 1.6); g.stroke(); break;
+      case 'open': g.ellipse(7.4, my, 2, 2.4, 0, 0, TAU); g.fill(); g.fillStyle = '#d9605a'; ell(g, 7.4, my + 1.1, 1.3, 0.9); break;
+      case 'o': g.ellipse(7.4, my, 1.2, 1.4, 0, 0, TAU); g.fill(); break;
+    }
+  }
+  if (X.includes('glasses')) { g.strokeStyle = '#4a3220'; g.lineWidth = 0.9; g.beginPath(); g.arc(e1, ey, 2.9, 0, TAU); g.moveTo(e2 + 2.9, ey); g.arc(e2, ey, 2.9, 0, TAU); g.moveTo(e1 + 2.9, ey - 0.3); g.lineTo(e2 - 2.9, ey - 0.3); g.moveTo(e1 - 2.9, ey); g.lineTo(-7, ey - 1); g.stroke(); }
+  if (X.includes('sweat')) { g.fillStyle = 'rgba(140,200,255,.9)'; g.beginPath(); g.moveTo(-5, -55); g.quadraticCurveTo(-2.4, -51, -5, -50.2); g.quadraticCurveTo(-7.6, -51, -5, -55); g.fill(); }
+  if (X.includes('tear')) { g.fillStyle = 'rgba(140,200,255,.9)'; ell(g, e2 + 0.6, ey + 3.6, 0.9, 1.4); }
+}
 function drawPerson(g, x, y, look, dir, o = {}) {
   const L = LOOKS[look], t = o.t || 0;
   const sw = o.walk ? Math.sin(t * 0.35) : 0;
@@ -2492,16 +2602,18 @@ function drawPerson(g, x, y, look, dir, o = {}) {
     drawWeapon(g, o.weapon); g.restore();
   }
   g.strokeStyle = L.robe; g.lineWidth = 6; g.beginPath(); g.moveTo(sx, sy); g.lineTo(hx, hy); g.stroke();
-  g.fillStyle = '#f2d4b2'; ell(g, hx, hy, 3.4, 3.4);
+  const skin = SKIN[(FACES[look] || {}).skin] || SKIN.base;
+  g.fillStyle = skin; ell(g, hx, hy, 3.4, 3.4);
 
-  // 머리
-  g.fillStyle = '#f2d4b2'; ell(g, 1, -48, 12, 12);
-  g.fillStyle = L.hair || '#1d1a18'; g.beginPath(); g.arc(1, -49, 12.4, Math.PI * 0.92, Math.PI * 1.98); g.closePath(); g.fill();
+  // 머리 (이마를 조금 드러내 눈썹이 보이게)
+  g.fillStyle = skin; ell(g, 1, -48, 12, 12);
+  g.fillStyle = L.hair || '#1d1a18'; g.beginPath(); g.arc(1, -50.6, 12.2, Math.PI * 0.93, Math.PI * 1.95); g.closePath(); g.fill();
+  drawFace(g, look, L);
   if (L.face === 'sly') {   // 음흉하게 가늘게 뜬 눈
     g.strokeStyle = '#1d1a18'; g.lineWidth = 1.6;
     g.beginPath(); g.moveTo(0, -46.5); g.quadraticCurveTo(2, -48, 4, -46.5); g.moveTo(5.5, -46.5); g.quadraticCurveTo(7.5, -48, 9.5, -46.5); g.stroke();
     g.beginPath(); g.moveTo(5, -52); g.lineTo(10, -51); g.stroke();
-  } else { g.fillStyle = '#1d1a18'; ell(g, 7.5, -47, 1.6, 2.4); ell(g, 2, -47, 1.6, 2.4); }
+  }
   if (L.face === 'angry') {   // 화난 눈썹, 붉은 얼굴, 핏대
     g.strokeStyle = '#1d1a18'; g.lineWidth = 2;
     g.beginPath(); g.moveTo(-1, -53.5); g.lineTo(4, -50.5); g.moveTo(5.5, -50.5); g.lineTo(10.5, -53.5); g.stroke();
@@ -2510,7 +2622,6 @@ function drawPerson(g, x, y, look, dir, o = {}) {
     g.beginPath(); g.moveTo(-8, -56); g.lineTo(-4, -56); g.moveTo(-6, -58); g.lineTo(-6, -54); g.moveTo(-9, -58.5); g.lineTo(-3, -53.5); g.stroke();
   }
   if (L.face === 'sneer') { g.strokeStyle = '#1d1a18'; g.lineWidth = 1.6; g.beginPath(); g.moveTo(0, -51.5); g.lineTo(4, -50.5); g.moveTo(5.5, -50.5); g.lineTo(10, -52); g.stroke(); }
-  g.fillStyle = 'rgba(230,120,100,.35)'; ell(g, 9, -42.5, 2.6, 1.8);
   if (o.hurt) { g.strokeStyle = '#1d1a18'; g.lineWidth = 1.2; g.beginPath(); g.moveTo(5, -40); g.lineTo(9, -40); g.stroke(); }
   if (L.beard) {
     g.fillStyle = '#f5f5f5'; g.beginPath(); g.moveTo(1, -41); g.lineTo(11, -42); g.lineTo(6, -27); g.closePath(); g.fill();
