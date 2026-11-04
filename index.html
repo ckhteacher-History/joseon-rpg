@@ -156,12 +156,16 @@
   .qtable .qn{color:#8b6a3e;width:34px}
   .qtable .btns{text-align:right;white-space:nowrap}
   .anote{font-size:12px;color:#8b6a3e;margin-top:4px}
-  #bgmBtn{position:absolute;right:258px;top:10px;z-index:2;font:700 13px 'Gowun Batang',serif;background:rgba(24,18,14,.8);color:#f3e3c0;
+  #bgmBtn{position:absolute;right:362px;top:10px;z-index:2;font:700 13px 'Gowun Batang',serif;background:rgba(24,18,14,.8);color:#f3e3c0;
     border:1.5px solid #8b6a3e;border-radius:8px;padding:5px 9px;cursor:pointer}
   body:not(.playing) #bgmBtn{display:none}
   #noteBtn{position:absolute;right:158px;top:10px;z-index:2;font:700 13px 'Gowun Batang',serif;background:rgba(24,18,14,.8);color:#bfe8a8;
     border:1.5px solid #6a9a5a;border-radius:8px;padding:5px 10px;cursor:pointer}
   body:not(.playing) #noteBtn{display:none}
+  #dexBtn{position:absolute;right:258px;top:10px;z-index:2;font:700 13px 'Gowun Batang',serif;background:rgba(24,18,14,.8);color:#ffb6a0;
+    border:1.5px solid #a0584a;border-radius:8px;padding:5px 10px;cursor:pointer}
+  body:not(.playing) #dexBtn{display:none}
+  #ending.dexMode .endStats,#ending.dexMode .endTabs{display:none}
   #recallAsk{position:absolute;inset:0;background:rgba(10,8,6,.5);display:flex;align-items:center;justify-content:center;z-index:4}
   .rcBox{width:420px;background:#f5ecd6;border:3px solid #4a6a9a;border-radius:14px;padding:20px 24px 18px;text-align:center;color:#2b1d12;box-shadow:0 8px 30px rgba(0,0,0,.5)}
   .rcBox h3{margin:0 0 6px;font-size:21px;color:#2f4b73} .rcBox p{margin:4px 0 12px;font-size:14.5px;color:#5b4026}
@@ -300,6 +304,7 @@
   <button id="admBtn" class="hidden">🛠 관리자 (F2)</button>
   <button id="mapBtn">🗺 조선 지도 (M)</button>
   <button id="noteBtn">📜 노트 (N)</button>
+  <button id="dexBtn">👹 도감 (K)</button>
   <button id="bgmBtn" title="배경 음악 켜기/끄기 (V)">🔊 음악</button>
   <div id="notes" class="hidden">
     <div class="notesBox">
@@ -318,11 +323,11 @@
   </div>
   <div id="ending" class="hidden">
     <div class="endBox">
-      <div class="endHead"><span style="font-size:30px">🏆</span><h2>조선유랑기 완주! <small id="endWho"></small></h2><button id="endClose" title="닫기 (Esc)">✕</button></div>
+      <div class="endHead"><span style="font-size:30px" id="endIcon">🏆</span><h2><span id="endTitle">조선유랑기 완주!</span> <small id="endWho"></small></h2><button id="endClose" title="닫기 (Esc)">✕</button></div>
       <div class="endStats" id="endStats"></div>
       <div class="endTabs"><button id="endTabN" class="on">📜 역사 노트</button><button id="endTabD">👹 몬스터 도감</button></div>
       <div id="endBody"></div>
-      <div class="endFoot"><span>19세기 조선을 끝까지 여행했어요. 수고 많았어요! — 제작: 역사교사 최경환</span><button class="btn" id="endGo" style="padding:6px 16px">계속 모험하기</button></div>
+      <div class="endFoot"><span id="endFootTxt">19세기 조선을 끝까지 여행했어요. 수고 많았어요! — 제작: 역사교사 최경환</span><button class="btn" id="endGo" style="padding:6px 16px">계속 모험하기</button></div>
     </div>
   </div>
 
@@ -364,7 +369,7 @@
 const SAVE_URL = '';
 
 // 버전 — 고칠 때마다 바꾸면, 화면에 보이는 버전으로 새 버전이 열렸는지 확인할 수 있어요.
-const VERSION = 'v7.5 (국밥 안내 문구)';
+const VERSION = 'v7.6 (플레이 중 몬스터 도감)';
 
 /* =========================================================
    조선유랑기 — 조선 후기 배경 횡스크롤 RPG
@@ -441,7 +446,7 @@ const KEYMAP = {
   Space: 'jump', KeyC: 'jump', AltLeft: 'jump', AltRight: 'jump',
   KeyZ: 'attack', ControlLeft: 'attack', ControlRight: 'attack',
   KeyX: 'skill', ShiftLeft: 'skill', ShiftRight: 'skill',
-  KeyA: 'potion', KeyH: 'help', KeyM: 'map', KeyN: 'notes', KeyE: 'forge', KeyB: 'recall', KeyV: 'bgm',
+  KeyA: 'potion', KeyH: 'help', KeyM: 'map', KeyN: 'notes', KeyK: 'dex', KeyE: 'forge', KeyB: 'recall', KeyV: 'bgm',
 };
 addEventListener('keydown', e => {
   if (admin.on && (e.code === 'F2' || (e.code === 'Escape' && adminOpen))) { e.preventDefault(); toggleAdmin(); return; }
@@ -458,8 +463,8 @@ addEventListener('keydown', e => {
     return;
   }
   if (endingOpen) {
-    if (['Escape', 'Enter'].includes(e.code)) { e.preventDefault(); closeEnding(); }
-    else if (['ArrowLeft', 'ArrowRight', 'Tab'].includes(e.code)) { e.preventDefault(); renderEnding(endTab === 'n' ? 'd' : 'n'); }
+    if (['Escape', 'Enter'].includes(e.code) || (dexMode && e.code === 'KeyK')) { e.preventDefault(); closeEnding(); }
+    else if (!dexMode && ['ArrowLeft', 'ArrowRight', 'Tab'].includes(e.code)) { e.preventDefault(); renderEnding(endTab === 'n' ? 'd' : 'n'); }
     return;
   }
   if (notesOpen) {
@@ -1571,6 +1576,7 @@ function update() {
   if (pressed.bgm) toggleBgm();
   if (pressed.recall) { askRecall(); clearPressed(); return; }
   if (pressed.notes) { openNotes(); clearPressed(); return; }
+  if (pressed.dex) { openDex(); clearPressed(); return; }
   if (pressed.forge) { openForge(nearSmith()); clearPressed(); return; }
   playFrames++;
   if (frame % 600 === 0) saveGame(false);          // 10초마다 기기에 저장
@@ -3868,7 +3874,7 @@ function drawToasts() {
 function drawHelp() {
   const a = Math.min(1, helpT / 40);
   ctx.globalAlpha = a;
-  const lines = ['← → 이동 · Space 점프 · 공중에서 Space 이단 점프 · ↓+Space 내려가기', 'Z(Ctrl) 공격(꾹 누르면 연속) · X(Shift) 기술 · A 국밥 먹기', '↑(Enter) 대화·포탈 · M 지도 · N 노트 · E 강화 · B 귀환(한양) · V 음악'];
+  const lines = ['← → 이동 · Space 점프 · 공중에서 Space 이단 점프 · ↓+Space 내려가기', 'Z(Ctrl) 공격(꾹 누르면 연속) · X(Shift) 기술 · A 국밥 먹기', '↑(Enter) 대화·포탈 · M 지도 · N 노트 · K 도감 · E 강화 · B 귀환 · V 음악'];
   ctx.fillStyle = 'rgba(20,14,10,.78)'; rr(ctx, VW / 2 - 225, 12, 450, 68, 10); ctx.fill();
   ctx.font = F(13, true); ctx.textAlign = 'center'; ctx.fillStyle = '#f3e3c0';
   lines.forEach((l, i) => ctx.fillText(l, VW / 2, 33 + i * 19));
@@ -4564,6 +4570,9 @@ function openEnding() {
   if (!P) return;
   if (dialog) { setTimeout(openEnding, 500); return; }
   if (notesOpen) closeNotes();
+  dexMode = false; $('ending').classList.remove('dexMode');
+  $('endIcon').textContent = '🏆'; $('endTitle').textContent = '조선유랑기 완주!';
+  $('endFootTxt').textContent = '19세기 조선을 끝까지 여행했어요. 수고 많았어요! — 제작: 역사교사 최경환'; $('endGo').textContent = '계속 모험하기';
   endingOpen = true; $('ending').classList.remove('hidden');
   const nGot = NOTE_LIST.filter(n => NOTES_GOT[n.id]).length, dGot = DEX_LIST.filter(d => DEX[d.t] > 0).length;
   const sec = Math.floor(playFrames / 60);
@@ -4571,6 +4580,21 @@ function openEnding() {
   $('endStats').innerHTML = `<span>레벨 <b>Lv.${P.lv}</b></span><span>무기 <b>${weaponName(P.c.weapon, P.enh)} +${P.enh}</b></span><span>역사 노트 <b>${nGot}/${NOTE_LIST.length}</b></span><span>몬스터 도감 <b>${dGot}/${DEX_LIST.length}</b></span><span>물리친 몬스터 <b>${Object.values(DEX).reduce((a, b) => a + b, 0)}마리</b></span><span>모험 시간 <b>${Math.floor(sec / 3600) ? Math.floor(sec / 3600) + '시간 ' : ''}${Math.floor(sec / 60) % 60}분</b></span><span>엽전 <b>${P.coins}닢</b></span>`;
   renderEnding('n'); SFX.lvl && SFX.lvl(); clearPressed();
 }
+// 플레이 중에 보는 몬스터 도감 (K 키 · 👹 도감 버튼)
+let dexMode = false;
+function openDex() {
+  if (!P || state !== 'play' || dialog || adminOpen || forgeOpen || recallOpen) return;
+  if (notesOpen) closeNotes();
+  dexMode = true; endingOpen = true;
+  const dGot = DEX_LIST.filter(d => DEX[d.t] > 0).length;
+  $('ending').classList.add('dexMode'); $('ending').classList.remove('hidden');
+  $('endIcon').textContent = '👹'; $('endTitle').textContent = '몬스터 도감';
+  $('endWho').textContent = `모은 몬스터 ${dGot} / ${DEX_LIST.length} · 물리친 수 ${Object.values(DEX).reduce((a, b) => a + b, 0)}마리`;
+  $('endFootTxt').textContent = '한 종류당 한 마리만 물리쳐도 도감에 올라가요. 아직 못 만난 몬스터는 ???로 보여요.';
+  $('endGo').textContent = '닫기 (K)';
+  renderEnding('d'); beep(500, 0.06, 'sine', 0.03); clearPressed();
+}
+$('dexBtn').addEventListener('click', e => { e.stopPropagation(); endingOpen ? closeEnding() : openDex(); });
 function closeEnding() { endingOpen = false; $('ending').classList.add('hidden'); clearPressed(); if (P) P.atkCd = Math.max(P.atkCd, 15); }
 $('endClose').onclick = closeEnding; $('endGo').onclick = closeEnding;
 $('endTabN').onclick = () => renderEnding('n'); $('endTabD').onclick = () => renderEnding('d');
