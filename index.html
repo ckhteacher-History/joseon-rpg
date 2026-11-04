@@ -58,6 +58,9 @@
   .qbtn:hover{background:#f3e3c0;border-color:#a0442c}
   #dlg.quiz{cursor:default}
   #dlgHint{position:absolute;right:14px;bottom:6px;font-size:13px;color:#8b6a3e;animation:blink 1s infinite}
+  #dlgHint.wait{animation:none;color:#b8a07a}
+  #dlgBar{position:absolute;left:0;bottom:0;height:4px;background:#c9a24a;border-radius:0 0 0 10px;width:0}
+  #dlg.note #dlgBar{background:#2f5d50}
   @keyframes blink{50%{opacity:.35}}
 
   /* 모바일 터치 버튼 */
@@ -269,6 +272,7 @@
     <canvas id="dlgPor" width="200" height="220"></canvas>
     <div><div id="dlgName"></div><div id="dlgText"></div></div>
     <div id="dlgHint">다음 ▶</div>
+    <div id="dlgBar"></div>
   </div>
 </div>
 
@@ -294,7 +298,7 @@
 const SAVE_URL = '';
 
 // 버전 — 고칠 때마다 바꾸면, 화면에 보이는 버전으로 새 버전이 열렸는지 확인할 수 있어요.
-const VERSION = 'v5.1 (배경 음악)';
+const VERSION = 'v5.2 (대화 2초 읽기 시간)';
 
 /* =========================================================
    조선유랑기 — 조선 후기 배경 횡스크롤 RPG
@@ -1948,13 +1952,24 @@ function showDialogPage() {
     });
   } else $('dlgText').innerHTML = text;
   const last = dialog.i === dialog.pages.length - 1;
-  $('dlgHint').textContent = isQuizPage() ? '답을 누르거나 숫자 키 1~4' : last ? (dialog.isOffer ? '부탁을 들어준다 ▶' : '닫기 ▶') : '다음 ▶';
+  const nextLabel = isQuizPage() ? '답을 누르거나 숫자 키 1~4' : last ? (dialog.isOffer ? '부탁을 들어준다 ▶' : '닫기 ▶') : '다음 ▶';
+  // 읽기 시간: 쪽마다 최소 2초가 지나야 넘길 수 있어요 (관리자 모드는 바로 넘김)
+  dialog.shownAt = performance.now();
+  const wait = isQuizPage() || admin.on ? 0 : DLG_MIN_MS;
+  const hint = $('dlgHint'), bar = $('dlgBar');
+  clearTimeout(dialog.hintTimer);
+  bar.style.transition = 'none'; bar.style.width = '0';
+  if (wait > 0) {
+    hint.textContent = '천천히 읽어 보세요…'; hint.classList.add('wait');
+    void bar.offsetWidth; bar.style.transition = `width ${wait}ms linear`; bar.style.width = '100%';
+    dialog.hintTimer = setTimeout(() => { if (dialog) { hint.textContent = nextLabel; hint.classList.remove('wait'); bar.style.transition = 'none'; bar.style.width = '0'; } }, wait);
+  } else { hint.textContent = nextLabel; hint.classList.remove('wait'); }
   const g = $('dlgPor').getContext('2d');
   g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, 200, 220);
   if (look) { g.setTransform(2.6, 0, 0, 2.6, 0, 0); drawPerson(g, 38, 80, look, 1, { t: 0 }); }
   else {
     g.font = '90px serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
-    g.fillText(name.includes('역사') ? '📜' : '🏯', 100, 115);
+    g.fillText(name.includes('역사') ? '📜' : '📖', 100, 115);
   }
   $('dlg').classList.remove('hidden');
 }
@@ -1973,8 +1988,10 @@ function answerQuiz(o) {
   }
   showDialogPage();
 }
+const DLG_MIN_MS = 2000;   // 대화 한 쪽을 넘기기 전 최소 읽기 시간
 function advanceDialog() {
   if (!dialog || isQuizPage()) return;
+  if (!admin.on && performance.now() - (dialog.shownAt || 0) < DLG_MIN_MS) return;
   dialog.i++;
   if (dialog.i >= dialog.pages.length) {
     const f = dialog.onEnd; dialog = null;
