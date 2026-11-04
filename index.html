@@ -54,6 +54,11 @@
   .hleg b{display:inline-block;width:11px;height:11px;border-radius:2px;margin-right:3px;vertical-align:-1px}
   .qzq{font-weight:700;margin-bottom:8px}
   .qzc{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+  .qtext{display:flex;gap:8px;margin-top:4px}
+  .qtext input{flex:1;font:17px 'Gowun Batang',serif;padding:7px 10px;border:1.5px solid #b89a6a;border-radius:8px;background:#fffdf7;-webkit-user-select:text;user-select:text;outline:none}
+  .qtext input:focus{border-color:#a0442c}
+  .qtext button{font:700 15px 'Gowun Batang',serif;padding:7px 16px;border-radius:8px;border:none;background:#a0442c;color:#fff;cursor:pointer}
+  .qtag{display:inline-block;font-size:11.5px;background:#2f5d50;color:#fff;border-radius:4px;padding:1px 6px;margin-right:6px;vertical-align:2px}
   .qbtn{font:15px 'Gowun Batang',serif;text-align:left;padding:7px 10px;border-radius:8px;border:1.5px solid #b89a6a;background:#fffdf7;color:#2b1d12;cursor:pointer}
   .qbtn:hover{background:#f3e3c0;border-color:#a0442c}
   #dlg.quiz{cursor:default}
@@ -298,7 +303,7 @@
 const SAVE_URL = '';
 
 // 버전 — 고칠 때마다 바꾸면, 화면에 보이는 버전으로 새 버전이 열렸는지 확인할 수 있어요.
-const VERSION = 'v5.3 (다음 이야기 안내 · 노트 잠금)';
+const VERSION = 'v5.4 (장 복습 퀴즈)';
 
 /* =========================================================
    조선유랑기 — 조선 후기 배경 횡스크롤 RPG
@@ -364,7 +369,7 @@ addEventListener('keydown', e => {
   if (dialog && isQuizPage()) {
     const k = ['Digit1', 'Digit2', 'Digit3', 'Digit4'].indexOf(e.code), k2 = ['Numpad1', 'Numpad2', 'Numpad3', 'Numpad4'].indexOf(e.code);
     const idx = k >= 0 ? k : k2;
-    if (idx >= 0) { e.preventDefault(); answerQuiz(curPage().order[idx]); return; }
+    if (idx >= 0 && !curPage().quiz.a) { e.preventDefault(); answerQuiz(curPage().order[idx]); return; }
   }
   if (notesOpen) {
     if (['Escape', 'KeyN'].includes(e.code)) { e.preventDefault(); closeNotes(); }
@@ -914,6 +919,66 @@ Object.assign(QUIZZES, {
     hint: '삼정(三政)을 바로잡는(釐整) 관청(廳)이오. 3장 진주에서도 들었을 것이오.',
     explain: '과인이 삼정이정청을 두었으나, 권세가들의 반대로 개혁은 오래가지 못했소.' }],
 });
+/* ---------- 장 복습 퀴즈 — 다음 장으로 넘어갈 때 3문제 중 1문제가 무작위로 나와요 ----------
+   객관식: c[0]이 정답(보기 순서는 섞임) / 주관식: a에 인정할 정답들(띄어쓰기·문장부호는 무시) */
+const CHECKPOINTS = [
+  [ // 1장 · 한양과 인왕산
+    { id: 'cp1a', q: '시전 상인이 허가 없이 장사하는 난전을 단속할 수 있었던 특권을 무엇이라 했나요? (네 글자)', a: ['금난전권'],
+      hint: '시전 상인 윤씨와 채제공 대감이 이야기했어요. "난전을 금(禁)하는 권리"예요.',
+      explain: '금난전권은 1791년 신해통공으로 육의전을 뺀 시전에서 없어졌어요.' },
+    { id: 'cp1b', q: '제주에서 객주를 운영해 모은 재산으로 흉년에 굶주린 백성을 구하고, 정조의 초청으로 한양과 금강산을 구경한 여성 상인은?', c: ['김만덕', '신사임당', '허난설헌', '황진이'],
+      hint: '한양 장터에서 "제주에서 왔다"고 말한 실존 인물이에요.',
+      explain: '김만덕은 제주 여인이 육지로 나갈 수 없던 시절, 정조의 허락으로 한양과 금강산을 구경했어요.' },
+    { id: 'cp1c', q: '상인의 물건을 맡아 대신 팔아 주고, 숙박·창고·돈 빌려주기·어음 발행까지 맡았던 곳으로, 한양 장터의 "○○ 주인 한씨"가 운영하던 곳은? (두 글자)', a: ['객주'],
+      hint: '客(손님 객) + 主(주인 주). 깃발에도 한자로 쓰여 있었어요.',
+      explain: '객주와 여각은 조선 후기 상업이 발달하면서 숙박·보관·중개·금융을 맡았어요.' },
+  ],
+  [ // 2장 · 삼정의 문란
+    { id: 'cp2a', q: '전정, 군정, 환곡 세 가지 제도를 합쳐 부르는 말은? (두 글자)', a: ['삼정'],
+      hint: '세 가지(三) 나라 살림 제도(政)예요. 남원의 김 노인이 처음 설명했어요.',
+      explain: '19세기에 삼정이 크게 어지러워진 것을 "삼정의 문란"이라고 해요.' },
+    { id: 'cp2b', q: '박씨 아낙의 남편처럼 이미 죽은 사람에게 군포를 매기는 수탈을 무엇이라 했나요?', c: ['백골징포', '황구첨정', '인징', '족징'],
+      hint: '백골(白骨), 곧 죽은 사람의 뼈에게까지 군포를 거둔다는 뜻이에요.',
+      explain: '황구첨정은 어린아이에게, 인징은 이웃에게, 족징은 친척에게 군포를 매기는 수탈이에요.' },
+    { id: 'cp2c', q: '임금의 명을 받고 몰래 고을을 살피다가 "출두요!"를 외치며 변 사또의 죄를 밝힌 관리는? (네 글자)', a: ['암행어사'],
+      hint: '몰래(暗) 다니며(行) 살피는 어사(御史)예요. 마패를 차고 있었죠.',
+      explain: '암행어사는 지방 관리들의 잘못을 몰래 살피던 관리예요. 이 장면은 『춘향전』에서 따왔어요.' },
+  ],
+  [ // 3장 · 들고일어난 백성들
+    { id: 'cp3a', q: '홍경래는 격문에서 평안도 등 어느 지역 사람들이 벼슬길에서 차별받는다고 꾸짖었나요? (두 글자, ○○ 지역)', a: ['서북', '서북지역', '평안도', '평안'],
+      hint: '한양에서 보면 서쪽과 북쪽 지역이에요. 상인 이씨와 홍경래가 이 말을 했어요.',
+      explain: '서북(평안도) 지역에 대한 차별은 세도 정치의 수탈, 흉년과 함께 홍경래의 난의 큰 원인이었어요.' },
+    { id: 'cp3b', q: '유계춘이 글을 모르는 사람도 따라 부를 수 있게 만들어 퍼뜨린 것은?', c: ['한글 노래', '한문 상소', '족보', '공명첩'],
+      hint: '유계춘이 통문과 함께 퍼뜨렸다고 했어요. 글을 몰라도 귀로 듣고 따라 할 수 있는 것!',
+      explain: '유계춘은 통문을 돌리고 한글 노래를 지어 퍼뜨려 농민들을 모았어요.' },
+    { id: 'cp3c', q: '1862년 진주에서 시작해 삼남 곳곳으로 번진 농민 봉기를 무엇이라 부르나요? (○○ 농민 봉기)', a: ['임술', '임술농민봉기', '임술민란'],
+      hint: '1862년은 간지로 "임술년"이에요.',
+      explain: '임술 농민 봉기 뒤 정부는 삼정이정청을 두었지만 개혁은 오래가지 못했어요.' },
+  ],
+  [ // 4장 · 흔들리는 신분제
+    { id: 'cp4a', q: '대구 호적 대장을 보면 1690년부터 1858년 사이에 비율이 크게 늘어난 신분은?', c: ['양반', '상민', '노비', '중인'],
+      hint: '호방이 보여 준 그래프에서 빨간 막대가 어떻게 바뀌었는지 떠올려 보세요.',
+      explain: '호적상 양반 가구는 9.2%에서 70.3%로 늘고, 노비 가구는 37.1%에서 1.5%로 줄었어요.' },
+    { id: 'cp4b', q: '돈으로 새로 양반이 된 "신향"과 옛 양반 "구향"이 향촌의 주도권을 두고 벌인 다툼은? (두 글자)', a: ['향전'],
+      hint: '향촌(鄕)에서 벌어진 싸움(戰)이에요. 향반 이 진사가 속상해했죠.',
+      explain: '향전 과정에서 수령의 힘이 커지고, 옛 양반들의 권위는 점점 약해졌어요.' },
+    { id: 'cp4c', q: '벼슬길에서 밀려나 땅도 잃고 농사나 장사로 살아가게 된 양반을 무엇이라 했나요?', c: ['잔반', '권반', '향반', '서얼'],
+      hint: '짚신을 삼아 팔던 정 생원을 떠올려 보세요.',
+      explain: '권반은 중앙 권력을 쥔 양반, 향반은 지방에서 권위를 지킨 양반, 잔반은 몰락한 양반이에요.' },
+  ],
+  [ // 5장 · 세도 정치의 그늘 (다음 장이 생기면 쓰여요)
+    { id: 'cp5a', q: '임진왜란 뒤 경복궁이 다시 지어지기 전까지 약 270년 동안 법궁 역할을 한 궁궐은? (세 글자)', a: ['창덕궁'],
+      hint: '5장의 무대였던 궁궐이에요. 정문은 돈화문!',
+      explain: '창덕궁은 1610년 가장 먼저 다시 지어져 1867년 경복궁 중건 전까지 실제 법궁 역할을 했어요.' },
+    { id: 'cp5b', q: '강화도에서 농사짓다 왕위에 올라 "강화도령"이라 불린 임금은?', c: ['철종', '순조', '헌종', '고종'],
+      hint: '희정당 앞에서 만난 임금님이에요.',
+      explain: '철종 때 안동 김씨의 세도 정치가 절정에 달했어요.' },
+    { id: 'cp5c', q: '세도 가문이 장악해 나라의 중요한 일을 결정한 최고 기구는? (세 글자)', a: ['비변사'],
+      hint: '5장 보스와 싸운 곳이에요. 서리 문씨가 일하던 곳!',
+      explain: '비변사는 원래 국방 문제를 의논하던 임시 기구였지만 임진왜란 뒤 최고 기구가 되었어요.' },
+  ],
+];
+const CP = {};   // 통과한 장 복습 퀴즈(장 번호)
 const QZ = {};   // 맞힌 퀴즈 기록
 const QUESTS = [
   {
@@ -1049,7 +1114,7 @@ const QUESTS = [
   /* ===================== 3장 · 들고일어난 백성들 ===================== */
   {
     id: 'q9', npc: 'hunjang', turnin: 'merchant', needNotes: { ch: 1 }, title: '역사 두루마리', need: 0, req: 'q8', reward: { exp: 300, coins: 80 },
-    onAccept: () => setTimeout(() => { toast('📜 두루마리를 펼치자 눈앞이 아득해진다…', '#f3e3c0', 200); trans = { to: 'jeongju', x: 150, t: 0 }; }, 300),
+    onAccept: () => setTimeout(() => { toast('📜 두루마리를 펼치자 눈앞이 아득해진다…', '#f3e3c0', 200); travel('jeongju', 150); }, 300),
     offer: A => [
       `${A}, 남원 소식은 들었소. 참으로 장한 일을 했구려!`,
       `삼정의 문란에 시달린 백성들은 끝내 들고일어났소. 그 이야기를 이 <b>역사 두루마리</b>에 적어 두었지. 두루마리를 펼치면 그때 그곳으로 가 볼 수 있다오.`,
@@ -1094,7 +1159,7 @@ const QUESTS = [
   {
     id: 'q12', npc: 'merchant', turnin: 'yu', needNotes: { map: 'jeongju' }, title: '두루마리의 다음 장', need: 0, req: ['q10', 'q11'], reward: { exp: 400, coins: 80 },
     lock: `정주 아낙의 들판 일도 도와주시오. 그 뒤에 할 이야기가 있소.`,
-    onAccept: () => setTimeout(() => { toast('📜 두루마리가 다음 장으로 넘어간다… 51년 뒤, 진주', '#f3e3c0', 220); trans = { to: 'jinju', x: 150, t: 0 }; }, 300),
+    onAccept: () => setTimeout(() => { toast('📜 두루마리가 다음 장으로 넘어간다… 51년 뒤, 진주', '#f3e3c0', 220); travel('jinju', 150); }, 300),
     offer: A => [
       `봉기는 끝났지만 백성들의 고통은 그 뒤로도 이어졌소…. 아니, 오히려 더 심해졌지.`,
       { name: '📜 역사 두루마리', look: null, text: `두루마리가 저절로 펼쳐진다…. <b>51년 뒤, 1862년 경상도 진주.</b> 진주의 선비 <b>유계춘</b>을 찾아가자.` },
@@ -1139,7 +1204,7 @@ const QUESTS = [
   /* ===================== 4장 · 흔들리는 신분제 ===================== */
   {
     id: 'q15', npc: 'hunjang', turnin: 'hobang', needNotes: { ch: 2 }, title: '두루마리 속의 호적 대장', need: 0, req: 'q14', reward: { exp: 800, coins: 120 },
-    onAccept: () => setTimeout(() => { toast('📜 두루마리를 펼치자 경상도 대구의 들판이 펼쳐진다…', '#f3e3c0', 200); trans = { to: 'daegu', x: 150, t: 0 }; }, 300),
+    onAccept: () => setTimeout(() => { toast('📜 두루마리를 펼치자 경상도 대구의 들판이 펼쳐진다…', '#f3e3c0', 200); travel('daegu', 150); }, 300),
     offer: A => [
       `${A}, 진주 이야기까지 잘 보고 왔구려. 이번에는 백성들의 <b>신분</b>이 어떻게 바뀌어 왔는지 살펴볼 차례요.`,
       `조선 후기 들어 양반은 점점 많아지고, 상민과 노비는 줄어들었다오. 믿기 어렵다면 <b>호적</b>을 보면 알 수 있지.`,
@@ -1218,7 +1283,7 @@ const QUESTS = [
   /* ===================== 5장 · 세도 정치의 그늘 ===================== */
   {
     id: 'q20', npc: 'hunjang', turnin: 'seungji', needNotes: { ch: 3 }, title: '궁궐로 간 두루마리', need: 0, req: 'q19', reward: { exp: 1500, coins: 200 },
-    onAccept: () => setTimeout(() => { toast('📜 두루마리가 펼쳐지자 커다란 궁궐 문이 보인다…', '#f3e3c0', 200); trans = { to: 'changdeok', x: 150, t: 0 }; }, 300),
+    onAccept: () => setTimeout(() => { toast('📜 두루마리가 펼쳐지자 커다란 궁궐 문이 보인다…', '#f3e3c0', 200); travel('changdeok', 150); }, 300),
     offer: A => [
       `${A}, 신분제가 흔들리는 모습까지 보고 왔구려. 이제 나라의 한가운데, <b>궁궐</b>로 가 볼 차례요.`,
       `농민들이 들고일어나고 신분 질서가 흔들린 데에는 나라 꼭대기의 문제가 컸소. 몇몇 가문이 권력을 독차지한 <b>세도 정치</b> 말이오.`,
@@ -1305,6 +1370,7 @@ function startGame(cid) {
   for (const k in QS) delete QS[k];
   for (const k in QZ) delete QZ[k];
   for (const k in NOTES_GOT) delete NOTES_GOT[k];
+  for (const k in CP) delete CP[k];
   ended = false; playFrames = 0;
   state = 'play'; document.body.classList.add('playing');
   enterMap('village', 150);
@@ -1851,12 +1917,33 @@ function interact() {
   for (const pt of map.portals) if (Math.abs(pt.x - P.x) < 42 && P.y > GROUND - 60) {
     if (pt.req && !pt.req()) { toast(pt.lock, '#f3e3c0', 220); return; }
     beep(300, 0.4, 'sine', 0.05, 500);
-    trans = { to: typeof pt.to === 'function' ? pt.to() : pt.to, x: pt.tx, t: 0 }; return;
+    travel(typeof pt.to === 'function' ? pt.to() : pt.to, pt.tx); return;
   }
 }
 
 const isActive = q => QS[q.id] && QS[q.id].state === 'active';
 const turninOf = q => q.turnin || q.npc;
+// 다음 장 맵으로 넘어갈 때, 앞 장 복습 퀴즈를 아직 안 풀었으면 먼저 퀴즈를 내요
+function checkpointNeeded(to) {
+  if (admin.on) return -1;
+  const dch = MAP_CH[to] ?? 0, cur = MAP_CH[mapId] ?? 0;
+  if (dch > cur && dch >= 1 && CHECKPOINTS[dch - 1] && !CP[dch - 1]) return dch - 1;
+  return -1;
+}
+function pickCheckpoint(k, exceptId) {
+  const list = CHECKPOINTS[k].filter(z => z.id !== exceptId);
+  return list[Math.floor(Math.random() * list.length)];
+}
+function travel(to, x) {
+  const k = checkpointNeeded(to);
+  if (k < 0) { trans = { to, x, t: 0 }; return; }
+  openDialog('📜 두루마리의 물음', null, [
+    `잠깐! 다음 이야기로 넘어가기 전에, <b>${CH_NAMES[k]}</b>에서 사람들의 이야기를 잘 들었는지 확인할게요.`,
+    { quiz: pickCheckpoint(k), cp: k },
+    `좋아요! 이제 다음 이야기로 떠나요. 📜`,
+  ], () => { trans = { to, x, t: 0 }; });
+}
+
 function questFor(npcId) {
   return QUESTS.find(q => isActive(q) && turninOf(q) === npcId && QS[q.id].count >= q.need)   // 완료 보고
     || QUESTS.find(q => isActive(q) && (turninOf(q) === npcId || q.npc === npcId))            // 진행 중
@@ -1960,16 +2047,26 @@ function showDialogPage() {
   $('dlg').classList.toggle('quiz', isQuizPage());
   $('dlgName').textContent = name;
   if (isQuizPage()) {
-    const z = p.quiz; p.order = p.order || shuffle([0, 1, 2, 3]);
-    $('dlgText').innerHTML = `<div class="qzq">📝 ${z.q}</div><div class="qzc">` +
-      p.order.map((o, k) => `<button class="qbtn" data-o="${o}">${k + 1}. ${z.c[o]}</button>`).join('') + `</div>`;
-    $('dlgText').querySelectorAll('.qbtn').forEach(b => {
-      b.addEventListener('pointerdown', e => e.stopPropagation());
-      b.addEventListener('click', e => { e.stopPropagation(); answerQuiz(+b.dataset.o); });
-    });
+    const z = p.quiz, tag = p.cp !== undefined ? `<span class="qtag">${CH_NAMES[p.cp].split(' · ')[0]} 복습 · ${z.a ? '주관식' : '객관식'}</span>` : '';
+    if (z.a) {
+      $('dlgText').innerHTML = `<div class="qzq">${tag}📝 ${z.q}</div><div class="qtext"><input id="qIn" maxlength="20" autocomplete="off" placeholder="답을 적어 보세요"><button id="qOk">확인</button></div>`;
+      const inp = $('qIn');
+      ['pointerdown', 'click'].forEach(ev => { inp.addEventListener(ev, e => e.stopPropagation()); $('qOk').addEventListener(ev, e => e.stopPropagation()); });
+      $('qOk').addEventListener('click', () => answerText(inp.value));
+      inp.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); answerText(inp.value); } });
+      setTimeout(() => inp.focus(), 50);
+    } else {
+      p.order = p.order || shuffle([0, 1, 2, 3]);
+      $('dlgText').innerHTML = `<div class="qzq">${tag}📝 ${z.q}</div><div class="qzc">` +
+        p.order.map((o, k) => `<button class="qbtn" data-o="${o}">${k + 1}. ${z.c[o]}</button>`).join('') + `</div>`;
+      $('dlgText').querySelectorAll('.qbtn').forEach(b => {
+        b.addEventListener('pointerdown', e => e.stopPropagation());
+        b.addEventListener('click', e => { e.stopPropagation(); answerQuiz(+b.dataset.o); });
+      });
+    }
   } else $('dlgText').innerHTML = text;
   const last = dialog.i === dialog.pages.length - 1;
-  const nextLabel = isQuizPage() ? '답을 누르거나 숫자 키 1~4' : last ? (dialog.isOffer ? '부탁을 들어준다 ▶' : '닫기 ▶') : '다음 ▶';
+  const nextLabel = isQuizPage() ? (p.quiz.a ? '답을 적고 Enter 또는 확인' : '답을 누르거나 숫자 키 1~4') : last ? (dialog.isOffer ? '부탁을 들어준다 ▶' : '닫기 ▶') : '다음 ▶';
   // 읽기 시간: 쪽마다 최소 2초가 지나야 넘길 수 있어요 (관리자 모드는 바로 넘김)
   dialog.shownAt = performance.now();
   const wait = isQuizPage() || admin.on ? 0 : DLG_MIN_MS;
@@ -1990,9 +2087,28 @@ function showDialogPage() {
   }
   $('dlg').classList.remove('hidden');
 }
-function answerQuiz(o) {
+const normAns = t => String(t).replace(/[\s·.,!?'"()（）~\-]/g, '').trim();
+function answerText(val) {
   if (!isQuizPage()) return;
   const z = curPage().quiz;
+  if (!normAns(val)) return;
+  answerQuiz(z.a.some(a => normAns(a) === normAns(val)) ? 0 : 1);
+}
+function answerQuiz(o) {
+  if (!isQuizPage()) return;
+  const pg = curPage(), z = pg.quiz;
+  if (pg.cp !== undefined) {   // 장 복습 퀴즈
+    if (o === 0) {
+      CP[pg.cp] = 1; SFX.quest();
+      dialog.pages[dialog.i] = { text: `⭕ <b>정답이에요!</b> ${z.explain}` };
+      saveGame(true);
+    } else {
+      beep(220, 0.3, 'sawtooth', 0.04, -100);
+      dialog.pages.splice(dialog.i + 1, 0, { quiz: pickCheckpoint(pg.cp, z.id), cp: pg.cp });
+      dialog.pages[dialog.i] = { text: `❌ <b>아쉬워요!</b> 힌트: ${z.hint}${z.a ? `<br>정답은 <b>${z.a[0]}</b>이었어요.` : ''}<br><small>이번에는 다른 문제로 다시 도전해 보세요.</small>` };
+    }
+    showDialogPage(); return;
+  }
   if (o === 0) {
     QZ[z.id] = 1;
     SFX.quest();
@@ -2017,7 +2133,7 @@ function advanceDialog() {
     f && f();
   } else showDialogPage();
 }
-$('dlg').addEventListener('pointerdown', e => { if (e.target.closest('.qbtn')) return; e.preventDefault(); advanceDialog(); });
+$('dlg').addEventListener('pointerdown', e => { if (e.target.closest('.qbtn, .qtext')) return; e.preventDefault(); advanceDialog(); });
 
 /* =========================================================
    그리기 — 인물
@@ -3317,7 +3433,7 @@ function snapshot() {
     v: 1, sid: user.sid, name: user.name, nick: user.nick, cid: P.cid,
     lv: P.lv, exp: P.exp, hp: Math.round(P.hp), mp: Math.round(P.mp), maxHp: P.maxHp, maxMp: P.maxMp, atk: +P.atk.toFixed(1),
     coins: P.coins, potions: P.potions, enh: P.enh, qs: JSON.parse(JSON.stringify(QS)), map: mapId, x: Math.round(P.x),
-    ended, play: playFrames, quiz: Object.keys(QZ), notes: Object.keys(NOTES_GOT), savedAt: Date.now(),
+    ended, play: playFrames, quiz: Object.keys(QZ), cp: Object.keys(CP), notes: Object.keys(NOTES_GOT), savedAt: Date.now(),
   };
 }
 
@@ -3430,6 +3546,8 @@ function resumeGame(sv) {
   ended = !!sv.ended; playFrames = sv.play || 0;
   for (const k in QZ) delete QZ[k];
   (sv.quiz || []).forEach(k => { QZ[k] = 1; });
+  for (const k in CP) delete CP[k];
+  (sv.cp || []).forEach(k => { CP[k] = 1; });
   for (const k in NOTES_GOT) delete NOTES_GOT[k];
   (sv.notes || []).forEach(k => { NOTES_GOT[k] = 1; });
   // 보관함이 생기기 전에 끝낸 퀘스트의 노트도 넣어 주기
