@@ -334,7 +334,7 @@
 const SAVE_URL = '';
 
 // 버전 — 고칠 때마다 바꾸면, 화면에 보이는 버전으로 새 버전이 열렸는지 확인할 수 있어요.
-const VERSION = 'v6.1 (최종 마무리 창 · 몬스터 도감 · 기술 효과)';
+const VERSION = 'v6.2 (무기 강화 수식어)';
 
 /* =========================================================
    조선유랑기 — 조선 후기 배경 횡스크롤 RPG
@@ -3435,7 +3435,7 @@ function drawHUD() {
   // 국밥 · 기술
   slot(490, '국밥', `×${P.potions}`, 'A', 0, '#e8d6a0');
   slot(575, c.skill.name, `MP ${c.skill.mp} · ${(skillCdOf() / 60).toFixed(1)}초`, 'X', P.skillCd / skillCdOf(), P.mp >= c.skill.mp ? '#ffd76a' : '#888');
-  slot(660, `${WEAPON_NAME[c.weapon]} +${P.enh}`, `공격+${enhPct(P.enh)}% · 눌러 강화`, 'E', 0, P.enh >= 10 ? '#ffcf3a' : P.enh >= 6 ? '#d9a6ff' : P.enh >= 3 ? '#8ac6ff' : '#e8d6a0');
+  slot(660, `${weaponName(c.weapon, P.enh, true)} +${P.enh}`, `공격+${enhPct(P.enh)}% · 눌러 강화`, 'E', 0, P.enh >= 10 ? '#ffcf3a' : P.enh >= 6 ? '#d9a6ff' : P.enh >= 3 ? '#8ac6ff' : '#e8d6a0');
   // EXP
   const need = expNeed(P.lv);
   ctx.fillStyle = '#120c08'; ctx.fillRect(0, 536, VW, 4);
@@ -3447,7 +3447,9 @@ function drawHUD() {
 function slot(x, name, sub, key, cd, col) {
   ctx.fillStyle = '#3a2a1c'; rr(ctx, x, 498, 78, 34, 6); ctx.fill();
   ctx.strokeStyle = '#6b4a2b'; ctx.lineWidth = 1.5; ctx.stroke();
-  ctx.textAlign = 'center'; ctx.font = F(12, true); ctx.fillStyle = col; ctx.fillText(name, x + 42, 513);
+  ctx.textAlign = 'center'; let fs = 12; ctx.font = F(fs, true);
+  while (fs > 8 && ctx.measureText(name).width > 72) ctx.font = F(--fs, true);
+  ctx.fillStyle = col; ctx.fillText(name, x + 42, 513);
   ctx.font = F(10); ctx.fillStyle = '#cdb88e'; ctx.fillText(sub, x + 42, 527);
   ctx.fillStyle = '#c9a24a'; rr(ctx, x - 4, 494, 15, 15, 3); ctx.fill();
   ctx.fillStyle = '#2b1d12'; ctx.font = F(10, true); ctx.fillText(key, x + 3.5, 505);
@@ -3757,7 +3759,7 @@ async function doLogin() {
   if (save && CLASSES[save.cid]) {
     pendingSave = save;
     $('resumeInfo').innerHTML = `<b>${escapeHtml(user.nick)}</b> 님의 기록이 있어요!<br>` +
-      `Lv.${save.lv} ${CLASSES[save.cid].name} · ${WEAPON_NAME[CLASSES[save.cid].weapon]} +${save.enh || 0} · 엽전 ${save.coins}닢 · 끝낸 부탁 ${doneCount(save.qs)}/${QUESTS.length}` +
+      `Lv.${save.lv} ${CLASSES[save.cid].name} · ${weaponName(CLASSES[save.cid].weapon, save.enh || 0)} +${save.enh || 0} · 엽전 ${save.coins}닢 · 끝낸 부탁 ${doneCount(save.qs)}/${QUESTS.length}` +
       (serverOk ? '' : '<br><small style="color:#a0442c">서버에 연결하지 못해 이 기기 기록을 불러왔어요.</small>');
     $('loginForm').classList.add('hidden'); $('recent').classList.add('hidden'); $('resume').classList.remove('hidden');
     $('btnResume').focus();
@@ -3809,6 +3811,15 @@ $('btnBack').onclick = () => { pendingSave = null; user = null; $('inNick').valu
    무기 강화 — 한양 장터 대장장이 강씨
    ========================================================= */
 const WEAPON_NAME = { brush: '붓', needle: '침', sickle: '낫', club: '몽둥이' };
+// 강화 수식어: +5까지는 기본 이름, +6부터 2단계마다 새 이름 [정식 이름, HUD용 짧은 이름]
+const WEAPON_TIERS = {
+  brush: [['족제비털 붓', '족제비털 붓'], ['강직한 선비의 붓', '선비의 붓'], ['찬란히 빛나는 붓', '빛나는 붓'], ['일필휘지 명필의 붓', '명필의 붓'], ['천하를 호령하는 신필(神筆)', '신필(神筆)']],
+  needle: [['은빛 날 선 침', '은빛 침'], ['명의의 금침(金鍼)', '금침(金鍼)'], ['기혈을 꿰뚫는 신통한 침', '신통한 침'], ['허준도 탐낼 명침', '명침(名鍼)'], ['백 가지 병을 다스리는 신침(神鍼)', '신침(神鍼)']],
+  sickle: [['숫돌에 벼린 낫', '벼린 낫'], ['대장장이가 두드린 강철 낫', '강철 낫'], ['서슬 퍼런 낫', '서슬 퍼런 낫'], ['들판을 휩쓰는 풍년 낫', '풍년 낫'], ['하늘을 가르는 천하제일 낫', '천하제일 낫']],
+  club: [['단단한 박달나무 몽둥이', '박달 몽둥이'], ['쇠테 두른 몽둥이', '쇠테 몽둥이'], ['불끈 성난 몽둥이', '성난 몽둥이'], ['바위도 부수는 무쇠 몽둥이', '무쇠 몽둥이'], ['신분의 벽도 깨는 전설의 몽둥이', '전설의 몽둥이']],
+};
+const wTier = n => n < 6 ? -1 : Math.min(4, Math.floor((n - 6) / 2));
+const weaponName = (w, n, short) => { const t = wTier(n || 0); return t < 0 ? WEAPON_NAME[w] : WEAPON_TIERS[w][t][short ? 1 : 0]; };
 const ENH_MAX = 15;
 const enhCost = n => Math.round(30 * Math.pow(1.45, n) / 10) * 10;     // +0→+1: 30닢, 단계마다 약 1.45배
 const enhBase = n => Math.max(0.3, 0.95 - 0.07 * n);                    // 95%부터 단계마다 7%씩, 최저 30%
@@ -3843,8 +3854,9 @@ function drawForgeWeapon() {
   g.translate(-16, 0); drawWeapon(g, P.c.weapon);
 }
 function updateForge() {
-  const n = P.enh, w = WEAPON_NAME[P.c.weapon];
-  $('fgName').textContent = `${w} +${n}`;
+  const n = P.enh, w = weaponName(P.c.weapon, n);
+  const nextLv = n < 6 ? 6 : n < 14 ? n + (n % 2 === 0 ? 2 : 1) : 0;
+  $('fgName').innerHTML = `${escapeHtml(w)} +${n}` + (nextLv && n < ENH_MAX ? `<div style="font-size:12px;font-weight:400;color:#cdb88e;margin-top:2px">+${nextLv}이 되면 「${escapeHtml(weaponName(P.c.weapon, nextLv))}」(으)로 거듭나요</div>` : '');
   drawForgeWeapon();
   if (n >= ENH_MAX) {
     $('fgStat').textContent = `공격력 +${enhPct(n)}% · 최고 단계에 도달했어요!`;
@@ -3869,7 +3881,9 @@ function tryEnhance() {
     const ok = Math.random() < enhRate(P.enh);
     if (ok) {
       P.enh++;
-      msg.className = 'ok'; msg.textContent = `✨ 강화 성공! ${WEAPON_NAME[P.c.weapon]} +${P.enh}`;
+      const renamed = wTier(P.enh) !== wTier(P.enh - 1);
+      msg.className = 'ok'; msg.textContent = `✨ 강화 성공! ${weaponName(P.c.weapon, P.enh)} +${P.enh}`;
+      if (renamed) toast(`🌟 무기가 「${weaponName(P.c.weapon, P.enh)}」(으)로 거듭났어요!`, '#ffd76a', 260);
       SFX.lvl();
     } else {
       msg.className = 'fail'; msg.textContent = `강화 실패… 엽전 ${cost}닢이 사라졌어요. (+${P.enh} 그대로)`;
@@ -4256,7 +4270,7 @@ function openEnding() {
   const nGot = NOTE_LIST.filter(n => NOTES_GOT[n.id]).length, dGot = DEX_LIST.filter(d => DEX[d.t] > 0).length;
   const sec = Math.floor(playFrames / 60);
   $('endWho').textContent = `${user ? user.nick : ''} · ${P.c.name}(${P.c.hanja})`;
-  $('endStats').innerHTML = `<span>레벨 <b>Lv.${P.lv}</b></span><span>무기 <b>${WEAPON_NAME[P.c.weapon]} +${P.enh}</b></span><span>역사 노트 <b>${nGot}/${NOTE_LIST.length}</b></span><span>몬스터 도감 <b>${dGot}/${DEX_LIST.length}</b></span><span>물리친 몬스터 <b>${Object.values(DEX).reduce((a, b) => a + b, 0)}마리</b></span><span>모험 시간 <b>${Math.floor(sec / 3600) ? Math.floor(sec / 3600) + '시간 ' : ''}${Math.floor(sec / 60) % 60}분</b></span><span>엽전 <b>${P.coins}닢</b></span>`;
+  $('endStats').innerHTML = `<span>레벨 <b>Lv.${P.lv}</b></span><span>무기 <b>${weaponName(P.c.weapon, P.enh)} +${P.enh}</b></span><span>역사 노트 <b>${nGot}/${NOTE_LIST.length}</b></span><span>몬스터 도감 <b>${dGot}/${DEX_LIST.length}</b></span><span>물리친 몬스터 <b>${Object.values(DEX).reduce((a, b) => a + b, 0)}마리</b></span><span>모험 시간 <b>${Math.floor(sec / 3600) ? Math.floor(sec / 3600) + '시간 ' : ''}${Math.floor(sec / 60) % 60}분</b></span><span>엽전 <b>${P.coins}닢</b></span>`;
   renderEnding('n'); SFX.lvl && SFX.lvl(); clearPressed();
 }
 function closeEnding() { endingOpen = false; $('ending').classList.add('hidden'); clearPressed(); if (P) P.atkCd = Math.max(P.atkCd, 15); }
