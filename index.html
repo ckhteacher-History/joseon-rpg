@@ -303,7 +303,7 @@
 const SAVE_URL = '';
 
 // 버전 — 고칠 때마다 바꾸면, 화면에 보이는 버전으로 새 버전이 열렸는지 확인할 수 있어요.
-const VERSION = 'v5.7 (몬스터 개편)';
+const VERSION = 'v5.8 (모든 맵 BGM)';
 
 /* =========================================================
    조선유랑기 — 조선 후기 배경 횡스크롤 RPG
@@ -3917,8 +3917,12 @@ const BGM_FILES = {
   jeongju: 'bgm/jeongju_1811.mp3',   // 1811 평안도 정주 — 장례의 박자
   jinju: 'bgm/jinju_1862.mp3',       // 1862 경상도 진주 — Twilight Village (진주용으로 새로 만든 곡)
   byeok: 'bgm/byeok_boss.mp3',       // 신분의 벽 앞 (보스) — First Step
+  jinjuseong: 'bgm/jinjuseong_boss.mp3', // 1862 진주성 (보스) — 전통적 전투곡
+  daegu: 'bgm/daegu.mp3',            // 경상도 대구 향촌 — Sunset Village
+  changdeok: 'bgm/changdeok.mp3',    // 1850년대 창덕궁 — 대궤 행진
+  bibyeonsa: 'bgm/bibyeonsa_boss.mp3', // 비변사 (보스) — Creeping Fade
 };
-const BGM_FALLBACK = { jinjuseong: 'dongheon', daegu: 'goeul', changdeok: 'village', bibyeonsa: 'dongheon' };
+const BGM_FALLBACK = {};   // 새 맵을 만들었는데 곡이 아직 없으면 { 새맵: '비슷한 맵' } 처럼 적어 두세요
 const BGM_VOL = 0.45;
 let bgmOn = (() => { try { return localStorage.getItem('joseonRPG_bgm') !== 'off'; } catch (e) { return true; } })();
 let bgmCur = null, bgmSrc = null;
