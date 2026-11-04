@@ -290,7 +290,7 @@
 const SAVE_URL = '';
 
 // 버전 — 고칠 때마다 바꾸면, 화면에 보이는 버전으로 새 버전이 열렸는지 확인할 수 있어요.
-const VERSION = 'v4.1 (레벨 성장 · 어디서나 강화)';
+const VERSION = 'v4.1.1 (원거리 공격 판정 수정)';
 
 /* =========================================================
    조선유랑기 — 조선 후기 배경 횡스크롤 RPG
@@ -1606,7 +1606,7 @@ function updateProjectiles() {
   for (const p of projs) {
     p.x += p.vx; p.y += p.vy || 0; p.life--; p.spin = (p.spin || 0) + 0.25;
     if (p.kind === 'brush' && frame % 2 === 0) fx.push({ type: 'p', x: p.x, y: p.y + rnd(-4, 4), vx: -p.vx * 0.05, vy: rnd(-0.3, 0.3), life: 16, max: 16, color: 'rgba(20,20,20,.55)', s: rnd(2, 4) });
-    const box = { x1: p.x - 9, x2: p.x + 9, y1: p.y - 11, y2: p.y + 11 };
+    const box = { x1: p.x - 9, x2: p.x + 9, y1: p.y - 14, y2: p.y + 30 };   // 아래쪽을 넉넉히: 땅에 붙은 낮은 몬스터(좀벌레 등)도 맞도록
     for (const m of mons) {
       if (!m.dead && overlap(box, monBox(m))) { damageMon(m, roll(p.mult), Math.sign(p.vx)); p.life = 0; break; }
     }
