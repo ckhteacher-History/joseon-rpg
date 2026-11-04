@@ -303,7 +303,7 @@
 const SAVE_URL = '';
 
 // 버전 — 고칠 때마다 바꾸면, 화면에 보이는 버전으로 새 버전이 열렸는지 확인할 수 있어요.
-const VERSION = 'v5.6 (BGM 추가: 진주 · 신분의 벽)';
+const VERSION = 'v5.7 (몬스터 개편)';
 
 /* =========================================================
    조선유랑기 — 조선 후기 배경 횡스크롤 RPG
@@ -441,6 +441,11 @@ const ADDR = { yangban: '나리', jungin: '선생', pyeongmin: '젊은이', nobi
 const MON = {
   boar: { name: '멧돼지', hp: 42, atk: 7, exp: 10, speed: 1.0, w: 56, h: 36, coin: [3, 8] },
   dokkaebi: { name: '도깨비불', hp: 34, atk: 9, exp: 13, speed: 0.8, w: 34, h: 38, float: true, aggro: true, coin: [4, 10] },
+  noru: { name: '노루', hp: 40, atk: 8, exp: 12, speed: 1.4, w: 46, h: 44, coin: [4, 10] },
+  pojol: { name: '타락한 관군', hp: 420, atk: 36, exp: 105, speed: 1.3, w: 32, h: 66, aggro: true, coin: [35, 60], person: 'pojol', weapon: 'club' },
+  tamgwan2: { name: '분노한 탐관오리', hp: 600, atk: 41, exp: 135, speed: 1.15, w: 38, h: 66, aggro: true, coin: [40, 70], person: 'tamgwan2', weapon: 'paddle', shoot: 1, glyph: '債' },
+  sinha: { name: '타락한 세도 가문 신하', hp: 1300, atk: 60, exp: 300, speed: 1.1, w: 32, h: 66, aggro: true, coin: [60, 100], person: 'sinha', weapon: 'brush', shoot: 1, glyph: '官' },
+  samjeong: { name: '삼정 문란 도깨비', hp: 1500, atk: 64, exp: 320, speed: 1.4, w: 50, h: 58, aggro: true, coin: [70, 110] },
   bandit: { name: '산적', hp: 95, atk: 13, exp: 28, speed: 1.2, w: 30, h: 62, aggro: true, coin: [10, 20], person: 'bandit', weapon: 'club' },
   tiger: { name: '산군(山君)', hp: 760, atk: 20, exp: 320, speed: 2.0, w: 116, h: 58, boss: true, coin: [20, 35],
     title: '산군(山君) — 인왕산 호랑이', intro: '어흥!! 산군이 나타났다!' },
@@ -510,9 +515,9 @@ const MAPS = {
       { t: 'boar', a: 380, b: 900, y: GROUND }, { t: 'boar', a: 500, b: 700, y: 372 },
       { t: 'boar', a: 950, b: 1400, y: GROUND }, { t: 'boar', a: 1140, b: 1360, y: 368 },
       { t: 'boar', a: 2500, b: 3000, y: GROUND },
-      { t: 'dokkaebi', a: 790, b: 970, y: 282 }, { t: 'dokkaebi', a: 1470, b: 1690, y: 280 },
-      { t: 'dokkaebi', a: 2110, b: 2350, y: 282 }, { t: 'dokkaebi', a: 2810, b: 3010, y: 282 },
-      { t: 'dokkaebi', a: 1450, b: 1800, y: GROUND },
+      { t: 'noru', a: 790, b: 970, y: 282 }, { t: 'noru', a: 1470, b: 1690, y: 280 },
+      { t: 'noru', a: 2110, b: 2350, y: 282 }, { t: 'noru', a: 2810, b: 3010, y: 282 },
+      { t: 'noru', a: 1450, b: 1800, y: GROUND },
       { t: 'bandit', a: 1600, b: 2100, y: GROUND }, { t: 'bandit', a: 1820, b: 2000, y: 370 },
       { t: 'bandit', a: 2200, b: 2600, y: GROUND }, { t: 'bandit', a: 2480, b: 2680, y: 368 },
       { t: 'bandit', a: 3000, b: 3400, y: GROUND },
@@ -575,9 +580,9 @@ const MAPS = {
         lock: '정주 이야기를 마치면 열려요. 상인 이씨의 부탁을 확인해 보세요.' },
     ],
     spawns: [
-      { t: 'haesuin', a: 1000, b: 1600, y: GROUND }, { t: 'haesuin', a: 1160, b: 1360, y: 372 },
-      { t: 'haesuin', a: 1760, b: 1980, y: 372 }, { t: 'haesuin', a: 1650, b: 2300, y: GROUND },
-      { t: 'haesuin', a: 2360, b: 2560, y: 372 },
+      { t: 'pojol', a: 1000, b: 1600, y: GROUND }, { t: 'pojol', a: 1160, b: 1360, y: 372 },
+      { t: 'pojol', a: 1760, b: 1980, y: 372 }, { t: 'pojol', a: 1650, b: 2300, y: GROUND },
+      { t: 'pojol', a: 2360, b: 2560, y: 372 },
       { t: 'hwangchung', a: 1460, b: 1640, y: 286 }, { t: 'hwangchung', a: 2060, b: 2260, y: 286 },
       { t: 'hwangchung', a: 2660, b: 2840, y: 286 }, { t: 'hwangchung', a: 2250, b: 2850, y: GROUND },
       { t: 'hwangchung', a: 1150, b: 1700, y: GROUND },
@@ -599,10 +604,10 @@ const MAPS = {
         lock: '진주성 문이 굳게 닫혀 있다. 유계춘과 먼저 이야기해 보자.' },
     ],
     spawns: [
-      { t: 'bitdok', a: 1310, b: 1510, y: 372 }, { t: 'bitdok', a: 1660, b: 1840, y: 286 },
-      { t: 'bitdok', a: 1960, b: 2180, y: 372 }, { t: 'bitdok', a: 2290, b: 2490, y: 286 },
-      { t: 'bitdok', a: 2610, b: 2810, y: 372 }, { t: 'bitdok', a: 1450, b: 2150, y: GROUND },
-      { t: 'haesuin', a: 2300, b: 3000, y: GROUND }, { t: 'haesuin', a: 2910, b: 3070, y: 286 },
+      { t: 'tamgwan2', a: 1310, b: 1510, y: 372 }, { t: 'tamgwan2', a: 1660, b: 1840, y: 286 },
+      { t: 'tamgwan2', a: 1960, b: 2180, y: 372 }, { t: 'tamgwan2', a: 2290, b: 2490, y: 286 },
+      { t: 'tamgwan2', a: 2610, b: 2810, y: 372 }, { t: 'tamgwan2', a: 1450, b: 2150, y: GROUND },
+      { t: 'pojol', a: 2300, b: 3000, y: GROUND }, { t: 'pojol', a: 2910, b: 3070, y: 286 },
     ],
   },
   jinjuseong: {
@@ -665,10 +670,10 @@ const MAPS = {
         lock: '비변사 문 앞을 권세가의 하인들이 막고 있다. 임금님을 먼저 뵈어야 할 것 같다.' },
     ],
     spawns: [
-      { t: 'geogan', a: 2650, b: 3200, y: GROUND }, { t: 'geogan', a: 3090, b: 3270, y: 286 }, { t: 'geogan', a: 3700, b: 3910, y: 286 },
+      { t: 'sinha', a: 2650, b: 3200, y: GROUND }, { t: 'sinha', a: 3090, b: 3270, y: 286 }, { t: 'sinha', a: 3700, b: 3910, y: 286 },
       { t: 'noemul', a: 2790, b: 2990, y: 372 }, { t: 'noemul', a: 2900, b: 3500, y: GROUND }, { t: 'noemul', a: 3390, b: 3610, y: 372 },
       { t: 'noemul', a: 3500, b: 4100, y: GROUND },
-      { t: 'cheongji', a: 3300, b: 4000, y: GROUND }, { t: 'cheongji', a: 3990, b: 4150, y: 372 },
+      { t: 'samjeong', a: 3300, b: 4000, y: GROUND }, { t: 'samjeong', a: 3990, b: 4150, y: 372 },
     ],
   },
   bibyeonsa: {
@@ -996,15 +1001,15 @@ const QUESTS = [
     idle: [`오늘은 어느 장으로 가 볼까… 장터를 돌다 보면 팔도 소식은 다 듣게 된다오.`],
   },
   {
-    id: 'q2', npc: 'hunjang', title: '서당의 도깨비불', target: 'dokkaebi', need: 6, reward: { exp: 120, coins: 30 },
+    id: 'q2', npc: 'hunjang', title: '서당 텃밭의 노루', target: 'noru', need: 6, reward: { exp: 120, coins: 30 },
     offer: A => [
       `에헴. 나는 이 마을 <b>서당</b>에서 아이들에게 천자문을 가르치는 훈장이오.`,
       `요즘 뜻있는 선비들은 <b>실학</b>을 한다오. 헛된 말싸움 말고, 백성의 살림살이에 실제로 쓸모 있는 학문을 하자는 것이지.`,
-      `헌데 밤마다 산길에 <b>도깨비불</b>이 떠다녀 아이들이 겁을 먹고 서당에 오질 않소. ${A}, <b>도깨비불 6개</b>를 꺼 주겠소?`,
+      `헌데 요즘 인왕산에서 <b>노루</b>들이 내려와 서당 텃밭의 채소를 몽땅 뜯어 먹는다오. 아이들 점심거리가 없어졌지 뭐요. ${A}, <b>노루 6마리</b>를 산으로 쫓아 주겠소?`,
     ],
-    progress: (c, n) => `도깨비불은 산길 높은 바위 위를 떠다닌다오. 아직 ${c}/${n}개요.`,
+    progress: (c, n) => `노루는 인왕산 산길의 들판과 높은 바위 위를 뛰어다닌다오. 아직 ${c}/${n}마리요.`,
     done: () => [
-      `허허, 수고 많았소! <b>실사구시(實事求是)</b>라 했소. 사실에 근거해 참된 것을 찾으라는 말이지. 도깨비보다 무서운 건 무지(無知)라네.`,
+      `허허, 수고 많았소! 이제 아이들 점심거리 걱정은 덜었구려. 텃밭 하나를 가꾸는 데도 실제로 쓸모 있는 지식이 필요한 법이지. <b>실사구시(實事求是)</b>, 사실에 근거해 참된 것을 찾으라는 말이오.`,
       note(`<b>실학</b> — 조선 후기, 성리학이 현실 문제를 해결하지 못한다는 반성에서 나온 학문이에요. 유형원·이익·정약용은 토지 제도를 고쳐 농민의 삶을 나아지게 하자고 했고, 박지원·박제가는 상공업을 발전시키고 청의 앞선 문물을 받아들이자고 주장했어요.`),
     ],
     idle: [`하늘 천, 따 지… 아이들 글 읽는 소리가 다시 들리니 좋구먼.`],
@@ -1129,13 +1134,13 @@ const QUESTS = [
     idle: [],
   },
   {
-    id: 'q10', npc: 'merchant', title: '바람에 흩어진 격문', target: 'haesuin', item: '격문 조각', drop: 0.55, need: 4, req: 'q9',
+    id: 'q10', npc: 'merchant', title: '바람에 흩어진 격문', target: 'pojol', item: '격문 조각', drop: 0.55, need: 4, req: 'q9',
     reward: { exp: 1200, coins: 150 },
     offer: A => [
       `요즘 고을 곳곳에 <b>격문</b>이 나붙었소. 격문은 사람들에게 뜻을 알리고 함께하자고 부르는 글이오.`,
-      `그런데 세도가의 하수인들이 격문을 찢어 바람에 날려 버렸지. <b>격문 조각 4장</b>을 모아 오시오. 무슨 내용인지 함께 읽어 봅시다.`,
+      `그런데 관아의 <b>타락한 관군</b>들이 격문을 찢어 바람에 날려 버렸지. 백성 편은 들지 않고 뇌물만 챙기는 자들이오. <b>격문 조각 4장</b>을 모아 오시오. 무슨 내용인지 함께 읽어 봅시다.`,
     ],
-    progress: (c, n) => `세도가 하수인들은 정주성 앞 눈 덮인 들판에 있소. 쓰러뜨리면 격문 조각을 떨어뜨릴 거요. (${c}/${n})`,
+    progress: (c, n) => `타락한 관군(포졸)들은 정주성 앞 눈 덮인 들판에 있소. 쓰러뜨리면 격문 조각을 떨어뜨릴 거요. (${c}/${n})`,
     done: () => [
       `조각을 맞춰 보니… "조정은 서북 땅을 더러운 흙처럼 버려두었다. 권세가의 종들조차 서북 사람을 업신여긴다. 어린 임금 곁에서 권세 있는 신하들이 나라를 어지럽힌다…"`,
       `이건 <b>홍경래</b>라는 사람이 돌린 격문이오. 서북 사람에 대한 차별과 세도 정치를 꾸짖고 있구려.`,
@@ -1173,12 +1178,12 @@ const QUESTS = [
     idle: [],
   },
   {
-    id: 'q13', npc: 'chogun', title: '빚 문서 도깨비', target: 'bitdok', need: 7, req: 'q12', reward: { exp: 2000, coins: 200 },
+    id: 'q13', npc: 'chogun', title: '분노한 탐관오리', target: 'tamgwan2', need: 7, req: 'q12', reward: { exp: 2000, coins: 200 },
     offer: A => [
       `어이, 나는 산에서 나무를 해다 파는 <b>초군</b> 돌쇠요. 땅 한 뙈기 없어도 환곡 빚은 꼬박꼬박 지고 있다오.`,
-      `관아 근처엔 백성들의 한이 서린 <b>빚 문서</b>가 도깨비가 되어 날아다닌다는 소문이오. 놈들은 <b>債(빚 채)</b> 자가 적힌 종이를 던진다오. <b>빚 문서 도깨비 7마리</b>를 없애 주시오!`,
+      `백낙신의 수탈에 앞장선 <b>탐관오리</b>들이 빚 문서를 들고 마을마다 행패를 부리고 있소. 백성들이 들고일어난다는 소문을 듣고 잔뜩 <b>화가 났다</b>지. 놈들은 <b>債(빚 채)</b> 자가 적힌 문서를 던진다오. <b>분노한 탐관오리 7명</b>을 혼내 주시오!`,
     ],
-    progress: (c, n) => `빚 문서 도깨비는 남강 가 바위 위를 날아다니오. (${c}/${n})`,
+    progress: (c, n) => `분노한 탐관오리들은 남강 가 들판과 바위 위에 있소. 남원에서 본 탐관오리보다 훨씬 세니 조심하시오! (${c}/${n})`,
     done: () => [
       `후련하구려! 이제 우리 초군들도 유계춘 어른과 함께 진주 관아로 가려 하오.`,
       note(`<b>몰락 양반과 농민</b> — 조선 후기에는 벼슬을 하지 못해 가난해진 <b>몰락 양반</b>이 많았어요. 홍경래, 유계춘처럼 글을 아는 몰락 양반이 계획을 세우고 글을 돌리면, 농민·나무꾼·광산 노동자 같은 사람들이 함께하면서 큰 봉기가 일어났어요.`),
@@ -1299,15 +1304,15 @@ const QUESTS = [
     idle: [`임금님의 명령은 모두 승정원을 거쳐 나간다오.`],
   },
   {
-    id: 'q21', npc: 'seungji', title: '팔려 나간 벼슬', target: 'geogan', need: 6, req: 'q20', reward: { exp: 6000, coins: 400 },
+    id: 'q21', npc: 'seungji', title: '팔려 나간 벼슬', target: 'sinha', need: 6, req: 'q20', reward: { exp: 6000, coins: 400 },
     offer: A => [
-      `요즘 궁궐 안팎에 벼슬을 사고파는 <b>거간꾼</b>들이 들끓소. 돈만 내면 고을 수령 자리도 판다지 뭐요.`,
+      `요즘 세도 가문에 붙은 <b>타락한 신하</b>들이 돈을 받고 벼슬을 팔아넘기고 있소. 돈만 내면 고을 수령 자리도 판다지 뭐요.`,
       `돈을 내고 수령이 된 자는 그 돈을 되찾으려고 백성을 쥐어짜지. 삼정이 문란해진 것도 다 이 때문이오.`,
-      `후원 쪽에 숨어든 <b>벼슬 거간꾼 6명</b>을 쫓아내 주시오. 놈들은 官(벼슬 관) 자가 적힌 임명장을 던진다오.`,
+      `후원 쪽에 모여 음모를 꾸미는 <b>타락한 세도 가문 신하 6명</b>을 혼내 주시오. 놈들은 官(벼슬 관) 자가 적힌 임명장을 던진다오.`,
     ],
-    progress: (c, n) => `거간꾼들은 희정당 너머 후원에 숨어 있소. (${c}/${n})`,
+    progress: (c, n) => `타락한 신하들은 희정당 너머 후원에 모여 있소. (${c}/${n})`,
     done: () => [
-      `수고했소! 하지만 거간꾼 몇을 쫓아낸다고 끝날 일이 아니오. 벼슬을 파는 쪽이 바로 권세가들이니….`,
+      `수고했소! 하지만 신하 몇을 혼낸다고 끝날 일이 아니오. 그 뒤에는 권세가가 버티고 있으니….`,
       note(`<b>매관매직</b> — 세도 정치 시기에는 돈을 받고 벼슬을 사고파는 일이 흔했어요. 돈을 주고 수령이 된 관리들은 본전을 찾으려고 백성을 수탈했고, 이것이 삼정의 문란과 농민 봉기로 이어졌어요.`),
     ],
     idle: [`나랏일이 바로 서야 백성이 편안할 텐데….`],
@@ -2183,6 +2188,9 @@ const LOOKS = {
   king: { robe: '#b0302a', line: '#7a1e1a', pants: '#e9e3d4', shoe: '#1f1f1f', belt: '#d4a73a', hat: 'ikseon', long: true, mustache: true, dragon: true },
   geogan: { robe: '#8a7a3a', line: '#5a4a1a', pants: '#e0d8c0', shoe: '#2a2a2a', belt: '#d4a73a', hat: 'gat', long: true, fat: true, mustache: true },
   cheongji: { robe: '#2a2a3a', line: '#15151f', pants: '#2e2a26', shoe: '#1f1f1f', belt: '#7a2a2a', hat: 'tanggeon' },
+  pojol: { robe: '#2e3a5a', line: '#1e2840', pants: '#e0d8c8', shoe: '#1f1f1f', belt: '#c0392b', hat: 'jeollip', chest: '捕', mustache: true, face: 'sneer' },
+  tamgwan2: { robe: '#4d7a5a', line: '#355a40', pants: '#e9e3d4', shoe: '#1f1f1f', belt: '#d4a73a', hat: 'samo', long: true, fat: true, mustache: true, hyungbae: true, face: 'angry' },
+  sinha: { robe: '#5a3a6a', line: '#3a2048', pants: '#e9e3d4', shoe: '#1f1f1f', belt: '#d4a73a', hat: 'samo', long: true, mustache: true, hyungbae: true, face: 'sly' },
   sedo: { robe: '#6a1e3a', line: '#4a0e2a', pants: '#e9e3d4', shoe: '#1f1f1f', belt: '#ffd23a', hat: 'samo', long: true, fat: true, beard: true, hyungbae: true },
   honggr: { robe: '#6a2e2a', line: '#4a1e1a', pants: '#e0d8c8', shoe: '#1f1f1f', belt: '#d4a73a', hat: 'jeollip', long: true, mustache: true },
   eosa: { robe: '#cfc6ae', line: '#a89e84', pants: '#cfc6ae', shoe: '#5a4a38', belt: '#6b5a40', hat: 'gat', long: true, patch: true, prop: 'mapae' },
@@ -2275,13 +2283,28 @@ function drawPerson(g, x, y, look, dir, o = {}) {
   // 머리
   g.fillStyle = '#f2d4b2'; ell(g, 1, -48, 12, 12);
   g.fillStyle = L.hair || '#1d1a18'; g.beginPath(); g.arc(1, -49, 12.4, Math.PI * 0.92, Math.PI * 1.98); g.closePath(); g.fill();
-  g.fillStyle = '#1d1a18'; ell(g, 7.5, -47, 1.6, 2.4); ell(g, 2, -47, 1.6, 2.4);
+  if (L.face === 'sly') {   // 음흉하게 가늘게 뜬 눈
+    g.strokeStyle = '#1d1a18'; g.lineWidth = 1.6;
+    g.beginPath(); g.moveTo(0, -46.5); g.quadraticCurveTo(2, -48, 4, -46.5); g.moveTo(5.5, -46.5); g.quadraticCurveTo(7.5, -48, 9.5, -46.5); g.stroke();
+    g.beginPath(); g.moveTo(5, -52); g.lineTo(10, -51); g.stroke();
+  } else { g.fillStyle = '#1d1a18'; ell(g, 7.5, -47, 1.6, 2.4); ell(g, 2, -47, 1.6, 2.4); }
+  if (L.face === 'angry') {   // 화난 눈썹, 붉은 얼굴, 핏대
+    g.strokeStyle = '#1d1a18'; g.lineWidth = 2;
+    g.beginPath(); g.moveTo(-1, -53.5); g.lineTo(4, -50.5); g.moveTo(5.5, -50.5); g.lineTo(10.5, -53.5); g.stroke();
+    g.fillStyle = 'rgba(225,50,35,.42)'; ell(g, 2, -47, 11, 9);
+    g.strokeStyle = '#e0302a'; g.lineWidth = 1.5;
+    g.beginPath(); g.moveTo(-8, -56); g.lineTo(-4, -56); g.moveTo(-6, -58); g.lineTo(-6, -54); g.moveTo(-9, -58.5); g.lineTo(-3, -53.5); g.stroke();
+  }
+  if (L.face === 'sneer') { g.strokeStyle = '#1d1a18'; g.lineWidth = 1.6; g.beginPath(); g.moveTo(0, -51.5); g.lineTo(4, -50.5); g.moveTo(5.5, -50.5); g.lineTo(10, -52); g.stroke(); }
   g.fillStyle = 'rgba(230,120,100,.35)'; ell(g, 9, -42.5, 2.6, 1.8);
   if (o.hurt) { g.strokeStyle = '#1d1a18'; g.lineWidth = 1.2; g.beginPath(); g.moveTo(5, -40); g.lineTo(9, -40); g.stroke(); }
   if (L.beard) {
     g.fillStyle = '#f5f5f5'; g.beginPath(); g.moveTo(1, -41); g.lineTo(11, -42); g.lineTo(6, -27); g.closePath(); g.fill();
     g.fillRect(3, -43, 8, 2);
   }
+  if (L.face === 'sly') { g.strokeStyle = '#7a2a2a'; g.lineWidth = 1.3; g.beginPath(); g.moveTo(4, -39.5); g.quadraticCurveTo(8, -38.5, 10.5, -41.5); g.stroke(); }
+  if (L.face === 'angry') { g.strokeStyle = '#5a1a1a'; g.lineWidth = 1.5; g.beginPath(); g.moveTo(4, -38.5); g.quadraticCurveTo(7, -41, 10, -38.5); g.stroke(); }
+  if (L.chest) { g.fillStyle = '#f2e6c8'; ell(g, 1, -27, 5.5, 5.5); g.fillStyle = '#c0392b'; g.font = 'bold 8px serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(L.chest, 1, -26.5); g.textBaseline = 'alphabetic'; }
   if (L.mustache) { g.strokeStyle = '#1d1a18'; g.lineWidth = 1.6; g.beginPath(); g.moveTo(4, -41); g.quadraticCurveTo(7, -43, 11, -40); g.stroke(); }
   if (L.mask) { g.fillStyle = '#2a2522'; g.beginPath(); g.arc(1, -48, 12.5, 0.1, Math.PI - 0.1); g.closePath(); g.fill(); }
   drawHat(g, L);
@@ -2392,6 +2415,13 @@ function drawMonster(m) {
     ctx.translate(m.x, fy); ctx.scale(sc, sc);
     if (m.windup > 0) ctx.translate(Math.sin(frame * 1.3) * 1.5, 0);
     drawPerson(ctx, 0, 0, m.d.person, m.dir, { walk: true, t: frame + m.phase * 10, weapon: m.d.weapon, atk: swing ? 1 - ((frame + m.phase * 30) % 36) / 36 : 0 });
+    if (m.t === 'tamgwan2' && !m.dead) {   // 머리끝까지 화가 나서 김이 펄펄
+      for (let i = 0; i < 3; i++) {
+        const k = ((frame * 0.8 + i * 20 + m.phase * 10) % 60) / 60;
+        ctx.fillStyle = `rgba(255,255,255,${0.75 * (1 - k)})`;
+        ell(ctx, (i - 1) * 9 + Math.sin(k * 6 + i) * 3, -80 - k * 22, 4 + k * 5, 3 + k * 4);
+      }
+    }
   }
   else if (m.t === 'tiger') drawTiger(m, fy);
   else if (m.t === 'hwangchung') drawLocusts(m.x, fy, m.phase, m.dir);
@@ -2399,6 +2429,8 @@ function drawMonster(m) {
   else if (m.t === 'gotgan') drawGotgan(m, fy);
   else if (m.t === 'jom') drawJom(m.x, fy, m.phase, m.dir);
   else if (m.t === 'noemul') drawNoemul(m.x, fy, m.phase, m.dir);
+  else if (m.t === 'noru') drawNoru(m.x, fy, m.phase, m.dir);
+  else if (m.t === 'samjeong') drawSamjeong(m.x, fy, m.phase, m.dir);
   else if (m.t === 'byeok') drawByeok(m, fy);
   ctx.restore();
   if (!m.dead && (m.showHp > 0 || m.d.boss) && !m.d.boss) {
@@ -2480,6 +2512,48 @@ function drawDebtGhost(x, y, ph, dir) {
   ctx.fillStyle = '#c0392b'; ctx.font = F(15, true); ctx.textAlign = 'center'; ctx.fillText('債', 0, 9);
   ctx.fillStyle = '#2a1a3a'; ell(ctx, -5 + dir * 2, -8, 2.2, 3); ell(ctx, 5 + dir * 2, -8, 2.2, 3);
   ctx.restore();
+}
+
+function drawNoru(x, y, ph, dir) {
+  const lg = Math.sin(ph * 2.6) * 5;
+  ctx.save(); ctx.translate(x, y); ctx.scale(dir, 1);
+  ctx.fillStyle = 'rgba(0,0,0,.18)'; ell(ctx, 0, 0, 22, 4);
+  ctx.strokeStyle = '#7a5232'; ctx.lineWidth = 3.5; ctx.lineCap = 'round';
+  [[-13, lg], [-7, -lg], [9, -lg], [15, lg]].forEach(([lx, o]) => { ctx.beginPath(); ctx.moveTo(lx, -20); ctx.lineTo(lx + o * 0.6, -1); ctx.stroke(); });
+  ctx.fillStyle = '#a8784a'; ell(ctx, 0, -24, 20, 10);
+  ctx.fillStyle = '#f2ead8'; ell(ctx, -18, -24, 5, 6);
+  ctx.fillStyle = '#a8784a'; ctx.beginPath(); ctx.moveTo(12, -28); ctx.lineTo(20, -40); ctx.lineTo(25, -38); ctx.lineTo(18, -24); ctx.closePath(); ctx.fill();
+  ell(ctx, 25, -40, 7, 5);
+  ctx.fillStyle = '#3a2a1e'; ell(ctx, 31, -39, 1.8, 1.6);
+  ctx.fillStyle = '#111'; ell(ctx, 26, -42, 1.5, 1.5);
+  ctx.fillStyle = '#946642'; ctx.beginPath(); ctx.ellipse(20, -46, 2.5, 5, -0.5, 0, TAU); ctx.fill();
+  ctx.strokeStyle = '#6a4a2a'; ctx.lineWidth = 1.8;
+  ctx.beginPath(); ctx.moveTo(23, -44); ctx.lineTo(22, -53); ctx.moveTo(22, -49); ctx.lineTo(19, -52); ctx.moveTo(26, -44); ctx.lineTo(27, -52); ctx.stroke();
+  ctx.restore();
+}
+
+function drawSamjeong(x, y, ph, dir) {
+  const bob = Math.sin(ph * 2) * 2;
+  ctx.save(); ctx.translate(x, y); ctx.scale(dir, 1);
+  ctx.fillStyle = 'rgba(0,0,0,.2)'; ell(ctx, 0, 0, 26, 5);
+  ctx.fillStyle = '#5a2a6a'; ctx.fillRect(-14, -16, 9, 16); ctx.fillRect(6, -16, 9, 16);
+  ctx.fillStyle = '#7a3a8a'; ell(ctx, 0, -32 + bob, 24, 22);
+  ctx.fillStyle = '#9a5aaa'; ell(ctx, 4, -28 + bob, 13, 11);
+  ctx.fillStyle = '#f5d24a';
+  ctx.beginPath(); ctx.moveTo(-10, -50 + bob); ctx.lineTo(-7, -64 + bob); ctx.lineTo(-3, -51 + bob); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(6, -51 + bob); ctx.lineTo(10, -64 + bob); ctx.lineTo(13, -50 + bob); ctx.fill();
+  ctx.fillStyle = '#fff'; ell(ctx, 4, -38 + bob, 5, 5.5); ell(ctx, 15, -38 + bob, 5, 5.5);
+  ctx.fillStyle = '#c0102a'; ell(ctx, 5.5, -37 + bob, 2.2, 3); ell(ctx, 16.5, -37 + bob, 2.2, 3);
+  ctx.fillStyle = '#2a0a2a'; ctx.beginPath(); ctx.ellipse(10, -26 + bob, 8, 4, 0, 0, Math.PI); ctx.fill();
+  ctx.restore();
+  // 삼정(전정·군정·환곡)을 뜻하는 세 장의 문서가 몸 주위를 맴돌아요
+  ['田', '軍', '還'].forEach((ch, i) => {
+    const a = ph * 1.6 + i * TAU / 3, px = x + Math.cos(a) * 32, py = y - 34 + Math.sin(a) * 14;
+    ctx.fillStyle = '#f3e7c8'; ctx.fillRect(px - 8, py - 9, 16, 18);
+    ctx.strokeStyle = '#8a6a3e'; ctx.lineWidth = 1; ctx.strokeRect(px - 8, py - 9, 16, 18);
+    ctx.fillStyle = '#7a1a3a'; ctx.font = F(12, true); ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(ch, px, py + 1);
+    ctx.textBaseline = 'alphabetic';
+  });
 }
 
 function drawNoemul(x, y, ph, dir) {
