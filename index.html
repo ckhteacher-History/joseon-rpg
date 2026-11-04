@@ -277,7 +277,7 @@
         </div>
         <button class="btn" id="fgBtn">⚒ 강화하기</button>
         <div id="fgMsg"></div>
-        <div class="fgHint">+7까지는 단계마다 공격력 +10%, <b style="color:#ffcf7a">+8부터는 성공할 때마다 +20%</b> (최대 +15). 실패해도 강화 단계는 그대로예요. 엽전만 사라져요. · Space/Enter: 강화 · E/Esc: 닫기</div>
+        <div class="fgHint">강화할 때마다 사거리 +4%. +7까지는 단계마다 공격력 +10%, <b style="color:#ffcf7a">+8부터는 성공할 때마다 +20%</b> (최대 +15). 실패해도 강화 단계는 그대로예요. 엽전만 사라져요. · Space/Enter: 강화 · E/Esc: 닫기</div>
       </div>
     </div>
   </div>
@@ -369,7 +369,7 @@
 const SAVE_URL = '';
 
 // 버전 — 고칠 때마다 바꾸면, 화면에 보이는 버전으로 새 버전이 열렸는지 확인할 수 있어요.
-const VERSION = 'v7.6 (플레이 중 몬스터 도감)';
+const VERSION = 'v7.7 (강화 단계별 사거리 증가)';
 
 /* =========================================================
    조선유랑기 — 조선 후기 배경 횡스크롤 RPG
@@ -1692,17 +1692,20 @@ function monY(m) { return (m.d.float ? m.y - 42 + Math.sin(m.phase) * 8 : m.y) -
 function monBox(m) { const fy = monY(m); return { x1: m.x - m.d.w / 2, x2: m.x + m.d.w / 2, y1: fy - m.d.h, y2: fy }; }
 const overlap = (a, b) => a.x1 < b.x2 && a.x2 > b.x1 && a.y1 < b.y2 && a.y2 > b.y1;
 
+// 강화할수록 사거리도 늘어나요: 단계마다 +4% (+15면 +60%)
+const rangePct = n => 4 * (n || 0);
+const rangeMult = () => 1 + rangePct(P ? P.enh : 0) / 100;
 function doAttack() {
   const c = P.c;
   P.atkCd = atkCdOf(); P.atkAnim = P.atkLen = 14; SFX.swing();
   if (c.type === 'ranged') {
     const brush = c.proj === 'brush';
     projs.push({
-      x: P.x + P.dir * 22, y: P.y - 34, vx: P.dir * (brush ? 8.5 : 11.5), vy: 0, life: brush ? 55 : 42,
+      x: P.x + P.dir * 22, y: P.y - 34, vx: P.dir * (brush ? 8.5 : 11.5), vy: 0, life: Math.round((brush ? 55 : 42) * rangeMult()),
       kind: c.proj, mult: 1, glyph: '文仁義禮智'[Math.floor(Math.random() * 5)], spin: 0,
     });
   } else {
-    const r = c.reach;
+    const r = Math.round(c.reach * rangeMult());
     const n = meleeHit(P.x + (P.dir > 0 ? 0 : -r), P.x + (P.dir > 0 ? r : 0), P.y - 70, P.y + 6, 1, c.maxHit, 1);
     fx.push({ type: 'slash', x: P.x + P.dir * 18, y: P.y - 32, dir: P.dir, r: r * 0.6, life: 12, max: 12, color: n ? '255,240,200' : '255,255,255' });
   }
@@ -1729,10 +1732,10 @@ function doSkill() {
   if (P.cid === 'yangban') {
     skillFlash = { c: '255,215,106', life: 22, max: 22 };
     fx.push({ type: 'glyph', x: cx, y: P.y - 150, text: '號令!', size: 64, color: '255,215,106', life: 70, max: 70 });
-    [0, 9, 18].forEach((d, i) => fx.push({ type: 'ring', x: cx, y: cy, r: 10, max: 360 - i * 50, life: 40, maxLife: 40, color: '255,215,106', delay: d, w: 10 }));
+    [0, 9, 18].forEach((d, i) => fx.push({ type: 'ring', x: cx, y: cy, r: 10, max: (360 - i * 50) * rangeMult(), life: 40, maxLife: 40, color: '255,215,106', delay: d, w: 10 }));
     fx.push({ type: 'gring', x: cx, y: P.y, r: 10, max: 380, life: 45, max2: 45, color: '255,200,80' });
     for (let i = 0; i < 36; i++) { const a = i / 36 * TAU; fx.push({ type: 'p', x: cx, y: cy, vx: Math.cos(a) * rnd(4, 8), vy: Math.sin(a) * rnd(3, 6), life: 40, max: 40, color: '#ffd76a', s: rnd(3, 6) }); }
-    const hit = mons.filter(m => !m.dead && Math.hypot(m.x - P.x, monY(m) - P.y) < 360);
+    const hit = mons.filter(m => !m.dead && Math.hypot(m.x - P.x, monY(m) - P.y) < 360 * rangeMult());
     hit.forEach((m, i) => {
       fx.push({ type: 'pillar', x: m.x, y: m.y, w: 44, h: 260, life: 42, max: 42, color: '255,220,110', delay: 6 + i * 3 });
       fx.push({ type: 'tp', x: m.x, y: monY(m) - m.d.h - 30, vx: 0, vy: -1.1, text: '令', size: 34, color: '#ffe08a', life: 50, max: 50, delay: 6 + i * 3 });
@@ -1748,16 +1751,16 @@ function doSkill() {
     fx.push({ type: 'pillar', x: cx, y: P.y, w: 70, h: 300, life: 60, max: 60, color: '120,235,160' });
     fx.push({ type: 'gring', x: cx, y: P.y, r: 10, max: 120, life: 50, max2: 50, color: '120,235,160' });
     for (let i = 0; i < 22; i++) fx.push({ type: 'tp', x: cx + rnd(-40, 40), y: P.y - rnd(0, 30), vx: 0, vy: -rnd(1.2, 2.4), text: '✚', size: rnd(14, 24), color: '#7fffb0', life: 50, max: 50, delay: Math.floor(i * 1.8) });
-    [-0.18, 0, 0.18].forEach(a => projs.push({ x: P.x + P.dir * 20, y: P.y - 34, vx: P.dir * 11 * Math.cos(a), vy: 11 * Math.sin(a), life: 45, kind: 'needle', mult: 1.4 * pw, big: true }));
+    [-0.18, 0, 0.18].forEach(a => projs.push({ x: P.x + P.dir * 20, y: P.y - 34, vx: P.dir * 11 * Math.cos(a), vy: 11 * Math.sin(a), life: Math.round(45 * rangeMult()), kind: 'needle', mult: 1.4 * pw, big: true }));
   } else if (P.cid === 'pyeongmin') {
     skillFlash = { c: '255,150,70', life: 20, max: 20 };
     fx.push({ type: 'glyph', x: cx, y: P.y - 150, text: '덩 기덕 쿵!', size: 50, color: '255,160,80', life: 70, max: 70 });
-    [0, 8, 16, 24].forEach((d, i) => fx.push({ type: 'ring', x: cx, y: cy, r: 10, max: 250 - i * 25, life: 34, maxLife: 34, color: i % 2 ? '90,150,235' : '240,120,60', delay: d, w: 9 }));
+    [0, 8, 16, 24].forEach((d, i) => fx.push({ type: 'ring', x: cx, y: cy, r: 10, max: (250 - i * 25) * rangeMult(), life: 34, maxLife: 34, color: i % 2 ? '90,150,235' : '240,120,60', delay: d, w: 9 }));
     [0, 12].forEach(d => fx.push({ type: 'gring', x: cx, y: P.y, r: 10, max: 260, life: 40, max2: 40, color: '240,150,70', delay: d }));
     const notesT = ['♪', '♫', '♬', '♩'];
     for (let i = 0; i < 18; i++) { const a = -Math.PI * (i / 17); fx.push({ type: 'tp', x: cx, y: cy, vx: Math.cos(a) * rnd(3, 6), vy: Math.sin(a) * rnd(2.5, 5), text: notesT[i % 4], size: rnd(20, 30), color: i % 2 ? '#8fc0ff' : '#ffb070', life: 55, max: 55, wob: true, delay: (i % 3) * 5 }); }
     for (let i = 0; i < 20; i++) fx.push({ type: 'p', x: cx + rnd(-30, 30), y: P.y - 2, vx: rnd(-5, 5), vy: -rnd(1, 3), life: 34, max: 34, color: 'rgba(200,170,120,.8)', s: rnd(4, 8) });
-    mons.filter(m => !m.dead && Math.hypot(m.x - P.x, monY(m) - P.y) < 240)
+    mons.filter(m => !m.dead && Math.hypot(m.x - P.x, monY(m) - P.y) < 240 * rangeMult())
       .forEach(m => damageMon(m, roll(1.8 * pw), Math.sign(m.x - P.x) || 1, 4, 70));
     shake = 8;
   } else {
@@ -1767,7 +1770,7 @@ function doSkill() {
     [[0, 100, 0], [5, 120, 0.5], [10, 140, -0.5]].forEach(([d, r, tilt]) => fx.push({ type: 'slash', x: P.x + P.dir * 40, y: P.y - 40, dir: P.dir, r, life: 26, max: 26, color: '255,110,70', big: true, delay: d, tilt }));
     for (let i = 0; i < 14; i++) fx.push({ type: 'streak', x: P.x + P.dir * rnd(10, 60), y: P.y - rnd(10, 100), vx: P.dir * rnd(12, 18), len: rnd(40, 90), life: 18, max: 18, color: '255,200,150', delay: Math.floor(rnd(0, 8)) });
     for (let i = 0; i < 24; i++) fx.push({ type: 'p', x: P.x + P.dir * rnd(60, 170), y: P.y - rnd(10, 90), vx: P.dir * rnd(1, 5), vy: -rnd(1, 4), life: 30, max: 30, color: i % 2 ? '#ff7a4a' : '#ffd08a', s: rnd(3, 6), delay: 4 });
-    meleeHit(P.x + (P.dir > 0 ? -10 : -170), P.x + (P.dir > 0 ? 170 : 10), P.y - 100, P.y + 8, 3.5 * pw, 6, 3);
+    { const R = Math.round(170 * rangeMult()); meleeHit(P.x + (P.dir > 0 ? -10 : -R), P.x + (P.dir > 0 ? R : 10), P.y - 100, P.y + 8, 3.5 * pw, 6, 3); }
     shake = 12;
   }
 }
@@ -4148,10 +4151,10 @@ function updateForge() {
   $('fgName').innerHTML = `${escapeHtml(w)} +${n}` + (nextLv && n < ENH_MAX ? `<div style="font-size:12px;font-weight:400;color:#cdb88e;margin-top:2px">+${nextLv}이 되면 「${escapeHtml(weaponName(P.c.weapon, nextLv))}」(으)로 거듭나요</div>` : '');
   drawForgeWeapon();
   if (n >= ENH_MAX) {
-    $('fgStat').textContent = `공격력 +${enhPct(n)}% · 최고 단계에 도달했어요!`;
+    $('fgStat').textContent = `공격력 +${enhPct(n)}% · 사거리 +${rangePct(n)}% · 최고 단계에 도달했어요!`;
     $('fgCost').textContent = '-'; $('fgRate').textContent = '-'; $('fgBtn').disabled = true;
   } else {
-    $('fgStat').textContent = `공격력 +${enhPct(n)}% → 성공하면 +${enhPct(n + 1)}%` + (n >= 7 ? ' 🔥' : '');
+    $('fgStat').innerHTML = `공격력 +${enhPct(n)}% → <b>+${enhPct(n + 1)}%</b>` + (n >= 7 ? ' 🔥' : '') + `<br><small>사거리 +${rangePct(n)}% → +${rangePct(n + 1)}%</small>`;
     $('fgCost').textContent = enhCost(n) + '닢';
     $('fgRate').innerHTML = Math.round(enhRate(n) * 100) + '%' + (forgeAtSmith ? ' <small style="color:#ffcf7a;font-size:11px">(+5%)</small>' : '');
     $('fgBtn').disabled = forgeBusy;
