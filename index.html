@@ -347,7 +347,7 @@
   <div id="joy"><div id="joyArrows">◀　　　▶</div><div id="joyKnob"></div></div>
   <button data-k="jump"  style="right:10px;bottom:56px">점프</button>
   <button data-k="attack" style="right:84px;bottom:50px;width:70px;height:70px">공격</button>
-  <button data-k="skill" style="right:20px;bottom:130px">기술</button>
+  <button data-k="skill" id="skillBtn" style="right:20px;bottom:130px;line-height:1.1">기술</button>
   <button data-k="up"    style="right:94px;bottom:136px">대화</button>
   <button data-k="potion" style="right:166px;bottom:56px;width:50px;height:50px;font-size:13px">국밥</button>
   <button data-k="recall" style="left:14px;bottom:196px;width:50px;height:50px;font-size:12px;line-height:1.1">한양<br>귀환</button>
@@ -364,7 +364,7 @@
 const SAVE_URL = '';
 
 // 버전 — 고칠 때마다 바꾸면, 화면에 보이는 버전으로 새 버전이 열렸는지 확인할 수 있어요.
-const VERSION = 'v7.0 (노트 인물 그림 · 모바일 조이스틱·전체화면)';
+const VERSION = 'v7.1 (모바일 기술 버튼 이름 · 자동 포탈)';
 
 /* =========================================================
    조선유랑기 — 조선 후기 배경 횡스크롤 RPG
@@ -1488,7 +1488,7 @@ const QUESTS = [
    ========================================================= */
 let state = 'login', map = MAPS.village, mapId = 'village', camX = 0, titleCam = 0, frame = 0;
 let P = null, mons = [], projs = [], eprojs = [], coins = [], fx = [], floats = [], toasts = [];
-let skillFlash = null, shake = 0, trans = null, banner = null, dialog = null, helpT = 0, ended = false, playFrames = 0;
+let skillBtnFor = null, skillFlash = null, shake = 0, trans = null, banner = null, dialog = null, helpT = 0, ended = false, playFrames = 0;
 let user = null, saveFlash = 0, saveFail = false;
 const QS = {};
 
@@ -1526,6 +1526,7 @@ function startGame(cid) {
 function enterMap(id, x) {
   mapId = id; map = MAPS[id];
   P.x = x; P.y = GROUND; P.vx = P.vy = 0; P.onGround = true; P.plat = null;
+  P.ptT = 0; P.ptHold = map.portals.find(p => Math.abs(p.x - x) < 50) || null;   // 도착하자마자 다시 이동하지 않도록
   mons = map.spawns.map(makeMon);
   projs = []; eprojs = []; coins = []; fx = []; floats = [];
   banner = { text: map.name, life: 170 };
@@ -1548,8 +1549,10 @@ function makeMon(s) {
 /* =========================================================
    업데이트
    ========================================================= */
+const SKILL_SHORT = { yangban: '호령', jungin: '처방', pyeongmin: '풍물', nobi: '분노<br>일격' };
 function update() {
   frame++;
+  if (P && SKILL_SHORT[P.cid] && skillBtnFor !== P.cid) { skillBtnFor = P.cid; $('skillBtn').innerHTML = SKILL_SHORT[P.cid]; }
   { const m = !!(notesOpen || endingOpen || forgeOpen || adminOpen || recallOpen); if (m !== document.body.classList.contains('modal')) document.body.classList.toggle('modal', m); }
   if (state !== 'play') { titleCam = (titleCam + 0.6) % (MAPS.village.w - VW); return; }
 
@@ -1645,6 +1648,23 @@ function updatePlayer() {
   if (pressed.skill) doSkill();
   if (pressed.potion) usePotion();
   if (pressed.up) interact();
+  if (document.body.classList.contains('touch')) autoPortal();
+}
+
+// 모바일: 포탈 위에 잠깐(0.5초) 서 있으면 자동으로 이동 — 그냥 지나칠 때는 이동하지 않아요
+const PORTAL_STAY = 30;
+function autoPortal() {
+  if (P.dead || trans || dialog) return;
+  const pt = map.portals.find(p => Math.abs(p.x - P.x) < 50 && P.y > GROUND - 60);
+  if (!pt) { P.ptHold = null; P.ptT = 0; return; }
+  if (P.ptHold === pt) return;                 // 방금 도착했거나 이미 처리한 포탈 → 한 번 벗어나야 다시 작동
+  if (pt.req && !pt.req()) { P.ptHold = pt; P.ptT = 0; toast(pt.lock, '#f3e3c0', 220); return; }
+  P.ptT = (P.ptT || 0) + 1;
+  if (P.ptT >= PORTAL_STAY) {
+    P.ptHold = pt; P.ptT = 0;
+    beep(300, 0.4, 'sine', 0.05, 500);
+    travel(typeof pt.to === 'function' ? pt.to() : pt.to, pt.tx);
+  }
 }
 
 function revivePlayer() {
@@ -3349,6 +3369,14 @@ function drawBossGloom(m, cam) {
   if (m.dark === 'night') { ctx.fillStyle = 'rgba(255,245,210,.85)'; ell(ctx, cam + 760, 80, 22, 22); ctx.fillStyle = shade; ell(ctx, cam + 769, 75, 20, 20); }   // 초승달
 }
 
+function drawPortalCharge() {
+  if (!P || !P.ptT || P.ptT < 4) return;
+  const k = P.ptT / PORTAL_STAY;
+  ctx.save(); ctx.strokeStyle = 'rgba(126,200,255,.9)'; ctx.lineWidth = 5; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.arc(P.x, P.y - 95, 14, -Math.PI / 2, -Math.PI / 2 + k * TAU); ctx.stroke();
+  ctx.font = F(11, true); ctx.textAlign = 'center'; ctx.fillStyle = '#dff1ff'; ctx.fillText('이동', P.x, P.y - 91);
+  ctx.restore();
+}
 function drawPortal(pt) {
   const label = typeof pt.label === 'function' ? pt.label() : pt.label;
   const x = pt.x, y = GROUND - 44, locked = pt.req && !pt.req();
@@ -3756,6 +3784,7 @@ function render() {
     coins.forEach(drawCoin);
     mons.forEach(drawMonster);
     drawPlayer();
+    drawPortalCharge();
     projs.forEach(drawProjectile);
     eprojs.forEach(drawPaper);
     fx.forEach(drawFx);
