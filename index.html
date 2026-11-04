@@ -369,7 +369,7 @@
 const SAVE_URL = '';
 
 // 버전 — 고칠 때마다 바꾸면, 화면에 보이는 버전으로 새 버전이 열렸는지 확인할 수 있어요.
-const VERSION = 'v7.8 (역사 노트 정리)';
+const VERSION = 'v7.9 (배달·호위 퀘스트)';
 
 /* =========================================================
    조선유랑기 — 조선 후기 배경 횡스크롤 RPG
@@ -1125,16 +1125,30 @@ const CP = {};   // 통과한 장 복습 퀴즈(장 번호)
 const QZ = {};   // 맞힌 퀴즈 기록
 const QUESTS = [
   {
-    id: 'q1', npc: 'bobusang', title: '장시 가는 길', target: 'boar', need: 5, reward: { exp: 80, coins: 40 },
+    id: 'q1', npc: 'bobusang', title: '장시에 낼 물건 떼 오기', need: 2, reward: { exp: 100, coins: 40 },
+    steps: [
+      { npc: 'yeogak', item: '소금 한 짐', pages: [
+        `보부상 김씨가 보냈다고? 옳거니, 기다리고 있었소. 나는 한강 포구에서 <b>여각</b>을 하는 최가요.`,
+        `서해에서 배로 실어 온 <b>소금</b>, 남해에서 올라온 어물, 삼남의 곡식 같은 큰 짐이 포구에 닿으면, 우리 여각이 짐을 받아 창고에 맡아 두었다가 상인들에게 팔아 준다오. 뱃사람과 말에게 잠자리와 먹이도 내주지.`,
+        `자, 김씨 몫의 <b>소금 한 짐</b>이오. 거래를 붙여 준 대가로 <b>구전</b>(수수료)은 이미 받았으니 그대로 가져가시오.`,
+      ] },
+      { npc: 'gaekju', item: '무명 한 필', pages: [
+        `어서 오시오. 나는 <b>객주</b> 한가요. 지방에서 물건을 지고 올라온 상인들이 우리 객주에 물건을 맡기면, 내가 살 사람을 찾아 대신 팔아 준다오. 이걸 <b>위탁 판매</b>라 하지.`,
+        `물건을 맡아 두는 창고, 상인들이 묵는 방, 급할 때 돈을 빌려주는 일까지 다 우리가 하오. 그러니 장사꾼들은 객주를 믿고 드나들지.`,
+        `보부상 김씨가 주문한 <b>무명(면포) 한 필</b>이 여기 있소. 장시에 내다 팔면 좋은 값을 받을 거요.`,
+      ] },
+    ],
     offer: A => [
       `어이쿠, ${A}! 마침 잘 만났소. 나는 등짐 지고 팔도 장시를 도는 <b>보부상</b> 김가요.`,
       `요즘은 닷새마다 서는 <b>장시</b>가 전국에 천 개가 넘는다오. 물건이 돌고 돈이 도니 장사할 맛이 나지!`,
-      `헌데 장터 오른쪽 길 너머 <b>인왕산 산길</b>에 멧돼지가 들끓어 짐을 지고 넘을 수가 없소. <b>멧돼지 5마리</b>만 쫓아 주시오!`,
+      `그런데 다음 장에 내다 팔 물건을 아직 못 떼 왔소. 장터의 <b>여각 주인 최씨</b>에게서 <b>소금</b>을, <b>객주 주인 한씨</b>에게서 <b>무명</b>을 받아다 주시겠소? 머리 위에 📦 표시가 있는 사람들이오.`,
     ],
-    progress: (c, n) => `멧돼지는 장터 오른쪽 끝 길로 나가면 있소. 아직 ${c}/${n}마리요.`,
+    progress: (c, n) => `여각 최씨에게서 소금, 객주 한씨에게서 무명을 받아 오시오. 📦 표시가 있는 사람들이오. (${c}/${n})`,
     done: () => [
-      `허허, 이제 길이 뚫렸구려! 약속한 사례요. 숙종 임금 때부터 온 나라에 널리 쓰인 <b>상평통보</b> 엽전이라오.`,
-      note(`<b>장시와 보부상</b> — 조선 후기에는 농업 생산력이 늘고 상업이 발달하면서 장시가 크게 늘어났어요(18세기 중엽 전국 1,000여 곳). 보부상은 장시를 돌아다니며 물건을 팔던 상인으로, 자기들끼리 조직을 만들어 서로 도왔어요. 상평통보 같은 화폐도 널리 쓰이게 되었지요.`),
+      `옳지, 소금 한 짐에 무명 한 필! 이제 이 짐을 지고 닷새마다 서는 장시를 돌며 팔 거요.`,
+      `보시오, 물건이 이렇게 돌고 돈다오. 바닷가와 지방에서 만든 물건이 배와 수레로 <b>포구</b>에 모이면 <b>여각·객주</b>가 맡아 거래를 붙이고, 우리 <b>보부상</b>이 그걸 떼다가 <b>장시</b>를 돌며 백성들에게 판다오.`,
+      `약속한 사례요. 숙종 임금 때부터 온 나라에 널리 쓰인 <b>상평통보</b> 엽전이라오.`,
+      note(`<b>장시와 보부상</b> — 조선 후기에는 농업 생산력이 늘고 상업이 발달하면서 장시가 크게 늘어났어요(18세기 중엽 전국 1,000여 곳). 물건은 대체로 <b>생산지 → 포구의 여각·객주(보관·위탁 판매·숙박·금융) → 보부상 → 장시 → 백성</b>의 길로 흘렀어요. 보부상은 장시를 돌아다니며 물건을 팔던 상인으로, 자기들끼리 조직을 만들어 서로 도왔어요. 상평통보 같은 화폐도 널리 쓰이게 되었지요.`),
     ],
     idle: [`오늘은 어느 장으로 가 볼까… 장터를 돌다 보면 팔도 소식은 다 듣게 된다오.`],
   },
@@ -1392,15 +1406,17 @@ const QUESTS = [
     idle: [],
   },
   {
-    id: 'q18', npc: 'jeomsun', title: '추노꾼을 막아라', target: 'chuno', need: 5, req: 'q15', reward: { exp: 3400, coins: 270 },
+    id: 'q18', npc: 'jeomsun', title: '점순을 지켜라', escort: true, need: 1, req: 'q15', reward: { exp: 3400, coins: 270 },
+    onAccept: () => startEscort(),
     offer: A => [
       `…쉿. 저는 <b>점순</b>이라고 해요. 원래 어느 양반 댁 노비였는데, 매질을 견디다 못해 도망쳐 나왔어요.`,
       `요즘은 저처럼 도망치는 노비가 아주 많아요. 몰래 도시로 가서 품을 팔거나, 먼 곳에서 상민 행세를 하며 살지요.`,
-      `그런데 도망 노비를 쫓는 <b>추노꾼</b>들이 들판을 뒤지고 있어요. <b>추노꾼 5명</b>만 막아 주세요. 저도, 다른 사람들도 숨을 돌릴 수 있게요.`,
+      `그런데 도망 노비를 쫓는 <b>추노꾼</b>들이 들판 동쪽을 지키고 있어요. 저 들판을 지나 <b>동쪽 고갯길</b>까지만 가면 숨을 곳이 있는데…. 저를 데려다주세요!`,
+      `제가 뒤따라 걸을게요. 너무 멀리 떨어지면 무서워서 못 가니, 꼭 가까이 있어 주세요. 추노꾼이 저를 잡으려 달려들면 막아 주시고요!`,
     ],
-    progress: (c, n) => `추노꾼들은 들판 동쪽에서 사람들을 쫓고 있어요. 발이 아주 빠르니 조심하세요! (${c}/${n})`,
+    progress: () => ESC.arrived ? `여기까지 오다니…! 저에게 말을 걸어 주세요.` : `동쪽 고갯길까지 데려다주세요. 너무 멀리 떨어지지 마세요! (추노꾼이 저를 노려요)`,
     done: () => [
-      `고마워요! 이제 저도 제 이름을 걸고 떳떳하게 살아 볼래요.`,
+      `휴우… 여기까지 오니 숨이 놓여요. 지켜 줘서 고마워요! 이제 저도 제 이름을 걸고 떳떳하게 살아 볼래요.`,
       `참, 그거 아세요? 영조 임금 때부터는 어머니가 양인이면 자식도 양인이 되게 했대요(<b>노비종모법</b>). 그리고 신유년(1801)에는 나라에서 관청 노비 6만여 명의 노비 문서를 불태웠다고 해요!`,
       note(`<b>노비의 감소</b> — 조선 후기에는 도망하는 노비가 늘었고, 돈을 내거나 군공을 세워 양인이 되는 노비도 있었어요. 나라도 군역을 질 양인을 늘리려고 <b>노비종모법</b>(1731)을 시행하고, 1801년에는 <b>공노비 6만여 명</b>을 해방했어요. 1886년에는 노비 세습제가 폐지되었고, 1894년 갑오개혁으로 신분제 자체가 법적으로 폐지되었어요.`),
     ],
@@ -1530,6 +1546,7 @@ function startGame(cid) {
 function enterMap(id, x) {
   mapId = id; map = MAPS[id];
   P.x = x; P.y = GROUND; P.vx = P.vy = 0; P.onGround = true; P.plat = null;
+  if (id === 'daegu') syncEscort();
   P.ptT = 0; P.ptHold = map.portals.find(p => Math.abs(p.x - x) < 50) || null;   // 도착하자마자 다시 이동하지 않도록
   mons = map.spawns.map(makeMon);
   projs = []; eprojs = []; coins = []; fx = []; floats = [];
@@ -1653,6 +1670,7 @@ function updatePlayer() {
   if (pressed.skill) doSkill();
   if (pressed.potion) usePotion();
   if (pressed.up) interact();
+  updateEscort();
   if (document.body.classList.contains('touch')) autoPortal();
 }
 
@@ -1854,6 +1872,41 @@ function hurtPlayer(dmg, fromX) {
   }
 }
 
+/* ---------- 호위: 도망 노비 점순을 동쪽 고갯길까지 ---------- */
+const ESC_START = 2000, ESC_DEST = 3560, ESC_MAXHP = 420;
+const ESC = { on: false, x: ESC_START, hp: ESC_MAXHP, hitCd: 0, arrived: false, moving: false, talkT: 0 };
+function escortActive() { return QS.q18 && QS.q18.state === 'active'; }
+function startEscort() { Object.assign(ESC, { on: true, x: ESC_START, hp: ESC_MAXHP, hitCd: 0, arrived: false, moving: false }); NPCS.jeomsun.x = ESC_START; toast('🛡 점순을 동쪽 고갯길까지 데려다주자! 너무 멀리 떨어지지 말 것', '#ffd76a', 240); }
+function syncEscort() {   // 맵에 들어올 때 점순 위치 맞추기
+  if (QS.q18 && (QS.q18.state === 'done' || QS.q18.count >= 1)) { NPCS.jeomsun.x = ESC_DEST; ESC.on = false; ESC.arrived = true; }
+  else if (escortActive()) { Object.assign(ESC, { on: true, x: ESC_START, hp: ESC_MAXHP, arrived: false }); NPCS.jeomsun.x = ESC_START; }
+  else { NPCS.jeomsun.x = ESC_START; ESC.on = false; ESC.arrived = false; }
+}
+function updateEscort() {
+  if (!ESC.on || mapId !== 'daegu' || !escortActive() || ESC.arrived) return;
+  const d = P.x - ESC.x;
+  ESC.moving = false;
+  if (Math.abs(d) < 230 && !P.dead) { ESC.x += 1.35; ESC.moving = true; }
+  else if (--ESC.talkT <= 0) { ESC.talkT = 150; addFloat(ESC.x, GROUND - 80, '같이 가 주세요!', 'info'); }
+  if (ESC.hitCd > 0) ESC.hitCd--;
+  for (const m of mons) {
+    if (m.dead || m.t !== 'chuno' || m.spawnA < 1) continue;
+    if (Math.abs(m.x - ESC.x) < 26 && m.y >= GROUND - 4 && ESC.hitCd <= 0) {
+      ESC.hp -= m.d.atk * rnd(0.85, 1.15); ESC.hitCd = 45;
+      addFloat(ESC.x, GROUND - 74, '살려 주세요!', 'warn'); beep(260, 0.15, 'square', 0.04, -80);
+      for (let i = 0; i < 6; i++) fx.push({ type: 'p', x: ESC.x, y: GROUND - 34, vx: rnd(-2, 2), vy: rnd(-3, 0), life: 18, max: 18, color: '#ff8a7a', s: 3 });
+    }
+  }
+  if (ESC.hp <= 0) {
+    toast('😢 점순이 추노꾼에게 붙잡혔다… 처음 자리에서 다시 도전하자.', '#ff9a8a', 260);
+    Object.assign(ESC, { x: ESC_START, hp: ESC_MAXHP, hitCd: 60 });
+  }
+  if (ESC.x >= ESC_DEST) {
+    ESC.x = ESC_DEST; ESC.arrived = true; ESC.moving = false;
+    questProgress(QUESTS.find(q => q.id === 'q18'), '점순을 무사히 데려다주었다!');
+  }
+  NPCS.jeomsun.x = ESC.x;
+}
 function updateMonsters() {
   const pb = playerBox();
   for (const m of mons) {
@@ -1866,7 +1919,8 @@ function updateMonsters() {
     }
     if (m.spawnA < 1) m.spawnA = Math.min(1, m.spawnA + 0.03);
     m.phase += 0.06; if (m.hurt > 0) m.hurt--; if (m.showHp > 0) m.showHp--;
-    const dx = P.x - m.x, near = Math.abs(dx) < 280 && Math.abs(P.y - m.y) < 120 && !P.dead;
+    let dx = P.x - m.x, near = Math.abs(dx) < 280 && Math.abs(P.y - m.y) < 120 && !P.dead;
+    if (m.t === 'chuno' && ESC.on && !ESC.arrived && mapId === 'daegu' && Math.abs(ESC.x - m.x) < 320 && Math.abs(ESC.x - m.x) < Math.abs(dx) + 60) { dx = ESC.x - m.x; near = true; }
 
     if (m.t === 'tiger') {
       tigerAI(m, dx);
@@ -2164,6 +2218,8 @@ function travel(to, x) {
   ], () => { trans = { to, x, t: 0 }; });
 }
 
+const pendingStep = (q, npcId) => q.steps && isActive(q) && q.steps.find(st => st.npc === npcId && !((QS[q.id].got || {})[st.npc]));
+const stepQuestFor = npcId => QUESTS.find(q => pendingStep(q, npcId));
 function questFor(npcId) {
   return QUESTS.find(q => isActive(q) && turninOf(q) === npcId && QS[q.id].count >= q.need)   // 완료 보고
     || QUESTS.find(q => isActive(q) && (turninOf(q) === npcId || q.npc === npcId))            // 진행 중
@@ -2190,6 +2246,7 @@ function notesLockPages(q) {
   ];
 }
 function npcStatus(npcId) {
+  if (stepQuestFor(npcId)) return 'step';
   const q = questFor(npcId);
   if (!q || !questUnlocked(q)) return null;
   const s = QS[q.id];
@@ -2199,6 +2256,16 @@ function npcStatus(npcId) {
 
 function talk(npcId) {
   if (npcId === 'smith') { openForge(true); return; }
+  const sq = stepQuestFor(npcId);
+  if (sq) {   // 배달 퀘스트: 물건 받기
+    const st = pendingStep(sq, npcId), n1 = NPCS[npcId];
+    openDialog(n1.name, n1.look, st.pages.slice(), () => {
+      const s1 = QS[sq.id]; s1.got = s1.got || {}; s1.got[st.npc] = 1;
+      SFX.coin(); toast(`📦 ${st.item}을(를) 받았다!`, '#ffcf7a', 200);
+      questProgress(sq, `${st.item} 받음 ${s1.count + 1}/${sq.need}`);
+    });
+    return;
+  }
   const hasQuest = QUESTS.some(x => x.npc === npcId || x.turnin === npcId);
   if (TALKS[npcId] && !hasQuest) { const n0 = NPCS[npcId]; openDialog(n0.name + (n0.real ? ' (실존 인물)' : ''), n0.look, TALKS[npcId].slice()); return; }
   const n = NPCS[npcId], q = questFor(npcId), A = ADDR[P.cid];
@@ -3514,7 +3581,15 @@ function drawPortal(pt) {
 }
 
 function drawNPC(n) {
-  drawPerson(ctx, n.x, GROUND, n.look, n.x < P.x ? 1 : -1, { t: frame, weapon: n.look === 'hunjang' ? null : null });
+  const esc = n.id === 'jeomsun' && ESC.on && !ESC.arrived && escortActive();
+  drawPerson(ctx, n.x, GROUND, n.look, esc ? (ESC.moving ? 1 : (n.x < P.x ? 1 : -1)) : (n.x < P.x ? 1 : -1), { t: frame, walk: esc && ESC.moving });
+  if (esc) {
+    const w = 60, x = n.x - w / 2, y = GROUND - 132;
+    ctx.fillStyle = 'rgba(0,0,0,.6)'; ctx.fillRect(x - 1, y - 1, w + 2, 7);
+    ctx.fillStyle = ESC.hp / ESC_MAXHP > 0.35 ? '#5ad07a' : '#e0704a'; ctx.fillRect(x, y, w * Math.max(0, ESC.hp / ESC_MAXHP), 5);
+    const k = clamp((ESC.x - ESC_START) / (ESC_DEST - ESC_START), 0, 1);
+    ctx.font = F(11, true); ctx.textAlign = 'center'; ctx.fillStyle = '#ffd76a'; ctx.fillText(`🛡 호위 ${Math.round(k * 100)}%`, n.x, y - 5);
+  }
   ctx.font = F(12, true); ctx.textAlign = 'center';
   const tw = ctx.measureText(n.name).width + 12;
   ctx.fillStyle = 'rgba(0,0,0,.6)'; rr(ctx, n.x - tw / 2, GROUND + 5, tw, 18, 4); ctx.fill();
@@ -3534,7 +3609,7 @@ function drawNPC(n) {
     ctx.font = F(18, true); ctx.textAlign = 'center'; ctx.fillStyle = '#ffd76a'; ctx.fillText('⚒', n.x, by);
   }
   if (st) {
-    const sym = { avail: '!', ready: '?', progress: '…', notes: '📜' }[st], col = { avail: '#ffcf3a', ready: '#7fe08a', progress: '#cccccc', notes: '#bfe8a8' }[st];
+    const sym = { avail: '!', ready: '?', progress: '…', notes: '📜', step: '📦' }[st], col = { avail: '#ffcf3a', ready: '#7fe08a', progress: '#cccccc', notes: '#bfe8a8', step: '#ffcf7a' }[st];
     ctx.fillStyle = 'rgba(0,0,0,.35)'; ell(ctx, n.x, by - 7, 12, 12);
     ctx.font = F(22, true); ctx.lineWidth = 4; ctx.strokeStyle = '#3a2410'; ctx.strokeText(sym, n.x, by + 1); ctx.fillStyle = col; ctx.fillText(sym, n.x, by + 1);
   }
@@ -3755,7 +3830,7 @@ function drawQuestTracker() {
   act.forEach((q, i) => {
     const s = QS[q.id], ok = s.count >= q.need;
     ctx.font = F(12, ok); ctx.fillStyle = ok ? '#7fe08a' : '#f3e3c0';
-    ctx.fillText(ok ? `✔ ${q.title} → ${NPCS[turninOf(q)].name}` : `· ${q.title}  ${q.item ? '모은 것' : MON[q.target].name} ${s.count}/${q.need}`, VW - 250, Y + 39 + i * 20);
+    ctx.fillText(ok ? `✔ ${q.title} → ${NPCS[turninOf(q)].name}` : `· ${q.title}  ${q.steps ? '받은 물건' : q.escort ? `남은 거리 ${Math.max(0, Math.round((ESC_DEST - ESC.x) / 10))}걸음 · 점순 HP ${Math.ceil(ESC.hp)}` : q.item ? '모은 것' : MON[q.target].name}${q.escort ? '' : ` ${s.count}/${q.need}`}`, VW - 250, Y + 39 + i * 20);
   });
 }
 
@@ -3899,6 +3974,11 @@ function render() {
   if (state === 'play' && m.dark) drawBossGloom(m, cam);
   if (state === 'play') {
     m.portals.forEach(drawPortal);
+    if (mapId === 'daegu' && escortActive() && !ESC.arrived) {   // 호위 목적지 표시
+      ctx.fillStyle = '#6b4a2b'; ctx.fillRect(ESC_DEST + 30, GROUND - 90, 4, 90);
+      ctx.fillStyle = '#ffd76a'; ctx.beginPath(); ctx.moveTo(ESC_DEST + 34, GROUND - 90); ctx.lineTo(ESC_DEST + 70, GROUND - 80); ctx.lineTo(ESC_DEST + 34, GROUND - 70); ctx.fill();
+      ctx.font = F(12, true); ctx.textAlign = 'center'; ctx.fillStyle = '#fff'; ctx.fillText('동쪽 고갯길', ESC_DEST + 40, GROUND - 98);
+    }
     npcsHere().forEach(drawNPC);
     coins.forEach(drawCoin);
     mons.forEach(drawMonster);
@@ -4251,7 +4331,7 @@ function buildAdminPanel() {
     if (CHAPTER_OF[q.id]) { const tr = tb.insertRow(); tr.className = 'ch'; const td = tr.insertCell(); td.colSpan = 3; td.textContent = CHAPTER_OF[q.id]; }
     const tr = tb.insertRow();
     tr.insertCell().outerHTML = `<td class="qn">${q.id.toUpperCase()}</td>`;
-    const goal = q.target ? (q.item ? `${q.item} ${q.need}개` : `${MON[q.target].name} ${q.need}`) : `${NPCS[q.turnin].name}에게 가기`;
+    const goal = q.steps ? q.steps.map(st => st.item).join(' · ') + ' 전달' : q.escort ? '점순 호위' : q.target ? (q.item ? `${q.item} ${q.need}개` : `${MON[q.target].name} ${q.need}`) : `${NPCS[q.turnin].name}에게 가기`;
     tr.insertCell().innerHTML = `<b>${escapeHtml(q.title)}</b> <span style="color:#8b6a3e">— ${NPCS[q.npc].name} · ${goal}</span>`;
     const td = tr.insertCell(); td.className = 'btns';
     [['before', '받기 전'], ['active', '진행 중'], ['ready', '보고 직전']].forEach(([st, label]) => {
