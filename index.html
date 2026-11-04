@@ -290,7 +290,7 @@
 const SAVE_URL = '';
 
 // 버전 — 고칠 때마다 바꾸면, 화면에 보이는 버전으로 새 버전이 열렸는지 확인할 수 있어요.
-const VERSION = 'v4.1.1 (원거리 공격 판정 수정)';
+const VERSION = 'v5.0 (5장 · 세도 정치의 그늘)';
 
 /* =========================================================
    조선유랑기 — 조선 후기 배경 횡스크롤 RPG
@@ -443,6 +443,11 @@ const MON = {
   chuno: { name: '추노꾼', hp: 1150, atk: 56, exp: 260, speed: 2.0, w: 32, h: 64, aggro: true, coin: [50, 90], person: 'chuno', weapon: 'club' },
   byeok: { name: '신분의 벽', hp: 9000, atk: 62, exp: 6000, speed: 0.6, w: 150, h: 150, boss: true, coin: [150, 250],
     title: '신분의 벽 — 흔들리는 신분 질서', intro: '신분의 벽: "양반은 양반, 천민은 천민! 아무도 넘어올 수 없다!"' },
+  geogan: { name: '벼슬 거간꾼', hp: 1300, atk: 60, exp: 300, speed: 1.1, w: 36, h: 64, aggro: true, coin: [60, 100], person: 'geogan', weapon: 'brush', shoot: 1, glyph: '官' },
+  noemul: { name: '뇌물 상자 도깨비', hp: 1250, atk: 58, exp: 290, speed: 1.3, w: 44, h: 40, aggro: true, coin: [80, 130] },
+  cheongji: { name: '권세가 청지기', hp: 1500, atk: 64, exp: 320, speed: 1.8, w: 32, h: 64, aggro: true, coin: [60, 100], person: 'cheongji', weapon: 'club' },
+  sedo: { name: '세도 대감', hp: 13000, atk: 70, exp: 10000, speed: 1.2, w: 62, h: 116, boss: true, coin: [200, 320], person: 'sedo', weapon: 'paddle', scale: 1.8,
+    title: '세도 대감 — 세도 가문의 권세가 (가상 인물)', intro: '세도 대감: "벼슬도, 과거도, 나라 살림도 모두 우리 가문의 손안에 있다!"' },
   gotgan: { name: '곳간 도깨비', hp: 4500, atk: 48, exp: 3000, speed: 1.5, w: 110, h: 118, boss: true, coin: [120, 200],
     title: '곳간 도깨비 — 백성의 곡식을 삼킨 탐욕', intro: '곳간 도깨비: "내 곳간에 손대지 마라!"' },
 };
@@ -465,7 +470,7 @@ const MAPS = {
       { x: 2640, to: 'mountain', tx: 140, label: '인왕산 산길 ▶' },
       { x: 50, to: 'goeul', tx: 150, label: '◀ 남원 고을 (삼남)', req: () => !!QS.q5,
         lock: '삼남으로 가는 먼 길이다. 지금은 떠날 이유가 없다.' },
-      { x: 1300, to: () => (QS.q15 ? 'daegu' : QS.q12 ? 'jinju' : 'jeongju'), tx: 150, label: '📜 역사 두루마리', req: () => !!QS.q9,
+      { x: 1300, to: () => (QS.q20 ? 'changdeok' : QS.q15 ? 'daegu' : QS.q12 ? 'jinju' : 'jeongju'), tx: 150, label: '📜 역사 두루마리', req: () => !!QS.q9,
         lock: '서당 훈장이 아끼는 두루마리다. 함부로 펼칠 수 없다.' },
     ],
     spawns: [],
@@ -625,6 +630,40 @@ const MAPS = {
     portals: [{ x: 60, to: 'daegu', tx: 3620, label: '◀ 대구 향촌' }],
     spawns: [{ t: 'byeok', a: 400, b: 1450, y: GROUND }],
   },
+
+  /* ---------- 5장 ---------- */
+  changdeok: {
+    name: '1850년대 · 창덕궁', w: 4300, theme: 'palace',
+    platforms: [
+      { x: 2780, y: 372, w: 220 }, { x: 3080, y: 286, w: 200 }, { x: 3380, y: 372, w: 240 },
+      { x: 3700, y: 286, w: 220 }, { x: 3980, y: 372, w: 180 },
+    ],
+    decor: [
+      { t: 'hall', x: 250, hw: 100, floors: 2, sign: '敦化門', gate: true }, { t: 'bridge', x: 760 },
+      { t: 'hall', x: 1330, hw: 150, floors: 2, sign: '仁政殿', base: true }, { t: 'hall', x: 1900, hw: 100, floors: 1, sign: '宣政殿', blue: true, base: true },
+      { t: 'hall', x: 2420, hw: 120, floors: 1, sign: '熙政堂', base: true },
+      { t: 'tree', x: 2700, s: 1.2 }, { t: 'pond', x: 3240 }, { t: 'hall', x: 3560, hw: 80, floors: 2, sign: '宙合樓', base: true },
+      { t: 'tree', x: 3900, s: 1.1 }, { t: 'tree', x: 4150, s: 1 },
+    ],
+    portals: [
+      { x: 50, to: 'village', tx: 1300, label: '◀ 두루마리 밖으로 (한양)' },
+      { x: 4220, to: 'bibyeonsa', tx: 140, label: '비변사 ▶', req: () => !!QS.q23,
+        lock: '비변사 문 앞을 권세가의 하인들이 막고 있다. 임금님을 먼저 뵈어야 할 것 같다.' },
+    ],
+    spawns: [
+      { t: 'geogan', a: 2650, b: 3200, y: GROUND }, { t: 'geogan', a: 3090, b: 3270, y: 286 }, { t: 'geogan', a: 3700, b: 3910, y: 286 },
+      { t: 'noemul', a: 2790, b: 2990, y: 372 }, { t: 'noemul', a: 2900, b: 3500, y: GROUND }, { t: 'noemul', a: 3390, b: 3610, y: 372 },
+      { t: 'noemul', a: 3500, b: 4100, y: GROUND },
+      { t: 'cheongji', a: 3300, b: 4000, y: GROUND }, { t: 'cheongji', a: 3990, b: 4150, y: 372 },
+    ],
+  },
+  bibyeonsa: {
+    name: '비변사 — 세도 가문의 권력 한복판', w: 1600, theme: 'palace',
+    platforms: [{ x: 300, y: 380, w: 170, kind: 'bench' }, { x: 1120, y: 380, w: 170, kind: 'bench' }],
+    decor: [{ t: 'hall', x: 800, hw: 160, floors: 1, sign: '備邊司', base: true }, { t: 'tree', x: 160, s: 1 }],
+    portals: [{ x: 60, to: 'changdeok', tx: 4120, label: '◀ 창덕궁 후원' }],
+    spawns: [{ t: 'sedo', a: 300, b: 1520, y: GROUND }],
+  },
 };
 
 const NPCS = {
@@ -655,6 +694,12 @@ const NPCS = {
   yeokgwan: { name: '역관 오 첨지', map: 'daegu', x: 1520, look: 'yeokgwan', talk: true },
   seoeol: { name: '서얼 유 선비', map: 'daegu', x: 1760, look: 'seoeol', talk: true },
   jeomsun: { name: '도망 노비 점순', map: 'daegu', x: 2000, look: 'jeomsun', talk: true },
+  // 5장 · 창덕궁
+  seungji: { name: '승정원 승지 홍씨', map: 'changdeok', x: 520, look: 'seungji' },
+  sanggung: { name: '늙은 상궁', map: 'changdeok', x: 1000, look: 'sanggung', talk: true },
+  yusaeng: { name: '낙방 유생 송씨', map: 'changdeok', x: 1650, look: 'yusaeng' },
+  seori: { name: '비변사 서리 문씨', map: 'changdeok', x: 2140, look: 'seori', talk: true },
+  king: { name: '철종 임금', map: 'changdeok', x: 2420, look: 'king', talk: true, real: true },
   honggr: { name: '평서대원수 홍경래', map: 'jeongju', x: 2990, look: 'honggr', talk: true, real: true },
   chogun: { name: '초군(나무꾼) 돌쇠', map: 'jinju', x: 760, look: 'chogun' },
 };
@@ -673,6 +718,27 @@ function hojeokChart() {
 
 /* ---------- 장터 사람들의 이야기 (퀘스트 없음) ---------- */
 const TALKS = {
+  sanggung: [
+    `어서 오시오. 나는 이 창덕궁에서 세 분의 임금님을 모신 늙은 상궁이라오.`,
+    `<b>순조</b> 임금께서는 열한 살에 왕위에 오르셨소. 처음엔 대왕대비(정순왕후)께서 수렴청정을 하셨고, 그 뒤에는 왕비의 아버지 <b>김조순</b> 대감의 집안, 곧 <b>안동 김씨</b>가 권세를 쥐었지.`,
+    `순조 임금께서는 효명세자에게 대리청정을 맡겨 세도를 누르려 하셨지만, 세자께서 너무 일찍 돌아가셨다오….`,
+    `그 뒤 여덟 살에 왕위에 오르신 <b>헌종</b> 임금 때에는, 임금의 외가인 <b>풍양 조씨</b>가 안동 김씨와 권세를 다투었소. 헌종 임금께서도 후사 없이 일찍 돌아가셨지.`,
+    `그래서 강화도에 계시던 지금의 임금님(철종)께서 왕위에 오르셨다오. 그리고 다시 안동 김씨의 세상이 되었지….`,
+    note(`<b>세도 정치의 흐름(1800~1863)</b> — 순조 때 정순왕후의 수렴청정이 끝난 뒤 왕비의 집안인 <b>안동 김씨</b>(김조순 등)가 권력을 잡았고, 헌종 때는 왕의 외가인 <b>풍양 조씨</b>(조만영 등)가 안동 김씨와 권력을 다투었어요. 철종 때는 다시 안동 김씨가 권력을 독차지했어요. 이렇게 60여 년 동안 왕실과 혼인한 몇몇 가문이 나라의 권력을 쥐고 흔들었어요.`),
+  ],
+  seori: [
+    `나는 비변사에서 문서를 베껴 쓰는 서리요. <b>비변사</b>가 어떤 곳인지 아시오?`,
+    `원래는 국경의 군사 문제를 의논하려고 만든 임시 기구였지. 그런데 임진왜란을 거치면서 나랏일을 모두 의논하는 최고 기구가 되었소.`,
+    `요즘은 세도 가문 사람들이 비변사의 높은 자리를 차지하고 나랏일을 마음대로 정한다오. 의정부와 6조는 이름만 남았지.`,
+    note(`<b>비변사</b> — 중종 때 국방 문제를 의논하려고 만든 임시 기구였지만, 임진왜란 이후 나라의 중요한 일을 모두 결정하는 최고 기구가 되었어요. 세도 정치 시기에는 세도 가문이 비변사의 주요 자리를 차지하고 권력을 독점했어요. 훗날 흥선 대원군은 비변사를 없애고 의정부와 삼군부의 기능을 되살렸어요.`),
+  ],
+  king: [
+    `그대가 백성들 사이를 두루 다녔다는 이로구려. 나는 이 나라의 임금이오. 사람들은 나를 '강화도령'이라 부르기도 하지.`,
+    `나는 강화도에서 농사를 짓던 왕족이었소. 헌종 임금께서 뒤를 이을 자식 없이 돌아가시자, 대왕대비(순원왕후)께서 나를 불러 왕위에 올리셨지. 열아홉 살 때였소.`,
+    `처음에는 대왕대비께서 수렴청정을 하셨고, 조정의 일은 대왕대비의 친정인 안동 김씨 가문이 좌지우지했소. 내 왕비도 안동 김씨 집안에서 맞았지.`,
+    `임술년(1862)에 삼남의 백성들이 들고일어났을 때, 나는 <b>삼정이정청</b>을 두어 삼정을 바로잡으려 했소. 하지만 권세가들의 반대로 오래가지 못했지….`,
+    note(`<b>철종(재위 1849~1863)</b> — 강화도에서 농사를 짓던 왕족으로, 헌종이 후사 없이 세상을 떠나자 순원왕후의 결정으로 왕위에 올랐어요('강화도령'). 철종 때 안동 김씨의 세도 정치는 절정에 달했고, 1862년 임술 농민 봉기가 일어나자 삼정이정청을 설치했지만 개혁은 곧 흐지부지되었어요.`),
+  ],
   gwonban: [
     `에헴, 비키거라. 나는 한양에서 내려온 <b>김 대감</b>이다. 우리 가문은 대대로 높은 벼슬을 지내 왔지.`,
     `요즘 높은 벼슬자리는 몇몇 힘 있는 가문이 거의 다 차지하고 있다네. 우리처럼 중앙의 권력을 쥔 양반을 사람들은 <b>권반</b>이라 부르지.`,
@@ -827,6 +893,17 @@ Object.assign(QUIZZES, {
   q19: [{ id: 'q19a', q: '양반의 자손이지만 어머니가 첩이라는 이유로 차별받은 사람들은?', c: ['서얼', '향리', '역관', '잔반'],
     hint: '서자(庶子)와 얼자(孼子)를 합친 말이오. 바로 나 같은 사람이지.',
     explain: '서얼은 과거와 벼슬에 제약을 받았지만, 계속된 상소 끝에 1851년 높은 관직에 나아갈 길이 열렸소.' }],
+});
+Object.assign(QUIZZES, {
+  q21: [{ id: 'q21a', q: '세도 정치 시기 세도 가문이 장악해 나라의 중요한 일을 결정한 최고 기구는?', c: ['비변사', '의정부', '집현전', '사헌부'],
+    hint: '원래 국경의 군사 문제를 의논하던 곳이오. 저기 💬 표시가 있는 <b>비변사 서리</b>에게 들어 보시오.',
+    explain: '비변사는 임진왜란 뒤 최고 기구가 되었고, 세도 가문이 그 요직을 차지했소. 의정부와 6조는 힘을 잃었지.' }],
+  q22: [{ id: 'q22a', q: '돈을 받고 벼슬을 사고파는 일을 무엇이라 할까?', c: ['매관매직', '납속', '향약', '균역'],
+    hint: '벼슬(官)을 사고(買) 판다(賣)는 말이오. 승지 어른이 말씀하셨을 것이오.',
+    explain: '매관매직으로 벼슬을 산 관리들은 본전을 찾으려 백성을 수탈했소. 납속은 곡식을 바치고 신분이나 벼슬 이름을 얻는 것이오.' }],
+  q23: [{ id: 'q23a', q: '1862년 임술 농민 봉기 뒤, 삼정을 바로잡으려고 설치한 기구는?', c: ['삼정이정청', '비변사', '규장각', '집현전'],
+    hint: '삼정(三政)을 바로잡는(釐整) 관청(廳)이오. 3장 진주에서도 들었을 것이오.',
+    explain: '과인이 삼정이정청을 두었으나, 권세가들의 반대로 개혁은 오래가지 못했소.' }],
 });
 const QZ = {};   // 맞힌 퀴즈 기록
 const QUESTS = [
@@ -1127,6 +1204,69 @@ const QUESTS = [
       note(`<b>흔들리는 신분제</b> — 조선 후기에는 양반 안에서도 권력을 쥔 <b>권반</b>, 지방에서 겨우 권위를 지키는 <b>향반</b>, 몰락한 <b>잔반</b>으로 나뉘었어요. 경제력을 키운 상민은 납속·공명첩·족보로 양반이 되었고, 노비는 도망과 해방으로 줄어들었어요. 서얼은 철종 때(1851) 높은 관직 진출이 허용되었고, 중인도 신분 상승 운동을 벌였어요. 이렇게 흔들린 신분제는 1894년 갑오개혁으로 법적으로 폐지되었어요.`),
     ],
     idle: [],
+  },
+
+  /* ===================== 5장 · 세도 정치의 그늘 ===================== */
+  {
+    id: 'q20', npc: 'hunjang', turnin: 'seungji', title: '궁궐로 간 두루마리', need: 0, req: 'q19', reward: { exp: 1500, coins: 200 },
+    onAccept: () => setTimeout(() => { toast('📜 두루마리가 펼쳐지자 커다란 궁궐 문이 보인다…', '#f3e3c0', 200); trans = { to: 'changdeok', x: 150, t: 0 }; }, 300),
+    offer: A => [
+      `${A}, 신분제가 흔들리는 모습까지 보고 왔구려. 이제 나라의 한가운데, <b>궁궐</b>로 가 볼 차례요.`,
+      `농민들이 들고일어나고 신분 질서가 흔들린 데에는 나라 꼭대기의 문제가 컸소. 몇몇 가문이 권력을 독차지한 <b>세도 정치</b> 말이오.`,
+      `두루마리를 펼쳐 1850년대의 궁궐로 가 보시오. 임진왜란 때 불탄 경복궁은 아직 폐허라, 임금님은 <b>창덕궁</b>에 계신다오. <b>승정원의 승지</b>를 찾으시오.`,
+    ],
+    progress: () => `서당 옆 두루마리로 창덕궁에 가서 승정원 승지를 찾아보시오.`,
+    done: () => [
+      `여기는 <b>창덕궁</b>이오. 나는 임금님의 명령을 전하고 나랏일을 기록하는 승정원의 승지요.`,
+      `저 문이 정문인 돈화문, 저기 큰 전각이 나라의 큰 행사를 치르는 인정전, 파란 기와를 얹은 곳이 임금님이 신하들과 나랏일을 의논하는 선정전이오.`,
+      `궁궐 안 사람들과도 이야기해 보시오. 💬 표시가 있는 상궁과 비변사 서리가 세도 정치 이야기를 들려줄 것이오.`,
+      note(`<b>창덕궁</b> — 태종 때 경복궁의 이궁(離宮)으로 지어졌어요. 임진왜란으로 궁궐이 모두 불탄 뒤 1610년 가장 먼저 다시 지어졌고, 1867년 경복궁이 중건될 때까지 약 270년 동안 실제 법궁 역할을 했어요. 세도 정치 시기의 임금들도 주로 창덕궁에 머물렀어요. 1997년 유네스코 세계 유산으로 등재되었어요.`),
+    ],
+    idle: [`임금님의 명령은 모두 승정원을 거쳐 나간다오.`],
+  },
+  {
+    id: 'q21', npc: 'seungji', title: '팔려 나간 벼슬', target: 'geogan', need: 6, req: 'q20', reward: { exp: 6000, coins: 400 },
+    offer: A => [
+      `요즘 궁궐 안팎에 벼슬을 사고파는 <b>거간꾼</b>들이 들끓소. 돈만 내면 고을 수령 자리도 판다지 뭐요.`,
+      `돈을 내고 수령이 된 자는 그 돈을 되찾으려고 백성을 쥐어짜지. 삼정이 문란해진 것도 다 이 때문이오.`,
+      `후원 쪽에 숨어든 <b>벼슬 거간꾼 6명</b>을 쫓아내 주시오. 놈들은 官(벼슬 관) 자가 적힌 임명장을 던진다오.`,
+    ],
+    progress: (c, n) => `거간꾼들은 희정당 너머 후원에 숨어 있소. (${c}/${n})`,
+    done: () => [
+      `수고했소! 하지만 거간꾼 몇을 쫓아낸다고 끝날 일이 아니오. 벼슬을 파는 쪽이 바로 권세가들이니….`,
+      note(`<b>매관매직</b> — 세도 정치 시기에는 돈을 받고 벼슬을 사고파는 일이 흔했어요. 돈을 주고 수령이 된 관리들은 본전을 찾으려고 백성을 수탈했고, 이것이 삼정의 문란과 농민 봉기로 이어졌어요.`),
+    ],
+    idle: [`나랏일이 바로 서야 백성이 편안할 텐데….`],
+  },
+  {
+    id: 'q22', npc: 'yusaeng', title: '바꿔치기된 답안지', target: 'noemul', item: '바꿔치기된 답안지', drop: 0.5, need: 4, req: 'q21', reward: { exp: 6500, coins: 420 },
+    offer: A => [
+      `에휴…. 나는 과거에 열 번이나 떨어진 유생이오. 실력이 모자라서라면 차라리 낫겠소.`,
+      `이번 과거장에서는 권세가 자제들이 남의 답안지를 바꿔치기하고, 대신 시험을 쳐 줄 사람까지 샀다오. 시험장은 사람들로 북새통이었고.`,
+      `뇌물이 가득 든 상자가 <b>도깨비</b>가 되어 후원을 뛰어다니는데, 그 안에 <b>바꿔치기된 답안지</b>가 들어 있다는 소문이오. <b>4장</b>만 찾아 주시오. 진실을 밝혀야겠소!`,
+    ],
+    progress: (c, n) => `뇌물 상자 도깨비는 후원 연못가와 바위 위를 뛰어다니오. (${c}/${n})`,
+    done: () => [
+      `이것 보시오! 내 답안지에 남의 이름이 적혀 있구려…. 이러니 아무리 공부해도 소용이 없었던 거요.`,
+      note(`<b>과거제의 문란</b> — 세도 정치 시기에는 과거 시험도 크게 어지러워졌어요. 남이 대신 시험을 치거나(대리 시험) 답안지를 바꿔치기하는 부정이 벌어졌고, 시험장은 수많은 사람으로 혼잡했어요. 결국 권세 있는 집안의 자제들이 급제를 독차지하면서, 실력 있는 인재들이 관직에 나아가기 어려워졌어요.`),
+    ],
+    idle: [`언젠가 공정하게 실력을 겨룰 날이 오겠지요.`],
+  },
+  {
+    id: 'q23', npc: 'king', title: '세도의 그늘을 걷어라', target: 'sedo', need: 1, req: 'q22', reward: { exp: 15000, coins: 1000 },
+    lock: `승지와 낙방 유생의 이야기를 먼저 들어 보시오. 궁궐이 얼마나 병들었는지 알게 될 것이오.`,
+    offer: A => [
+      `벼슬은 팔리고, 과거는 어지럽고, 백성은 굶주리오. 이 모든 것이 몇몇 가문이 권력을 쥐고 흔든 탓이오.`,
+      `나라의 중요한 일은 모두 <b>비변사</b>에서 정해지는데, 그곳을 세도 가문의 권세가가 쥐고 있소. 과인의 말은 그 문턱을 넘지 못하지….`,
+      `후원 너머 <b>비변사</b>로 가서 그곳을 장악한 <b>세도 대감</b>을 물리쳐 주시오. 이 나라에 드리운 세도의 그늘을 걷어 주시오!`,
+    ],
+    progress: () => `비변사는 후원 오른쪽 끝에 있소. 세도 대감은 官 자 임명장을 흩뿌리고(<b>官!</b>), 엽전 비를 내리고(<b>錢!</b>), 몸을 날려 돌진(<b>!</b>)한다오.`,
+    done: () => [
+      `그대 덕분에 비변사에 드리웠던 그늘이 걷혔구려. 고맙소.`,
+      `하지만 나라를 바로 세우는 일은 이제부터요. 백성의 목소리에 귀 기울이고, 능력 있는 이를 고루 쓰는 나라를 만들어야 하오.`,
+      note(`<b>세도 정치의 폐단</b> — 순조·헌종·철종 3대 60여 년 동안 왕실과 혼인한 안동 김씨·풍양 조씨 등 몇몇 가문이 비변사를 장악하고 권력을 독점했어요. 그 결과 매관매직과 과거제의 문란, 삼정의 문란이 심해져 백성의 삶이 크게 어려워졌고, 홍경래의 난과 임술 농민 봉기 같은 저항이 일어났어요. 1863년 고종이 즉위하자 아버지 <b>흥선 대원군</b>이 권력을 잡고 세도 정치를 끝내기 위한 개혁을 시작했어요.<br><small>※ '세도 대감'은 세도 가문의 권세가를 나타낸 가상 인물이에요.</small>`),
+    ],
+    idle: [`그대 같은 이가 있어 든든하구려.`],
   },
 ];
 
@@ -1464,6 +1604,8 @@ function updateMonsters() {
       gotganAI(m, dx);
     } else if (m.t === 'byeok') {
       byeokAI(m, dx);
+    } else if (m.t === 'sedo') {
+      sedoAI(m, dx);
     } else {
       if (m.d.shoot && near && Math.abs(dx) < 360 && Math.abs(P.y - m.y) < 100 && --m.timer <= 0) {
         m.timer = rnd(140, 220); m.dir = dx > 0 ? 1 : -1;
@@ -1524,6 +1666,40 @@ function sattoAI(m, dx) {
     }
   }
   m.x += m.kb; m.kb *= 0.8;
+  if (m.x <= m.s.a || m.x >= m.s.b) m.dash = 0;
+  m.x = clamp(m.x, m.s.a, m.s.b);
+}
+
+function sedoAI(m, dx) {
+  if (m.dash > 0) {
+    m.dash--; m.x += m.dir * 7;
+    if (m.dash % 3 === 0) fx.push({ type: 'p', x: m.x - m.dir * 30, y: m.y - 6, vx: -m.dir, vy: -0.5, life: 20, max: 20, color: 'rgba(255,210,80,.7)', s: 5 });
+  } else if (m.windup > 0) {
+    m.windup--;
+    if (m.windup === 0) {
+      if (m.next === 'dash') { m.dash = 40; beep(110, 0.4, 'sawtooth', 0.05, 80); }
+      else if (m.next === 'volley') {
+        [-1.6, -0.6, 0.4, 1.4, 2.4].forEach(vy => throwPaper(m.x + m.dir * 40, m.y - 130, m.dir * 4.8, vy, m.d.atk * 0.65, '官'));
+        beep(700, 0.2, 'square', 0.03, -300);
+      } else {
+        for (let i = 0; i < 6; i++) {
+          const cx = clamp(P.x + (i - 2.5) * 80 + rnd(-15, 15), 40, map.w - 40);
+          eprojs.push({ x: cx, y: -30 - i * 35, vx: 0, vy: 5.4, dmg: m.d.atk * 0.6, glyph: '錢', brick: true, coin: true, life: 220, spin: 0 });
+        }
+        SFX.coin();
+      }
+    }
+  } else {
+    m.dir = dx > 0 ? 1 : -1;
+    if (Math.abs(dx) > 90) m.x += m.dir * m.d.speed;
+    if (--m.timer <= 0) {
+      const r = Math.random();
+      m.next = r < 0.34 ? 'dash' : r < 0.67 ? 'volley' : 'rain';
+      m.windup = 40; m.timer = rnd(110, 170);
+      addFloat(m.x, m.y - m.d.h - 26, { dash: '!', volley: '官!', rain: '錢!' }[m.next], 'warn');
+    }
+  }
+  m.x += m.kb * 0.5; m.kb *= 0.8;
   if (m.x <= m.s.a || m.x >= m.s.b) m.dash = 0;
   m.x = clamp(m.x, m.s.a, m.s.b);
 }
@@ -1717,7 +1893,8 @@ function talk(npcId) {
       }
       if (q.id === 'q8') setTimeout(() => toast('🎉 2장 「삼정의 문란」 완료! 서당 훈장에게 새 부탁이 생겼다.', '#ffd76a', 450), 900);
       if (q.id === 'q14') setTimeout(() => toast('🎉 3장 「들고일어난 백성들」 완료! 서당 훈장에게 새 부탁이 생겼다.', '#ffd76a', 450), 900);
-      if (q.id === 'q19') setTimeout(() => toast('🎉 4장 「흔들리는 신분제」 완료!', '#ffd76a', 450), 900);
+      if (q.id === 'q19') setTimeout(() => toast('🎉 4장 「흔들리는 신분제」 완료! 서당 훈장에게 새 부탁이 생겼다.', '#ffd76a', 450), 900);
+      if (q.id === 'q23') setTimeout(() => toast('🎉 5장 「세도 정치의 그늘」 완료!', '#ffd76a', 450), 900);
     };
   } else {
     const all = QUESTS.filter(x => x.npc === npcId).flatMap(x => x.idle);
@@ -1843,6 +2020,14 @@ const LOOKS = {
   jeomsun: { robe: '#b8a888', line: '#8a7a60', pants: '#8a7a60', shoe: '#6b5a40', belt: '#6b5a40', hat: 'bun', skirt: '#8a7a60', patch: true },
   wijo: { robe: '#5a5a4a', line: '#3a3a2e', pants: '#d0c8b4', shoe: '#1f1f1f', belt: '#8a7a3a', hat: 'gat', long: true, mustache: true },
   chuno: { robe: '#3a3a3a', line: '#222', pants: '#2e2a26', shoe: '#1f1f1f', belt: '#c9a55a', hat: 'banditband' },
+  seungji: { robe: '#2f5f8a', line: '#1f4060', pants: '#e9e3d4', shoe: '#1f1f1f', belt: '#d4a73a', hat: 'samo', long: true, mustache: true, hyungbae: true },
+  sanggung: { robe: '#4a6a5a', line: '#2f4a3a', pants: '#3a4a6a', shoe: '#3a2a2a', belt: '#a33a2a', hat: 'bun', skirt: '#3a4a6a', hair: '#b8b8b8' },
+  yusaeng: { robe: '#f2f0e8', line: '#cfcabb', pants: '#e9e5da', shoe: '#3a2a1e', belt: '#3a3a3a', hat: 'gat', long: true, patch: true },
+  seori: { robe: '#7a7a6a', line: '#5a5a4a', pants: '#ddd5c4', shoe: '#2a2a2a', belt: '#3a3a2a', hat: 'tanggeon', mustache: true },
+  king: { robe: '#b0302a', line: '#7a1e1a', pants: '#e9e3d4', shoe: '#1f1f1f', belt: '#d4a73a', hat: 'ikseon', long: true, mustache: true, dragon: true },
+  geogan: { robe: '#8a7a3a', line: '#5a4a1a', pants: '#e0d8c0', shoe: '#2a2a2a', belt: '#d4a73a', hat: 'gat', long: true, fat: true, mustache: true },
+  cheongji: { robe: '#2a2a3a', line: '#15151f', pants: '#2e2a26', shoe: '#1f1f1f', belt: '#7a2a2a', hat: 'tanggeon' },
+  sedo: { robe: '#6a1e3a', line: '#4a0e2a', pants: '#e9e3d4', shoe: '#1f1f1f', belt: '#ffd23a', hat: 'samo', long: true, fat: true, beard: true, hyungbae: true },
   honggr: { robe: '#6a2e2a', line: '#4a1e1a', pants: '#e0d8c8', shoe: '#1f1f1f', belt: '#d4a73a', hat: 'jeollip', long: true, mustache: true },
   eosa: { robe: '#cfc6ae', line: '#a89e84', pants: '#cfc6ae', shoe: '#5a4a38', belt: '#6b5a40', hat: 'gat', long: true, patch: true, prop: 'mapae' },
 };
@@ -1894,6 +2079,11 @@ function drawPerson(g, x, y, look, dir, o = {}) {
   g.fillStyle = L.robe; g.strokeStyle = L.line; g.lineWidth = 1.2;
   g.beginPath(); g.moveTo(-10, -38); g.lineTo(10, -38); g.lineTo(bw, bot); g.lineTo(-bw, bot); g.closePath(); g.fill(); g.stroke();
   if (L.fat) { g.beginPath(); g.ellipse(3, -22, 15, 12, 0, 0, TAU); g.fill(); g.stroke(); }
+  if (L.dragon) {   // 곤룡포의 금빛 용보
+    g.fillStyle = '#d4a73a'; ell(g, 0.5, -28, 7, 7);
+    g.fillStyle = '#b0302a'; ell(g, 0.5, -28, 4.5, 4.5);
+    g.strokeStyle = '#ffd76a'; g.lineWidth = 1.2; g.beginPath(); g.arc(0.5, -28, 3, 0.3, 5.5); g.stroke();
+  }
   if (L.hyungbae) {
     g.fillStyle = '#2b2b5a'; g.fillRect(-6, -34, 13, 12);
     g.strokeStyle = '#d4a73a'; g.lineWidth = 1; g.strokeRect(-6, -34, 13, 12);
@@ -1978,6 +2168,12 @@ function drawHat(g, L) {
       g.fillStyle = '#c0392b'; g.beginPath(); g.moveTo(-1, -68); g.lineTo(-12, -56); g.lineTo(-6, -56); g.lineTo(3, -68); g.closePath(); g.fill();
       g.fillStyle = '#d4a73a'; ell(g, 1, -68, 2.5, 2.5);
       break;
+    case 'ikseon':   // 익선관(임금의 관)
+      g.fillStyle = '#1b1b1b'; g.fillRect(-10, -60, 22, 5);
+      g.beginPath(); g.ellipse(1, -61, 10, 10, 0, Math.PI, 0); g.fill();
+      g.beginPath(); g.ellipse(-4, -70, 5, 7, -0.3, 0, TAU); g.fill();
+      g.fillStyle = '#2a2a2a'; g.beginPath(); g.ellipse(-9, -74, 3, 8, -0.4, 0, TAU); g.fill(); g.beginPath(); g.ellipse(-3, -76, 3, 8, -0.1, 0, TAU); g.fill();
+      break;
     case 'samo':
       g.fillStyle = '#1b1b1b'; g.fillRect(-10, -60, 22, 5);
       g.beginPath(); g.ellipse(1, -61, 9, 9, 0, Math.PI, 0); g.fill();
@@ -2030,6 +2226,11 @@ function drawMonster(m) {
   if (m.t === 'boar') drawBoar(m.x, fy, m.dir, m.phase);
   else if (m.t === 'dokkaebi') drawDokkaebi(m.x, fy, m.phase);
   else if (m.d.person) {
+    if (m.t === 'sedo') {   // 권세의 금빛 기운
+      const gr = ctx.createRadialGradient(m.x, fy - 100, 10, m.x, fy - 100, 130);
+      gr.addColorStop(0, 'rgba(255,215,90,.35)'); gr.addColorStop(1, 'rgba(255,200,60,0)');
+      ctx.fillStyle = gr; ell(ctx, m.x, fy - 100, 130, 130);
+    }
     const sc = m.d.scale || 1, near = Math.abs(P.x - m.x) < 80 * sc && !m.dead;
     const swing = m.dash > 0 || m.windup > 0 || near;
     ctx.translate(m.x, fy); ctx.scale(sc, sc);
@@ -2041,6 +2242,7 @@ function drawMonster(m) {
   else if (m.t === 'bitdok') drawDebtGhost(m.x, fy, m.phase, m.dir);
   else if (m.t === 'gotgan') drawGotgan(m, fy);
   else if (m.t === 'jom') drawJom(m.x, fy, m.phase, m.dir);
+  else if (m.t === 'noemul') drawNoemul(m.x, fy, m.phase, m.dir);
   else if (m.t === 'byeok') drawByeok(m, fy);
   ctx.restore();
   if (!m.dead && (m.showHp > 0 || m.d.boss) && !m.d.boss) {
@@ -2121,6 +2323,21 @@ function drawDebtGhost(x, y, ph, dir) {
   ctx.beginPath(); ctx.moveTo(4, -17); ctx.lineTo(7, -26); ctx.lineTo(10, -17); ctx.fill();
   ctx.fillStyle = '#c0392b'; ctx.font = F(15, true); ctx.textAlign = 'center'; ctx.fillText('債', 0, 9);
   ctx.fillStyle = '#2a1a3a'; ell(ctx, -5 + dir * 2, -8, 2.2, 3); ell(ctx, 5 + dir * 2, -8, 2.2, 3);
+  ctx.restore();
+}
+
+function drawNoemul(x, y, ph, dir) {
+  const hop = Math.abs(Math.sin(ph * 2)) * 14, open = Math.max(0, Math.sin(ph * 2)) * 0.5;
+  ctx.fillStyle = 'rgba(0,0,0,.2)'; ell(ctx, x, y, 22 - hop * 0.4, 4);
+  ctx.save(); ctx.translate(x, y - hop); ctx.scale(dir, 1);
+  ctx.fillStyle = '#7a4a22'; ctx.fillRect(-20, -26, 40, 26);
+  ctx.fillStyle = '#d4a73a'; ctx.fillRect(-20, -26, 40, 3); ctx.fillRect(-20, -3, 40, 3); ctx.fillRect(-2, -26, 4, 26);
+  ctx.save(); ctx.translate(-20, -26); ctx.rotate(-open);
+  ctx.fillStyle = '#8a5a2a'; ctx.fillRect(0, -12, 40, 12); ctx.fillStyle = '#d4a73a'; ctx.fillRect(0, -12, 40, 3);
+  ctx.fillStyle = '#fff'; for (let i = 4; i < 40; i += 8) { ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i + 3, 5); ctx.lineTo(i + 6, 0); ctx.fill(); }
+  ctx.restore();
+  if (open > 0.15) { ctx.fillStyle = '#ffd76a'; ell(ctx, 4, -27, 5, 3); ell(ctx, -6, -28, 4, 3); }
+  ctx.fillStyle = '#fff'; ell(ctx, 8, -15, 5, 5); ctx.fillStyle = '#111'; ell(ctx, 9.5, -15, 2.2, 3);
   ctx.restore();
 }
 
@@ -2267,6 +2484,21 @@ function drawBackground(theme, cam) {
     ctx.fillRect(0, 370, VW, 3);
     return;
   }
+  if (theme === 'palace') {
+    gr.addColorStop(0, '#a3cbe6'); gr.addColorStop(0.75, '#f2e8d2');
+    ctx.fillStyle = gr; ctx.fillRect(0, 0, VW, VH);
+    ctx.fillStyle = 'rgba(255,240,200,.85)'; ell(ctx, 780, 90, 34, 34);
+    ridge(cam, 0.07, 280, 85, 21, '#9fb2a8');
+    ridge(cam, 0.16, 340, 50, 23, '#7f9a86');
+    // 궁궐 담장
+    const off = -(cam * 0.33) % 60;
+    ctx.fillStyle = '#b08a6a'; ctx.fillRect(0, 376, VW, 34);
+    ctx.strokeStyle = 'rgba(80,50,30,.25)'; ctx.lineWidth = 1;
+    for (let sx = off - 60; sx < VW + 60; sx += 30) ctx.strokeRect(sx, 380, 30, 14);
+    ctx.fillStyle = '#4a4f57'; ctx.fillRect(0, 368, VW, 10);
+    ctx.fillStyle = '#3a3f47'; for (let sx = off - 60; sx < VW + 60; sx += 12) ctx.fillRect(sx, 366, 6, 4);
+    return;
+  }
   if (theme === 'jinju') {
     gr.addColorStop(0, '#a9cde3'); gr.addColorStop(0.7, '#f1e6cc');
     ctx.fillStyle = gr; ctx.fillRect(0, 0, VW, VH);
@@ -2324,8 +2556,8 @@ function drawBackground(theme, cam) {
 }
 
 function drawGround(theme, cam) {
-  const top = { village: '#7da35a', mountain: '#5f8f45', cave: '#55443a', goeul: '#7da35a', dongheon: '#b8b0a0', winter: '#ffffff', jinju: '#7da35a' }[theme];
-  const dirt = { village: '#cfae7c', mountain: '#9a7a52', cave: '#3d2f25', goeul: '#c4a274', dongheon: '#d8cdb8', winter: '#dfe5ea', jinju: '#c9b58a' }[theme];
+  const top = { village: '#7da35a', mountain: '#5f8f45', cave: '#55443a', goeul: '#7da35a', dongheon: '#b8b0a0', winter: '#ffffff', jinju: '#7da35a', palace: '#aaa293' }[theme];
+  const dirt = { village: '#cfae7c', mountain: '#9a7a52', cave: '#3d2f25', goeul: '#c4a274', dongheon: '#d8cdb8', winter: '#dfe5ea', jinju: '#c9b58a', palace: '#cdc6b6' }[theme];
   const x0 = Math.floor(cam) - 10;
   ctx.fillStyle = dirt; ctx.fillRect(x0, GROUND, VW + 20, VH - GROUND);
   ctx.fillStyle = top; ctx.fillRect(x0, GROUND, VW + 20, 7);
@@ -2338,7 +2570,7 @@ function drawGround(theme, cam) {
 
 function drawPlatform(p, theme) {
   if (p.kind === 'roof') return;
-  if (theme === 'village' || theme === 'dongheon') {
+  if (p.kind === 'bench' || theme === 'village' || theme === 'dongheon') {
     ctx.fillStyle = '#6e4a2c';
     [p.x + 8, p.x + p.w - 14].forEach(lx => ctx.fillRect(lx, p.y, 6, GROUND - p.y));
     ctx.fillStyle = '#a8794a'; ctx.fillRect(p.x, p.y, p.w, 9);
@@ -2489,6 +2721,69 @@ function drawDecor(d) {
       ctx.fillStyle = '#2b3037'; ctx.fillRect(x - 96, G - 198, 192, 8);
       ctx.fillStyle = '#3a2a1c'; ctx.fillRect(x - 36, G - 136, 72, 20);
       ctx.fillStyle = '#e8c870'; ctx.font = F(14, true); ctx.textAlign = 'center'; ctx.fillText(d.sign || '', x, G - 121);
+      break;
+    }
+    case 'hall': {   // 궁궐 전각 (1층/2층, 청기와 선택)
+      const hw = d.hw || 100, base = d.base ? 26 : 0, roofC = d.blue ? '#3e6f9a' : '#3d434c', ridgeC = d.blue ? '#2c5478' : '#2b3037';
+      const roofAt = (by, rw) => {
+        ctx.fillStyle = roofC; ctx.beginPath();
+        ctx.moveTo(x - rw - 30, by - 13); ctx.quadraticCurveTo(x - rw - 14, by, x - rw + 6, by); ctx.lineTo(x + rw - 6, by);
+        ctx.quadraticCurveTo(x + rw + 14, by, x + rw + 30, by - 13); ctx.quadraticCurveTo(x + rw - 6, by - 18, x + rw * 0.62, by - 46);
+        ctx.lineTo(x - rw * 0.62, by - 46); ctx.quadraticCurveTo(x - rw + 6, by - 18, x - rw - 30, by - 13); ctx.closePath(); ctx.fill();
+        ctx.strokeStyle = d.blue ? '#5a8ab4' : '#555d68'; ctx.lineWidth = 1.4;
+        for (let i = -1; i <= 1; i += 0.12) { ctx.beginPath(); ctx.moveTo(x + i * rw * 0.6, by - 44); ctx.lineTo(x + i * (rw + 4), by - 2); ctx.stroke(); }
+        ctx.fillStyle = ridgeC; ctx.fillRect(x - rw * 0.68, by - 52, rw * 1.36, 8);
+        ctx.beginPath(); ctx.moveTo(x - rw * 0.68, by - 52); ctx.lineTo(x - rw * 0.68 - 10, by - 60); ctx.lineTo(x - rw * 0.68 + 6, by - 52); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(x + rw * 0.68, by - 52); ctx.lineTo(x + rw * 0.68 + 10, by - 60); ctx.lineTo(x + rw * 0.68 - 6, by - 52); ctx.fill();
+      };
+      const body = (top, bot, bw) => {
+        ctx.fillStyle = '#efe6d2'; ctx.fillRect(x - bw, top, bw * 2, bot - top);
+        ctx.strokeStyle = '#a0784a'; ctx.lineWidth = 1;
+        for (let bx = x - bw + 6; bx < x + bw - 6; bx += 9) { ctx.beginPath(); ctx.moveTo(bx, top + 8); ctx.lineTo(bx, bot - 4); ctx.stroke(); }
+        ctx.fillStyle = '#a8352a'; for (let px = x - bw; px <= x + bw - 6; px += Math.max(26, (bw * 2) / 5)) ctx.fillRect(px, top, 7, bot - top);
+        ctx.fillRect(x + bw - 7, top, 7, bot - top);
+        ctx.fillStyle = '#2e7d6a'; ctx.fillRect(x - bw - 4, top - 8, bw * 2 + 8, 5);
+        ctx.fillStyle = '#c0392b'; ctx.fillRect(x - bw - 4, top - 3, bw * 2 + 8, 3);
+      };
+      if (base) {
+        ctx.fillStyle = '#c8c0b0'; ctx.fillRect(x - hw - 40, G - base, (hw + 40) * 2, base);
+        ctx.strokeStyle = '#a49c8c'; ctx.lineWidth = 1; ctx.strokeRect(x - hw - 40, G - base, (hw + 40) * 2, base);
+        ctx.fillStyle = '#b5ad9c'; for (let k = 0; k < 4; k++) ctx.fillRect(x - 24 + k * 2, G - base + k * 6.5, 48 - k * 4, 6.5);
+      }
+      const g0 = G - base;
+      if (d.gate) {
+        ctx.fillStyle = '#a8352a'; ctx.fillRect(x - hw, g0 - 92, hw * 2, 92);
+        ctx.fillStyle = '#7a2418'; [-0.66, -0.2, 0.26].forEach(k => ctx.fillRect(x + k * hw * 1.5 - 14, g0 - 76, 30, 76));
+      } else body(g0 - 94, g0, hw);
+      roofAt(g0 - 96, hw);
+      if (d.floors === 2) {
+        body(g0 - 150, g0 - 110, hw * 0.82);
+        roofAt(g0 - 152, hw * 0.9);
+      }
+      const sy = d.floors === 2 ? g0 - 146 : g0 - 90;
+      ctx.fillStyle = '#2a1e14'; ctx.fillRect(x - 40, sy, 80, 22);
+      ctx.strokeStyle = '#c9a24a'; ctx.lineWidth = 1.5; ctx.strokeRect(x - 38, sy + 2, 76, 18);
+      ctx.fillStyle = '#ffd76a'; ctx.font = F(14, true); ctx.textAlign = 'center'; ctx.fillText(d.sign || '', x, sy + 16);
+      break;
+    }
+    case 'bridge': {   // 금천교 (돌다리)
+      ctx.fillStyle = '#6fa3c4'; ctx.fillRect(x - 90, G - 10, 180, 10);
+      ctx.fillStyle = '#c8c0b0'; ctx.fillRect(x - 80, G - 26, 160, 16);
+      ctx.fillStyle = '#b0a898';
+      for (let px = x - 80; px <= x + 72; px += 32) { ctx.fillRect(px, G - 44, 8, 34); ell(ctx, px + 4, G - 46, 5, 4); }
+      ctx.fillRect(x - 80, G - 36, 160, 5);
+      ctx.fillStyle = '#9a9283'; ell(ctx, x - 100, G - 20, 14, 12); ell(ctx, x + 100, G - 20, 14, 12);
+      ctx.fillStyle = '#2a2420'; ell(ctx, x - 104, G - 24, 2, 2); ell(ctx, x + 96, G - 24, 2, 2);
+      break;
+    }
+    case 'pond': {   // 부용지 (네모난 연못과 둥근 섬)
+      ctx.fillStyle = '#a49c8c'; ctx.fillRect(x - 160, G - 34, 320, 34);
+      ctx.fillStyle = '#5f9ab8'; ctx.fillRect(x - 150, G - 28, 300, 24);
+      ctx.fillStyle = 'rgba(255,255,255,.45)'; for (let i = 0; i < 6; i++) ctx.fillRect(x - 130 + i * 48 + (frame * 0.3 % 20), G - 20 + (i % 2) * 6, 18, 2);
+      ctx.fillStyle = '#7da35a'; ell(ctx, x + 50, G - 22, 26, 9);
+      ctx.fillStyle = '#7a4a2e'; ctx.fillRect(x + 48, G - 60, 4, 38);
+      ctx.fillStyle = '#2f5a3a'; ell(ctx, x + 50, G - 62, 18, 8); ell(ctx, x + 44, G - 50, 14, 6);
+      ctx.fillStyle = '#e88aa8'; [[-90, -18], [-40, -12], [100, -14]].forEach(([ox, oy]) => ell(ctx, x + ox, G + oy, 4, 3));
       break;
     }
     case 'stack': {   // 볏짚 더미
@@ -2644,6 +2939,11 @@ function drawPaper(e) {
   if (e.brick) {
     const dist = clamp((GROUND - e.y) / 400, 0, 1);
     ctx.fillStyle = `rgba(0,0,0,${0.35 - dist * 0.25})`; ell(ctx, e.x, GROUND - 2, 22 - dist * 10, 5 - dist * 2);
+    if (e.coin) {
+      ctx.fillStyle = '#c99a2e'; ell(ctx, e.x, e.y, 14, 14); ctx.fillStyle = '#ffd76a'; ell(ctx, e.x, e.y, 11, 11);
+      ctx.fillStyle = '#7a5a1a'; ctx.fillRect(e.x - 3.5, e.y - 3.5, 7, 7);
+      return;
+    }
     ctx.fillStyle = '#8a8478'; ctx.fillRect(e.x - 18, e.y - 12, 36, 24);
     ctx.strokeStyle = '#4a453f'; ctx.lineWidth = 1.5; ctx.strokeRect(e.x - 18, e.y - 12, 36, 24);
     ctx.fillStyle = '#fff6e0'; ctx.font = F(12, true); ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(e.glyph, e.x, e.y + 1);
@@ -2804,7 +3104,7 @@ const KOREA = [[124.35,40.05],[124.9,40.45],[125.6,40.85],[126.4,41.35],[126.9,4
   [125.3,37.75],[124.75,38.05],[125.0,38.45],[125.15,38.7],[125.3,38.85],[125.1,39.3],[125.35,39.55],[124.9,39.65],[124.6,39.85]];
 const PROVINCES = [['함경도', 128.7, 41.0], ['평안도', 125.9, 40.15], ['황해도', 125.65, 38.35], ['강원도', 128.35, 37.85],
   ['경기도', 127.35, 37.2], ['충청도', 127.0, 36.55], ['전라도', 126.85, 35.05], ['경상도', 128.55, 36.2]];
-const MAP_PLACE = { village: 'hanyang', mountain: 'hanyang', cave: 'hanyang', goeul: 'namwon', dongheon: 'namwon', jeongju: 'jeongju', jinju: 'jinju', jinjuseong: 'jinju', daegu: 'daegu', byeok: 'daegu' };
+const MAP_PLACE = { village: 'hanyang', mountain: 'hanyang', cave: 'hanyang', goeul: 'namwon', dongheon: 'namwon', jeongju: 'jeongju', jinju: 'jinju', jinjuseong: 'jinju', daegu: 'daegu', byeok: 'daegu', changdeok: 'hanyang', bibyeonsa: 'hanyang' };
 const PLACES = {
   hanyang: { name: '한양', lon: 126.98, lat: 37.57 },
   namwon: { name: '남원', lon: 127.39, lat: 35.42 },
@@ -3201,8 +3501,8 @@ function adminHash(str) {
 }
 const admin = { on: false, god: false, power: false, cls: 'yangban' };
 let adminOpen = false, admFails = 0, admLockUntil = 0;
-const CHAPTER_OF = { q1: '1장 · 한양과 인왕산', q5: '2장 · 삼정의 문란', q9: '3장 · 들고일어난 백성들 (홍경래의 난 · 진주 농민 봉기)', q15: '4장 · 흔들리는 신분제' };
-const AUTO_LV = { q1: 1, q2: 2, q3: 3, q4: 5, q5: 7, q6: 7, q7: 8, q8: 9, q9: 10, q10: 11, q11: 11, q12: 12, q13: 12, q14: 13, q15: 14, q16: 15, q17: 15, q18: 16, q19: 17 };
+const CHAPTER_OF = { q1: '1장 · 한양과 인왕산', q5: '2장 · 삼정의 문란', q9: '3장 · 들고일어난 백성들 (홍경래의 난 · 진주 농민 봉기)', q15: '4장 · 흔들리는 신분제', q20: '5장 · 세도 정치의 그늘 (창덕궁)' };
+const AUTO_LV = { q1: 1, q2: 2, q3: 3, q4: 5, q5: 7, q6: 7, q7: 8, q8: 9, q9: 10, q10: 11, q11: 11, q12: 12, q13: 12, q14: 13, q15: 14, q16: 15, q17: 15, q18: 16, q19: 17, q20: 18, q21: 18, q22: 19, q23: 20 };
 
 $('admLink').onclick = () => {
   $('loginForm').classList.add('hidden'); $('resume').classList.add('hidden'); $('recent').classList.add('hidden');
@@ -3344,9 +3644,9 @@ Object.entries(CLASSES).forEach(([id, c], i) => {
    ========================================================= */
 const NOTES_GOT = {};
 const NOTE_LIST = [];
-const CH_NAMES = ['1장 · 한양과 인왕산', '2장 · 삼정의 문란', '3장 · 들고일어난 백성들', '4장 · 흔들리는 신분제'];
-const MAP_CH = { village: 0, mountain: 0, cave: 0, goeul: 1, dongheon: 1, jeongju: 2, jinju: 2, jinjuseong: 2, daegu: 3, byeok: 3 };
-const QUEST_CH = id => { const n = +id.slice(1); return n <= 4 ? 0 : n <= 8 ? 1 : n <= 14 ? 2 : 3; };
+const CH_NAMES = ['1장 · 한양과 인왕산', '2장 · 삼정의 문란', '3장 · 들고일어난 백성들', '4장 · 흔들리는 신분제', '5장 · 세도 정치의 그늘'];
+const MAP_CH = { village: 0, mountain: 0, cave: 0, goeul: 1, dongheon: 1, jeongju: 2, jinju: 2, jinjuseong: 2, daegu: 3, byeok: 3, changdeok: 4, bibyeonsa: 4 };
+const QUEST_CH = id => { const n = +id.slice(1); return n <= 4 ? 0 : n <= 8 ? 1 : n <= 14 ? 2 : n <= 19 ? 3 : 4; };
 const noteTitle = t => { const m = /<b>(.*?)<\/b>/.exec(t); return (m ? m[1] : t.slice(0, 20)).replace(/<[^>]+>/g, ''); };
 const isNotePage = p => p && typeof p === 'object' && p.name && p.name.includes('역사 노트');
 let notesOpen = false, noteSel = null, noteSeen = {};
