@@ -9,8 +9,10 @@
 <link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&display=swap" rel="stylesheet">
 <style>
   html,body{margin:0;height:100%;background:#1a1410;overflow:hidden;font-family:'Gowun Batang','Nanum Myeongjo',serif;
+    -webkit-text-size-adjust:100%;text-size-adjust:100%;
     touch-action:none;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
-  #stage{position:absolute;left:50%;top:50%;width:960px;height:540px;transform-origin:center;overflow:hidden;background:#000}
+  body{position:fixed;inset:0;width:100%}
+  #stage{position:fixed;left:0;top:0;width:960px;height:540px;transform-origin:0 0;overflow:hidden;background:#000}
   #game{position:absolute;left:0;top:0;width:960px;height:540px;display:block}
   .hidden{display:none!important}
 
@@ -153,6 +155,12 @@
   #noteBtn{position:absolute;right:158px;top:10px;z-index:2;font:700 13px 'Gowun Batang',serif;background:rgba(24,18,14,.8);color:#bfe8a8;
     border:1.5px solid #6a9a5a;border-radius:8px;padding:5px 10px;cursor:pointer}
   body:not(.playing) #noteBtn{display:none}
+  #recallAsk{position:absolute;inset:0;background:rgba(10,8,6,.5);display:flex;align-items:center;justify-content:center;z-index:4}
+  .rcBox{width:420px;background:#f5ecd6;border:3px solid #4a6a9a;border-radius:14px;padding:20px 24px 18px;text-align:center;color:#2b1d12;box-shadow:0 8px 30px rgba(0,0,0,.5)}
+  .rcBox h3{margin:0 0 6px;font-size:21px;color:#2f4b73} .rcBox p{margin:4px 0 12px;font-size:14.5px;color:#5b4026}
+  .rcBar{height:8px;background:#e0d3b4;border-radius:4px;overflow:hidden;margin:0 0 14px} .rcBar div{height:100%;background:#5a86c8;width:100%}
+  .rcBtns{display:flex;gap:12px;justify-content:center} .rcBtns button{font:700 16px 'Gowun Batang',serif;padding:9px 22px;border-radius:10px;cursor:pointer;border:2px solid #4a6a9a}
+  #rcYes{background:#4a6a9a;color:#fff} #rcNo{background:#fffaf0;color:#2f4b73}
   #notes{position:absolute;inset:0;background:rgba(10,8,6,.55);display:flex;align-items:center;justify-content:center;z-index:3}
   .notesBox{width:860px;height:470px;display:flex;flex-direction:column;background:#f5ecd6;border:3px solid #2f5d50;border-radius:14px;overflow:hidden;box-shadow:0 8px 30px rgba(0,0,0,.5)}
   .nhead{background:#2f5d50;color:#fff;padding:9px 16px;font-weight:700;font-size:17px;display:flex;align-items:center}
@@ -285,6 +293,14 @@
     </div>
   </div>
 
+  <div id="recallAsk" class="hidden">
+    <div class="rcBox">
+      <h3>🏠 기본 마을 '한양 장터'로 귀환하시겠습니까?</h3>
+      <p><b id="rcSec">10</b>초 뒤에 자동으로 귀환해요.</p>
+      <div class="rcBar"><div id="rcBar"></div></div>
+      <div class="rcBtns"><button id="rcYes">예, 귀환 (Enter)</button><button id="rcNo">아니오 (Esc)</button></div>
+    </div>
+  </div>
   <div id="ending" class="hidden">
     <div class="endBox">
       <div class="endHead"><span style="font-size:30px">🏆</span><h2>조선유랑기 완주! <small id="endWho"></small></h2><button id="endClose" title="닫기 (Esc)">✕</button></div>
@@ -335,7 +351,7 @@
 const SAVE_URL = '';
 
 // 버전 — 고칠 때마다 바꾸면, 화면에 보이는 버전으로 새 버전이 열렸는지 확인할 수 있어요.
-const VERSION = 'v6.8 (한양 귀환 B · 음악 V)';
+const VERSION = 'v6.9 (귀환 확인 창 · 모바일 화면 맞춤)';
 
 /* =========================================================
    조선유랑기 — 조선 후기 배경 횡스크롤 RPG
@@ -352,13 +368,21 @@ const F = (s, b) => `${b ? 'bold ' : ''}${s}px "Gowun Batang","Nanum Myeongjo",s
 /* ---------- 화면 크기 ---------- */
 let K = 1;
 function resize() {
-  const s = Math.min(innerWidth / VW, innerHeight / VH);
-  $('stage').style.transform = `translate(-50%,-50%) scale(${s})`;
+  // 모바일은 주소창·툴바 때문에 innerHeight가 실제 보이는 화면보다 클 수 있어요 → visualViewport 기준으로 맞춤
+  const vv = window.visualViewport;
+  const w = vv ? vv.width : innerWidth, h = vv ? vv.height : innerHeight;
+  const ox = vv ? vv.offsetLeft : 0, oy = vv ? vv.offsetTop : 0;
+  const s = Math.min(w / VW, h / VH);
+  const st = $('stage');
+  st.style.left = (ox + (w - VW * s) / 2) + 'px'; st.style.top = (oy + (h - VH * s) / 2) + 'px';
+  st.style.transform = `scale(${s})`;
   const dpr = window.devicePixelRatio || 1;
   K = s * dpr;
   cv.width = Math.round(VW * K); cv.height = Math.round(VH * K);
 }
 addEventListener('resize', resize); resize();
+if (window.visualViewport) { visualViewport.addEventListener('resize', resize); visualViewport.addEventListener('scroll', resize); }
+addEventListener('orientationchange', () => [100, 350, 800].forEach(t => setTimeout(resize, t)));
 if ('ontouchstart' in window || matchMedia('(pointer:coarse)').matches) document.body.classList.add('touch');
 
 /* ---------- 소리 (간단한 효과음) ---------- */
@@ -402,6 +426,11 @@ addEventListener('keydown', e => {
     const k = ['Digit1', 'Digit2', 'Digit3', 'Digit4'].indexOf(e.code), k2 = ['Numpad1', 'Numpad2', 'Numpad3', 'Numpad4'].indexOf(e.code);
     const idx = k >= 0 ? k : k2;
     if (idx >= 0 && !curPage().quiz.a) { e.preventDefault(); answerQuiz(curPage().order[idx]); return; }
+  }
+  if (recallOpen) {
+    if (['Enter', 'KeyY'].includes(e.code)) { e.preventDefault(); answerRecall(true); }
+    else if (['Escape', 'KeyN'].includes(e.code)) { e.preventDefault(); answerRecall(false); }
+    return;
   }
   if (endingOpen) {
     if (['Escape', 'Enter'].includes(e.code)) { e.preventDefault(); closeEnding(); }
@@ -1468,7 +1497,7 @@ function update() {
     if (trans.t >= 40) trans = null;
     clearPressed(); return;
   }
-  if (adminOpen || forgeOpen || notesOpen || endingOpen) { clearPressed(); return; }
+  if (adminOpen || forgeOpen || notesOpen || endingOpen || recallOpen) { clearPressed(); return; }
   if (dialog) {
     if (pressed.up || pressed.jump || pressed.attack) advanceDialog();
     clearPressed(); return;
@@ -1476,7 +1505,7 @@ function update() {
   if (pressed.help) helpT = helpT > 0 ? 0 : 600;
   if (pressed.map) toggleMap();
   if (pressed.bgm) toggleBgm();
-  if (pressed.recall) { recallHome(); clearPressed(); return; }
+  if (pressed.recall) { askRecall(); clearPressed(); return; }
   if (pressed.notes) { openNotes(); clearPressed(); return; }
   if (pressed.forge) { openForge(nearSmith()); clearPressed(); return; }
   playFrames++;
@@ -3209,6 +3238,30 @@ function recallHome() {
   toast('🏠 한양 장터로 돌아갑니다', '#bfe0ff', 120);
   trans = { to: 'village', x: 1300, t: 0 };
 }
+// 귀환 확인 창: 10초 동안 아무것도 고르지 않으면 그대로 귀환, '아니오'면 하던 것 계속
+let recallOpen = false, recallTimer = null, recallEnd = 0;
+const RECALL_MS = 10000;
+function askRecall() {
+  if (trans || P.dead || recallOpen) return;
+  if (mapId === 'village') { toast('이미 한양 장터에 있어요.', '#ccc', 70); return; }
+  recallOpen = true; recallEnd = performance.now() + RECALL_MS;
+  $('recallAsk').classList.remove('hidden'); beep(600, 0.08, 'sine', 0.03);
+  const tick = () => {
+    const left = Math.max(0, recallEnd - performance.now());
+    $('rcSec').textContent = Math.ceil(left / 1000); $('rcBar').style.width = (left / RECALL_MS * 100) + '%';
+    if (left <= 0) answerRecall(true);
+  };
+  tick(); recallTimer = setInterval(tick, 100);
+}
+function answerRecall(yes) {
+  if (!recallOpen) return;
+  recallOpen = false; clearInterval(recallTimer);
+  $('recallAsk').classList.add('hidden'); clearPressed();
+  for (const k in keys) keys[k] = false;
+  if (yes) recallHome(); else if (P) P.atkCd = Math.max(P.atkCd, 15);
+}
+$('rcYes').addEventListener('click', e => { e.stopPropagation(); answerRecall(true); });
+$('rcNo').addEventListener('click', e => { e.stopPropagation(); answerRecall(false); });
 function scrollDest() { return QS.q20 ? 'changdeok' : QS.q15 ? 'daegu' : QS.q12 ? 'jinju' : 'jeongju'; }
 // 보스 맵 분위기: 저녁노을(dusk), 불길(fire), 폭풍(storm), 밤(night)
 const GLOOM = {
@@ -3860,7 +3913,7 @@ const enhMult = () => 1 + enhPct(P ? P.enh || 0 : 0) / 100;                   //
 let forgeOpen = false, forgeBusy = false, forgeAtSmith = false;
 
 function openForge(atSmith) {
-  if (!P || state !== 'play' || dialog || adminOpen || notesOpen || endingOpen) return;
+  if (!P || state !== 'play' || dialog || adminOpen || notesOpen || endingOpen || recallOpen) return;
   forgeAtSmith = !!atSmith;
   forgeOpen = true; $('forge').classList.remove('hidden');
   $('fgTitle').textContent = forgeAtSmith ? '⚒ 대장간 — 무기 강화 (성공 확률 +5%)' : '⚒ 무기 강화';
