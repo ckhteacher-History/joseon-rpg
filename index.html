@@ -277,7 +277,7 @@
   <button id="admBtn" class="hidden">🛠 관리자 (F2)</button>
   <button id="mapBtn">🗺 조선 지도 (M)</button>
   <button id="noteBtn">📜 노트 (N)</button>
-  <button id="bgmBtn" title="배경 음악 켜기/끄기 (B)">🔊 음악</button>
+  <button id="bgmBtn" title="배경 음악 켜기/끄기 (V)">🔊 음악</button>
   <div id="notes" class="hidden">
     <div class="notesBox">
       <div class="nhead"><span>📜 역사 노트 보관함 <small id="nCount"></small></span><button id="nEnd" class="hidden" style="font-size:13px;border:1.5px solid #ffe6a8;border-radius:8px;padding:3px 10px;margin-right:10px">🏆 완주 기록 · 도감</button><button id="nClose" title="닫기 (N / Esc)">✕</button></div>
@@ -300,7 +300,7 @@
     <div class="sub">朝鮮流浪記 · 19세기 조선, 신분을 골라 길을 떠나라</div>
     <div class="hello" id="hello"></div>
     <div id="cards"></div>
-    <div class="keys"><b>← →</b> 이동 &nbsp; <b>Space</b> 점프(×2 이단) &nbsp; <b>Z</b> 공격 &nbsp; <b>X</b> 기술 &nbsp; <b>↑</b> 대화·포탈 &nbsp; <b>A</b> 국밥 먹기 &nbsp; <b>E</b> 무기 강화 &nbsp; <b>↓+Space</b> 아래로 내려가기</div>
+    <div class="keys"><b>← →</b> 이동 &nbsp; <b>Space</b> 점프(×2 이단) &nbsp; <b>Z</b> 공격 &nbsp; <b>X</b> 기술 &nbsp; <b>↑</b> 대화·포탈 &nbsp; <b>A</b> 국밥 먹기 &nbsp; <b>E</b> 무기 강화 &nbsp; <b>B</b> 한양 귀환 &nbsp; <b>↓+Space</b> 아래로 내려가기</div>
     <div class="credit">제작: 역사교사 최경환</div>
   </div>
 
@@ -321,6 +321,7 @@
   <button data-k="skill" style="right:20px;bottom:130px">기술</button>
   <button data-k="up"    style="right:94px;bottom:136px">대화</button>
   <button data-k="potion" style="right:166px;bottom:56px;width:50px;height:50px;font-size:13px">국밥</button>
+  <button data-k="recall" style="left:10px;bottom:200px;width:50px;height:50px;font-size:12px;line-height:1.1">한양<br>귀환</button>
 </div>
 <div id="rotate">📱 화면을 가로로 돌려 주세요<br><small>조선유랑기는 가로 화면에서 즐길 수 있어요</small></div>
 
@@ -334,7 +335,7 @@
 const SAVE_URL = '';
 
 // 버전 — 고칠 때마다 바꾸면, 화면에 보이는 버전으로 새 버전이 열렸는지 확인할 수 있어요.
-const VERSION = 'v6.7 (박 포수 대사 수정)';
+const VERSION = 'v6.8 (한양 귀환 B · 음악 V)';
 
 /* =========================================================
    조선유랑기 — 조선 후기 배경 횡스크롤 RPG
@@ -391,7 +392,7 @@ const KEYMAP = {
   Space: 'jump', KeyC: 'jump', AltLeft: 'jump', AltRight: 'jump',
   KeyZ: 'attack', ControlLeft: 'attack', ControlRight: 'attack',
   KeyX: 'skill', ShiftLeft: 'skill', ShiftRight: 'skill',
-  KeyA: 'potion', KeyH: 'help', KeyM: 'map', KeyN: 'notes', KeyE: 'forge', KeyB: 'bgm',
+  KeyA: 'potion', KeyH: 'help', KeyM: 'map', KeyN: 'notes', KeyE: 'forge', KeyB: 'recall', KeyV: 'bgm',
 };
 addEventListener('keydown', e => {
   if (admin.on && (e.code === 'F2' || (e.code === 'Escape' && adminOpen))) { e.preventDefault(); toggleAdmin(); return; }
@@ -1475,6 +1476,7 @@ function update() {
   if (pressed.help) helpT = helpT > 0 ? 0 : 600;
   if (pressed.map) toggleMap();
   if (pressed.bgm) toggleBgm();
+  if (pressed.recall) { recallHome(); clearPressed(); return; }
   if (pressed.notes) { openNotes(); clearPressed(); return; }
   if (pressed.forge) { openForge(nearSmith()); clearPressed(); return; }
   playFrames++;
@@ -3197,6 +3199,16 @@ function drawDecor(d) {
   }
 }
 
+// 귀환: 어느 맵에서든 한양 장터(서당 앞)로 바로 돌아가기
+function recallHome() {
+  if (trans || P.dead) return;
+  if (mapId === 'village') { toast('이미 한양 장터에 있어요.', '#ccc', 70); return; }
+  for (let i = 0; i < 24; i++) fx.push({ type: 'p', x: P.x + rnd(-20, 20), y: P.y - rnd(0, 60), vx: rnd(-0.5, 0.5), vy: -rnd(1.5, 3.5), life: 36, max: 36, color: '#bfe0ff', s: rnd(3, 5) });
+  fx.push({ type: 'pillar', x: P.x, y: P.y, w: 50, h: 220, life: 36, max: 36, color: '170,210,255' });
+  beep(520, 0.25, 'sine', 0.04, 500);
+  toast('🏠 한양 장터로 돌아갑니다', '#bfe0ff', 120);
+  trans = { to: 'village', x: 1300, t: 0 };
+}
 function scrollDest() { return QS.q20 ? 'changdeok' : QS.q15 ? 'daegu' : QS.q12 ? 'jinju' : 'jeongju'; }
 // 보스 맵 분위기: 저녁노을(dusk), 불길(fire), 폭풍(storm), 밤(night)
 const GLOOM = {
@@ -3603,7 +3615,7 @@ function drawToasts() {
 function drawHelp() {
   const a = Math.min(1, helpT / 40);
   ctx.globalAlpha = a;
-  const lines = ['← → 이동 · Space 점프 · 공중에서 Space 이단 점프 · ↓+Space 내려가기', 'Z(Ctrl) 공격(꾹 누르면 연속) · X(Shift) 기술 · A 국밥 먹기', '↑(Enter) 대화·포탈 · M 지도 · N 노트 · E 강화 · B 음악'];
+  const lines = ['← → 이동 · Space 점프 · 공중에서 Space 이단 점프 · ↓+Space 내려가기', 'Z(Ctrl) 공격(꾹 누르면 연속) · X(Shift) 기술 · A 국밥 먹기', '↑(Enter) 대화·포탈 · M 지도 · N 노트 · E 강화 · B 귀환(한양) · V 음악'];
   ctx.fillStyle = 'rgba(20,14,10,.78)'; rr(ctx, VW / 2 - 225, 12, 450, 68, 10); ctx.fill();
   ctx.font = F(13, true); ctx.textAlign = 'center'; ctx.fillStyle = '#f3e3c0';
   lines.forEach((l, i) => ctx.fillText(l, VW / 2, 33 + i * 19));
