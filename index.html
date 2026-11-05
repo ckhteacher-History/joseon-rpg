@@ -370,7 +370,7 @@
 const SAVE_URL = '';
 
 // 버전 — 고칠 때마다 바꾸면, 화면에 보이는 버전으로 새 버전이 열렸는지 확인할 수 있어요.
-const VERSION = 'v8.5 (퀴즈 수정 · 보스 이동 범위)';
+const VERSION = 'v8.6 (관리자 엽전·국밥 무제한)';
 
 /* =========================================================
    조선유랑기 — 조선 후기 배경 횡스크롤 RPG
@@ -1802,9 +1802,9 @@ function doSkill() {
 }
 
 function usePotion() {
-  if (P.potions <= 0) { toast('국밥이 없다. 주막에서 사 오자.', '#ccc', 70); return; }
+  if (P.potions <= 0 && !admin.on) { toast('국밥이 없다. 주막에서 사 오자.', '#ccc', 70); return; }
   if (P.hp >= P.maxHp) { toast('이미 HP가 최대입니다.', '#ccc', 70); return; }
-  P.potions--;
+  if (!admin.on) P.potions--;   // 관리자 모드: 국밥 무제한
   const h = Math.round(P.maxHp * 0.45) + 20;
   P.hp = Math.min(P.maxHp, P.hp + h);
   addFloat(P.x, P.y - 70, '+' + h, 'heal'); beep(520, 0.15, 'sine', 0.05, 200);
@@ -1875,7 +1875,7 @@ function hurtPlayer(dmg, fromX) {
   addFloat(P.x, P.y - 66, dmg, 'hurt'); SFX.hurt(); shake = 6;
   if (P.hp <= 0) {
     P.hp = 0; P.dead = 100;
-    const lost = Math.floor(P.coins * 0.1); P.coins -= lost;
+    const lost = admin.on ? 0 : Math.floor(P.coins * 0.1); P.coins -= lost;
     toast(`기절했다…${lost ? ` (엽전 ${lost}닢을 잃었다)` : ''}`, '#ff8a8a', 200);
   }
 }
@@ -2314,11 +2314,11 @@ function talk(npcId) {
     const prev = onEnd;
     const shopTalk = !q || (isActive(q) && QS[q.id].count < q.need) || !questUnlocked(q);
     if (shopTalk) {
-      const n2 = Math.min(3, Math.floor(P.coins / 10));
+      const n2 = admin.on ? 3 : Math.min(3, Math.floor(P.coins / 10));
       pages = pages.concat(n2 > 0
         ? [QK(`국밥 한 그릇에 엽전 10닢이오. 든든하게 <b>${n2}그릇</b> 싸 드리리다! (<b>A 키</b>로 먹기)`)]
         : [QK(`국밥 한 그릇에 엽전 10닢인데… 엽전이 모자라구려. 산짐승을 잡으면 엽전이 떨어질 거요.`)]);
-      onEnd = () => { prev && prev(); if (n2 > 0) { P.coins -= n2 * 10; P.potions += n2; SFX.coin(); toast(`국밥 ${n2}그릇을 샀다 (엽전 -${n2 * 10})`, '#fff'); saveGame(true); } };
+      onEnd = () => { prev && prev(); if (n2 > 0) { if (!admin.on) P.coins -= n2 * 10; P.potions += n2; SFX.coin(); toast(`국밥 ${n2}그릇을 샀다 (엽전 -${n2 * 10})`, '#fff'); saveGame(true); } };
     }
   }
   if (!pages.length || pages[0] === undefined) pages = ['…'];
@@ -3810,9 +3810,9 @@ function drawHUD() {
   bar(140, 518, 230, 11, P.mp, P.maxMp, '#3f7fd9', 'MP');
   // 엽전
   ctx.fillStyle = '#c99a2e'; ell(ctx, 398, 515, 9, 9); ctx.fillStyle = '#e8c35a'; ell(ctx, 398, 515, 7, 7); ctx.fillStyle = '#7a5a1a'; ctx.fillRect(395.5, 512.5, 5, 5);
-  ctx.textAlign = 'left'; ctx.font = F(15, true); ctx.fillStyle = '#ffe08a'; ctx.fillText(P.coins + '닢', 412, 520);
+  ctx.textAlign = 'left'; ctx.font = F(15, true); ctx.fillStyle = '#ffe08a'; ctx.fillText(admin.on ? '∞닢 (관리자)' : P.coins + '닢', 412, 520);
   // 국밥 · 기술
-  slot(490, '국밥', `×${P.potions}`, 'A', 0, '#e8d6a0');
+  slot(490, '국밥', admin.on ? '×∞' : `×${P.potions}`, 'A', 0, '#e8d6a0');
   slot(575, c.skill.name, `MP ${c.skill.mp} · ${(skillCdOf() / 60).toFixed(1)}초`, 'X', P.skillCd / skillCdOf(), P.mp >= c.skill.mp ? '#ffd76a' : '#888');
   slot(660, `${weaponName(c.weapon, P.enh, true)} +${P.enh}`, `공격+${enhPct(P.enh)}% · 눌러 강화`, 'E', 0, P.enh >= 10 ? '#ffcf3a' : P.enh >= 6 ? '#d9a6ff' : P.enh >= 3 ? '#8ac6ff' : '#e8d6a0');
   // EXP
@@ -4253,14 +4253,14 @@ function updateForge() {
     $('fgRate').innerHTML = Math.round(enhRate(n) * 100) + '%' + (forgeAtSmith ? ' <small style="color:#ffcf7a;font-size:11px">(+5%)</small>' : '');
     $('fgBtn').disabled = forgeBusy;
   }
-  $('fgCoins').textContent = P.coins + '닢';
-  $('fgCoins').style.color = n < ENH_MAX && P.coins < enhCost(n) ? '#ff8a6a' : '';
+  $('fgCoins').textContent = admin.on ? '∞ (관리자)' : P.coins + '닢';
+  $('fgCoins').style.color = !admin.on && n < ENH_MAX && P.coins < enhCost(n) ? '#ff8a6a' : '';
 }
 function tryEnhance() {
   if (forgeBusy || P.enh >= ENH_MAX) return;
   const cost = enhCost(P.enh), msg = $('fgMsg');
-  if (P.coins < cost) { msg.className = 'fail'; msg.textContent = `엽전이 ${cost - P.coins}닢 모자라요.`; return; }
-  P.coins -= cost; forgeBusy = true; $('fgBtn').disabled = true; updateForge();
+  if (P.coins < cost && !admin.on) { msg.className = 'fail'; msg.textContent = `엽전이 ${cost - P.coins}닢 모자라요.`; return; }
+  if (!admin.on) P.coins -= cost;   // 관리자 모드: 엽전 무제한 forgeBusy = true; $('fgBtn').disabled = true; updateForge();
   msg.className = 'work'; msg.textContent = '땅!';
   [0, 280, 560].forEach((t, i) => setTimeout(() => { beep(880 - i * 60, 0.08, 'square', 0.05, -400); msg.textContent = '땅! '.repeat(i + 1).trim(); }, t));
   setTimeout(() => {
