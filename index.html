@@ -25,6 +25,25 @@
   .card{width:200px;background:#fbf5e6;border:2px solid #8b6a3e;border-radius:12px;padding:8px 10px 10px;text-align:center;cursor:pointer;
     transition:transform .15s,box-shadow .15s;box-shadow:0 4px 0 #8b6a3e;outline:none}
   .card:hover,.card:focus{transform:translateY(-6px);box-shadow:0 10px 0 #8b6a3e}
+  .card{position:relative}
+  .pvBtn{position:absolute;top:8px;right:8px;font:700 12px 'Gowun Batang',serif;background:#8a3a2a;color:#fff3dc;border:none;border-radius:999px;padding:4px 9px;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.25)}
+  .pvBtn:hover{background:#a8492f}
+  #preview{position:absolute;inset:0;background:rgba(15,10,6,.72);display:flex;align-items:center;justify-content:center;z-index:6}
+  .pvBox{width:780px;background:#f5ecd6;border:3px solid #8b6a3e;border-radius:14px;overflow:hidden;box-shadow:0 10px 40px rgba(0,0,0,.5)}
+  .pvHead{display:flex;align-items:center;gap:10px;padding:8px 14px;background:linear-gradient(90deg,#3c2a1a,#6b4a2b);color:#ffe6a8}
+  .pvHead h3{margin:0;font-size:20px;flex:1} .pvHead h3 small{font-size:13px;color:#e8d3a8;font-weight:400;margin-left:6px}
+  .pvHead button{background:none;border:none;color:#ffe6a8;font-size:20px;cursor:pointer}
+  #pvCv{display:block;width:780px;height:260px;background:#cfe3ea}
+  #pvCap{padding:8px 16px;font-size:15px;line-height:1.55;min-height:50px;color:#2b1d12;border-top:2px solid #d8c9a6}
+  #pvCap b{color:#8a3a2a}
+  .pvBtns{display:flex;gap:8px;padding:0 14px 12px;flex-wrap:wrap}
+  .pvBtns button{font:700 14.5px 'Gowun Batang',serif;padding:8px 14px;border-radius:9px;border:2px solid #8b6a3e;background:#fffaf0;color:#3b2a1a;cursor:pointer}
+  .pvBtns button.on{background:#e9d6a8}
+  .pvBtns #pvStart{margin-left:auto;background:#8a3a2a;color:#fff;border-color:#6a2a1a}
+  #opening{position:absolute;inset:0;z-index:7;background:#140d08}
+  #opCv{width:960px;height:540px;display:block}
+  #opSkip{position:absolute;right:18px;bottom:16px;font:700 14px 'Gowun Batang',serif;background:rgba(0,0,0,.45);color:#f3e3c0;border:1.5px solid rgba(243,227,192,.6);border-radius:999px;padding:6px 16px;cursor:pointer}
+  .opAgain{position:absolute;left:14px;bottom:8px;font:12.5px 'Gowun Batang',serif;color:#8b6a3e;background:none;border:none;cursor:pointer;text-decoration:underline}
   .card canvas{width:100px;height:105px;display:block;margin:0 auto;background:#efe2c2;border-radius:50%}
   .card h2{margin:6px 0 0;font-size:24px;line-height:1}
   .card .hj{font-size:13px;color:#8b6a3e}
@@ -339,7 +358,19 @@
     <div id="cards"></div>
     <div class="keys"><b>← →</b> 이동 &nbsp; <b>Space</b> 점프(×2 이단) &nbsp; <b>Z</b> 공격 &nbsp; <b>X</b> 기술 &nbsp; <b>↑</b> 대화·포탈 &nbsp; <b>A</b> 국밥 먹기 &nbsp; <b>E</b> 무기 강화 &nbsp; <b>B</b> 한양 귀환 &nbsp; <b>↓+Space</b> 아래로 내려가기</div>
     <div class="credit">제작: 역사교사 최경환</div>
+    <button class="opAgain" id="opAgain">🎬 오프닝 다시 보기</button>
   </div>
+
+  <div id="preview" class="hidden">
+    <div class="pvBox">
+      <div class="pvHead"><h3 id="pvTitle"></h3><button id="pvClose" title="닫기 (Esc)">✕</button></div>
+      <canvas id="pvCv" width="1170" height="390"></canvas>
+      <div id="pvCap"></div>
+      <div class="pvBtns"><button id="pvAuto" class="on">▶ 전체 보기</button><button id="pvAtk">Z 기본 공격</button><button id="pvSkill">X 기술</button><button id="pvStart">이 신분으로 시작 ▶</button></div>
+    </div>
+  </div>
+
+  <div id="opening" class="hidden"><canvas id="opCv" width="1920" height="1080"></canvas><button id="opSkip">건너뛰기 ▶▶</button></div>
 
   <div id="dlg" class="hidden">
     <canvas id="dlgPor" width="200" height="220"></canvas>
@@ -370,7 +401,7 @@
 const SAVE_URL = '';
 
 // 버전 — 고칠 때마다 바꾸면, 화면에 보이는 버전으로 새 버전이 열렸는지 확인할 수 있어요.
-const VERSION = 'v8.7 (분노의 일격 충격파)';
+const VERSION = 'v8.8 (오프닝 · 노트 획득 연출 · 직업 미리보기)';
 
 /* =========================================================
    조선유랑기 — 조선 후기 배경 횡스크롤 RPG
@@ -479,6 +510,14 @@ addEventListener('keydown', e => {
     return;
   }
   if (state === 'login') return;
+  if (state === 'opening') { if (['Enter', 'Escape', 'Space'].includes(e.code)) { e.preventDefault(); endOpening(); } return; }
+  if (pv) {
+    if (e.code === 'Escape') closePreview();
+    else if (e.code === 'KeyZ') pvMode('atk');
+    else if (e.code === 'KeyX') pvMode('skill');
+    else if (e.code === 'Enter') { const c = pv.cid; closePreview(); startGame(c); }
+    e.preventDefault(); return;
+  }
   if (state === 'title') {
     const n = ['Digit1', 'Digit2', 'Digit3', 'Digit4'].indexOf(e.code);
     if (n >= 0) startGame(Object.keys(CLASSES)[n]);
@@ -1581,6 +1620,7 @@ function makeMon(s) {
 const SKILL_SHORT = { yangban: '호령', jungin: '처방', pyeongmin: '풍물', nobi: '분노<br>일격' };
 function update() {
   frame++;
+  if (noteFx) { if (++noteFx.t > NOTE_FX_LEN) noteFx = null; } else if (noteFxQ.length) noteFx = { id: noteFxQ.shift(), t: 0 };
   if (P && SKILL_SHORT[P.cid] && skillBtnFor !== P.cid) { skillBtnFor = P.cid; $('skillBtn').innerHTML = SKILL_SHORT[P.cid]; }
   { const m = !!(notesOpen || endingOpen || forgeOpen || adminOpen || recallOpen); if (m !== document.body.classList.contains('modal')) document.body.classList.toggle('modal', m); }
   if (state !== 'play') { titleCam = (titleCam + 0.6) % (MAPS.village.w - VW); return; }
@@ -4065,6 +4105,7 @@ function render() {
       ctx.fillStyle = gr; ctx.fillRect(0, 0, VW, 492);
     }
   }
+  if (state === 'play') drawNoteFx();
   if (trans) { ctx.fillStyle = `rgba(0,0,0,${1 - Math.abs(trans.t - 20) / 20})`; ctx.fillRect(0, 0, VW, VH); }
 }
 
@@ -4182,7 +4223,8 @@ async function doLogin() {
     goClassSelect();
   }
 }
-function goClassSelect() {
+function goClassSelect(noOpening) {
+  if (!noOpening) { playOpening(() => goClassSelect(true)); return; }
   state = 'title';
   $('login').classList.add('hidden'); $('title').classList.remove('hidden');
   $('hello').innerHTML = `<b>${escapeHtml(user.nick)}</b> 님, 어떤 신분으로 길을 떠날까요? (${escapeHtml(user.sid)} ${escapeHtml(user.name)})`;
@@ -4452,8 +4494,10 @@ $('admBtn').onclick = () => openAdmin();
 let last = performance.now(), acc = 0;
 function loop(now) {
   acc += Math.min(100, now - last); last = now;
-  while (acc >= 1000 / 60) { update(); acc -= 1000 / 60; }
+  while (acc >= 1000 / 60) { update(); if (pv) pvUpdate(); acc -= 1000 / 60; }
   render();
+  if (pv) pvRender();
+  if (op) drawOpening();
   requestAnimationFrame(loop);
 }
 
@@ -4461,11 +4505,12 @@ function loop(now) {
 Object.entries(CLASSES).forEach(([id, c], i) => {
   const d = document.createElement('div');
   d.className = 'card'; d.tabIndex = 0;
-  d.innerHTML = `<canvas width="200" height="210"></canvas><h2>${c.name}</h2><div class="hj">${c.hanja} · ${i + 1}번</div>
+  d.innerHTML = `<button class="pvBtn" title="공격·기술 미리보기">▶ 미리보기</button><canvas width="200" height="210"></canvas><h2>${c.name}</h2><div class="hj">${c.hanja} · ${i + 1}번</div>
     <div class="tags">${c.tags}</div><p>${c.desc}</p><div class="sk"><b>[X] ${c.skill.name}</b><br>${c.skill.desc}</div>`;
   const g = d.querySelector('canvas').getContext('2d');
   g.setTransform(2.5, 0, 0, 2.5, 0, 0);
   drawPerson(g, 40, 80, c.look, 1, { weapon: c.weapon });
+  d.querySelector('.pvBtn').addEventListener('click', e => { e.stopPropagation(); openPreview(id); });
   d.addEventListener('click', () => { goFullscreen(); startGame(id); });
   d.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); startGame(id); } });
   $('cards').appendChild(d);
@@ -4558,6 +4603,7 @@ function collectNote(text) {
   const id = noteTitle(text);
   if (!NOTE_LIST.some(n => n.id === id) || NOTES_GOT[id]) return;
   NOTES_GOT[id] = 1;
+  noteFxQ.push(id);
   toast(`📜 역사 노트 보관함에 넣었어요 (${Object.keys(NOTES_GOT).length}/${NOTE_LIST.length})`, '#bfe8a8', 200);
   const nt = NOTE_LIST.find(n => n.id === id), chAll = NOTE_LIST.filter(n => n.ch === nt.ch);
   if (chAll.every(n => NOTES_GOT[n.id])) setTimeout(() => toast(`🎉 ${CH_NAMES[nt.ch]}의 역사 노트를 모두 모았어요!`, '#ffd76a', 260), 600);
@@ -4725,6 +4771,243 @@ function closeEnding() { endingOpen = false; $('ending').classList.add('hidden')
 $('endClose').onclick = closeEnding; $('endGo').onclick = closeEnding;
 $('endTabN').onclick = () => renderEnding('n'); $('endTabD').onclick = () => renderEnding('d');
 $('nEnd').onclick = e => { e.stopPropagation(); closeNotes(); openEnding(); };
+
+/* =========================================================
+   📜 역사 노트 획득 연출: 두루마리가 펼쳐지고 → 제목이 붓으로 써지고 → 낙관이 쾅! → 노트 버튼으로 쏙
+   ========================================================= */
+const noteFxQ = []; let noteFx = null; const NOTE_FX_LEN = 150;
+function drawScrollPaper(g, cx, cy, w, h, rollW) {
+  // 종이
+  const gr = g.createLinearGradient(0, cy - h / 2, 0, cy + h / 2);
+  gr.addColorStop(0, '#efe0bb'); gr.addColorStop(0.5, '#f8eed5'); gr.addColorStop(1, '#eadab2');
+  g.fillStyle = gr; g.fillRect(cx - w / 2, cy - h / 2, w, h);
+  g.fillStyle = '#8a3a2a'; g.fillRect(cx - w / 2, cy - h / 2, w, 6); g.fillRect(cx - w / 2, cy + h / 2 - 6, w, 6);   // 위아래 비단 띠
+  g.fillStyle = 'rgba(138,58,42,.25)'; g.fillRect(cx - w / 2, cy - h / 2 + 8, w, 2); g.fillRect(cx - w / 2, cy + h / 2 - 10, w, 2);
+  // 양쪽 두루마리 축
+  [-1, 1].forEach(sd => {
+    const x = cx + sd * w / 2;
+    const wg = g.createLinearGradient(x - rollW / 2, 0, x + rollW / 2, 0);
+    wg.addColorStop(0, '#4a2c16'); wg.addColorStop(0.5, '#9a6a3a'); wg.addColorStop(1, '#4a2c16');
+    g.fillStyle = wg; g.fillRect(x - rollW / 2, cy - h / 2 - 10, rollW, h + 20);
+    g.fillStyle = '#c9a24a'; g.fillRect(x - rollW / 2 - 2, cy - h / 2 - 16, rollW + 4, 7); g.fillRect(x - rollW / 2 - 2, cy + h / 2 + 9, rollW + 4, 7);
+  });
+}
+function drawStamp(g, x, y, size, text, k) {   // k: 1→크게 떨어지는 중, 0→제자리
+  const sc = 1 + k * 1.4;
+  g.save(); g.translate(x, y); g.rotate(-0.08); g.scale(sc, sc); g.globalAlpha *= 1 - k * 0.6;
+  g.fillStyle = '#b8231a'; g.fillRect(-size / 2, -size / 2, size, size);
+  g.strokeStyle = '#f6dcc8'; g.lineWidth = 2; g.strokeRect(-size / 2 + 4, -size / 2 + 4, size - 8, size - 8);
+  g.fillStyle = '#fbe9dc'; g.font = F(size * (text.length > 1 ? 0.36 : 0.62), true); g.textAlign = 'center'; g.textBaseline = 'middle';
+  if (text.length > 1) { g.fillText(text[0], 0, -size * 0.2); g.fillText(text[1], 0, size * 0.2); } else g.fillText(text, 0, 2);
+  g.restore(); g.textBaseline = 'alphabetic';
+}
+function drawNoteFx() {
+  if (!noteFx) return;
+  const t = noteFx.t, g = ctx, title = noteFx.id;
+  const ease = x => 1 - Math.pow(1 - clamp(x, 0, 1), 3);
+  let cx = VW / 2, cy = 190, sc = 1, al = 1;
+  if (t > 110) { const k = ease((t - 110) / 36); cx += (775 - cx) * k; cy += (26 - cy) * k; sc = 1 - 0.88 * k; al = 1 - k * 0.7; }   // 노트 버튼 쪽으로
+  g.save(); g.globalAlpha = al; g.translate(cx, cy); g.scale(sc, sc);
+  g.font = F(26, true); const tw = Math.max(260, g.measureText(title).width + 120);
+  const w = tw * ease(t / 18);
+  g.shadowColor = 'rgba(0,0,0,.4)'; g.shadowBlur = 18; g.fillStyle = 'rgba(0,0,0,.001)'; g.fillRect(-w / 2, -46, w, 92); g.shadowBlur = 0;
+  drawScrollPaper(g, 0, 0, w, 92, 14);
+  if (t > 12) {
+    g.save(); g.beginPath(); g.rect(-w / 2 + 8, -46, w - 16, 92); g.clip();
+    g.globalAlpha *= clamp((t - 12) / 10, 0, 1);
+    g.font = F(14, true); g.textAlign = 'center'; g.fillStyle = '#8a3a2a'; g.fillText('📜 역사 노트 획득', 0, -18);
+    // 제목: 붓으로 써 내려가듯 왼쪽부터 드러나기
+    g.font = F(26, true); const ttw = g.measureText(title).width, p = clamp((t - 18) / 30, 0, 1);
+    g.save(); g.beginPath(); g.rect(-ttw / 2 - 4, -12, (ttw + 8) * p, 40); g.clip();
+    g.fillStyle = '#21140b'; g.fillText(title, 0, 18); g.restore();
+    if (p > 0 && p < 1) { g.fillStyle = 'rgba(20,12,6,.8)'; ell(g, -ttw / 2 + ttw * p, 10 + Math.sin(t) * 3, 4, 4); }   // 붓끝
+    g.restore();
+  }
+  if (t >= 50) drawStamp(g, tw / 2 - 40, 14, 40, '錄', clamp(1 - (t - 50) / 8, 0, 1));
+  g.restore();
+  if (t === 50) { shake = Math.max(shake, 4); beep(140, 0.12, 'square', 0.05, -60); }
+}
+
+/* =========================================================
+   🎬 오프닝: 두루마리가 펼쳐지며 이야기가 붓으로 써지고, 제목에 낙관이 찍혀요 (건너뛰기 가능)
+   ========================================================= */
+let op = null;
+const OP_LINES = [
+  '18세기 말, 정조 임금이 다스리던 조선.',
+  '장시가 열리고 엽전이 돌며, 한양 장터는 사람들로 북적였다.',
+  '그러나 1800년 정조가 세상을 떠나자, 몇몇 가문이 권세를 쥐었다.',
+  '삼정은 어지러워지고, 백성들의 한숨은 깊어만 간다…',
+  '이제 역사 두루마리를 펼쳐, 그대의 유랑이 시작된다.',
+];
+const OP_LINE_T = 1.9, OP_LINE0 = 1.5, OP_TITLE = OP_LINE0 + OP_LINES.length * OP_LINE_T + 0.4, OP_END = OP_TITLE + 4.2;
+function playOpening(done) {
+  op = { start: performance.now(), done, stamped: false };
+  state = 'opening';
+  $('login').classList.add('hidden'); $('title').classList.add('hidden'); $('opening').classList.remove('hidden');
+  beep(220, 0.6, 'sine', 0.04, 110);
+}
+function endOpening() {
+  if (!op) return;
+  const d = op.done; op = null;
+  $('opening').classList.add('hidden');
+  d && d();
+}
+$('opSkip').addEventListener('click', e => { e.stopPropagation(); endOpening(); });
+$('opAgain').addEventListener('click', e => { e.stopPropagation(); playOpening(() => goClassSelect(true)); });
+function drawOpening() {
+  const t = (performance.now() - op.start) / 1000, g = $('opCv').getContext('2d');
+  g.setTransform(2, 0, 0, 2, 0, 0);
+  const ease = x => 1 - Math.pow(1 - clamp(x, 0, 1), 3);
+  // 먹빛 배경 + 은은한 빛
+  g.fillStyle = '#140d08'; g.fillRect(0, 0, VW, VH);
+  const bg = g.createRadialGradient(VW / 2, VH / 2, 40, VW / 2, VH / 2, 560); bg.addColorStop(0, 'rgba(120,80,40,.35)'); bg.addColorStop(1, 'rgba(0,0,0,0)');
+  g.fillStyle = bg; g.fillRect(0, 0, VW, VH);
+  for (let i = 0; i < 18; i++) {   // 떠다니는 금빛 먼지
+    const x = (i * 137 + t * 14 * (1 + i % 3)) % VW, y = (i * 71 + Math.sin(t * 0.7 + i) * 30 + 540) % VH;
+    g.fillStyle = `rgba(255,215,140,${0.15 + 0.15 * Math.sin(t * 2 + i)})`; ell(g, x, y, 1.6, 1.6);
+  }
+  const fadeOut = clamp((t - (OP_END - 0.8)) / 0.8, 0, 1);
+  g.save(); g.globalAlpha = 1 - fadeOut;
+  const W = 880 * ease((t - 0.2) / 1.2), H = 420;
+  if (W > 4) drawScrollPaper(g, VW / 2, VH / 2, W, H, 22);
+  // 한지 결
+  if (W > 40) { g.save(); g.beginPath(); g.rect(VW / 2 - W / 2, VH / 2 - H / 2, W, H); g.clip();
+    g.strokeStyle = 'rgba(150,110,60,.08)'; g.lineWidth = 1; for (let i = 0; i < 40; i++) { g.beginPath(); g.moveTo(VW / 2 - 440 + i * 23, VH / 2 - 210); g.lineTo(VW / 2 - 430 + i * 23 + Math.sin(i) * 20, VH / 2 + 210); g.stroke(); }
+    g.restore(); }
+  // 이야기 줄
+  const linesAlpha = 1 - clamp((t - OP_TITLE + 0.3) / 0.6, 0, 1);
+  g.font = F(23, true); g.textAlign = 'center';
+  OP_LINES.forEach((ln, i) => {
+    const st = OP_LINE0 + i * OP_LINE_T, p = clamp((t - st) / (OP_LINE_T * 0.75), 0, 1);
+    if (p <= 0) return;
+    const y = 150 + i * 58, tw = g.measureText(ln).width;
+    g.save(); g.globalAlpha *= linesAlpha;
+    g.beginPath(); g.rect(VW / 2 - tw / 2 - 4, y - 30, (tw + 8) * p, 44); g.clip();
+    g.fillStyle = i === OP_LINES.length - 1 ? '#8a2a1a' : '#21140b'; g.fillText(ln, VW / 2, y);
+    g.restore();
+    if (p < 1) { g.fillStyle = `rgba(20,12,6,${0.8 * linesAlpha})`; ell(g, VW / 2 - tw / 2 + tw * p, y - 8 + Math.sin(t * 20) * 4, 4.5, 4.5); }
+  });
+  // 제목 + 낙관
+  if (t > OP_TITLE) {
+    const p = clamp((t - OP_TITLE) / 1.3, 0, 1);
+    g.font = F(76, true); const tw = g.measureText('조선유랑기').width;
+    g.save(); g.beginPath(); g.rect(VW / 2 - tw / 2 - 10, 170, (tw + 20) * p, 120); g.clip();
+    g.fillStyle = '#21140b'; g.shadowColor = 'rgba(120,70,30,.35)'; g.shadowBlur = 8; g.fillText('조선유랑기', VW / 2, 268); g.restore();
+    g.globalAlpha *= clamp((t - OP_TITLE - 1.1) / 0.6, 0, 1);
+    g.font = F(22, true); g.fillStyle = '#8b6a3e'; g.fillText('朝鮮流浪記 · 19세기 조선, 신분을 골라 길을 떠나라', VW / 2, 330);
+    g.globalAlpha = 1 - fadeOut;
+    const ts = OP_TITLE + 1.6;
+    if (t > ts) {
+      drawStamp(g, VW / 2 + tw / 2 + 50, 236, 64, '流浪', clamp(1 - (t - ts) / 0.18, 0, 1));
+      if (!op.stamped) { op.stamped = true; beep(110, 0.2, 'square', 0.06, -50); }
+    }
+  }
+  g.restore();
+  // 쾅 하는 순간 화면 흔들림 대신 짧은 섬광
+  if (op.stamped && t - (OP_TITLE + 1.6) < 0.15) { g.fillStyle = 'rgba(255,240,210,.18)'; g.fillRect(0, 0, VW, VH); }
+  if (t > OP_END) endOpening();
+}
+
+/* =========================================================
+   ▶ 직업 미리보기: 허수아비를 상대로 기본 공격(Z)과 기술(X)을 시연해요
+   (게임과 같은 공격·기술 코드를 그대로 써서, 실제 게임에서 보이는 모습 그대로예요)
+   ========================================================= */
+let pv = null;
+const PV_VIEW_W = 900, PV_VIEW_H = 300, PV_TOP = GROUND - 250;
+const PV_DUMMY = { name: '허수아비', w: 40, h: 72, boss: false, exp: 0, coin: [0, 0] };
+const ATK_DESC = {
+  yangban: '붓으로 글자(文·仁·義·禮·智)를 써서 <b>멀리</b> 날려요. 멀리 있는 적을 안전하게 맞혀요.',
+  jungin: '침을 <b>빠르게</b> 던져요. 사거리가 길고 공격 속도가 빨라요.',
+  pyeongmin: '낫으로 앞쪽의 적을 <b>여러 명</b> 한꺼번에 베어요.',
+  nobi: '몽둥이로 앞을 <b>세게</b> 내리쳐요. 한 방이 가장 강해요.',
+};
+function pvSwap() {
+  const mine = { P, mons, projs, waves, fx, floats, coins, eprojs, skillFlash, shake, map, mapId, ctx };
+  ({ P, mons, projs, waves, fx, floats, coins, eprojs, skillFlash, shake, map, mapId, ctx } = pv.s);
+  pv.s = mine;
+}
+function pvDummies() {
+  return [60, 330, 470, 640, 820].map(x => ({ t: 'dummy', d: PV_DUMMY, x, home: x, y: GROUND, hp: 1e9, maxHp: 1e9, dead: false, spawnA: 1, hurt: 0, kb: 0, phase: 0, s: { a: 0, b: PV_VIEW_W, y: GROUND } }));
+}
+function openPreview(cid) {
+  const c = CLASSES[cid], pl = newPlayer(cid);
+  pl.x = 190; pl.y = GROUND; pl.dir = 1; pl.mp = pl.maxMp = 999; pl.lv = 1; pl.enh = 0;
+  pv = { cid, t: 0, mode: 'auto', g: $('pvCv').getContext('2d'),
+    s: { P: pl, mons: pvDummies(), projs: [], waves: [], fx: [], floats: [], coins: [], eprojs: [], skillFlash: null, shake: 0, map: MAPS.village, mapId: 'village', ctx: $('pvCv').getContext('2d') } };
+  $('pvTitle').innerHTML = `${c.name} <small>${c.hanja} · ${c.tags}</small>`;
+  $('preview').classList.remove('hidden');
+  pvMode('auto');
+}
+function closePreview() { if (!pv) return; pv = null; $('preview').classList.add('hidden'); }
+function pvMode(m) {
+  if (!pv) return;
+  pv.mode = m; pv.t = 0;
+  ['pvAuto', 'pvAtk', 'pvSkill'].forEach(id => $(id).classList.remove('on'));
+  $({ auto: 'pvAuto', atk: 'pvAtk', skill: 'pvSkill' }[m]).classList.add('on');
+  pvCaption();
+}
+function pvCaption(which) {
+  const c = CLASSES[pv.cid], m = which || (pv.mode === 'skill' ? 'skill' : 'atk');
+  $('pvCap').innerHTML = m === 'skill'
+    ? `<b>[X] ${c.skill.name}</b> — ${c.skill.desc}. <small>(기력 ${c.skill.mp} 사용 · 모바일은 「${SKILL_SHORT[pv.cid].replace('<br>', '')}」 버튼)</small>`
+    : `<b>[Z] 기본 공격</b> — ${ATK_DESC[pv.cid]} <small>(꾹 누르면 연속 공격 · 모바일은 「공격」 버튼)</small>`;
+}
+function pvUpdate() {
+  pvSwap();
+  try {
+    const t = ++pv.t;
+    P.walkT = (P.walkT || 0) + 1; P.skillCd = 0; P.mp = 999; P.inv = 0;
+    if (P.atkAnim > 0) P.atkAnim--; if (P.atkCd > 0) P.atkCd--;
+    if (pv.mode === 'auto') {
+      if ([20, 60, 100].includes(t)) { doAttack(); pvCaption('atk'); }
+      if (t === 165) { doSkill(); pvCaption('skill'); }
+      if (t >= 360) { pv.t = 0; }
+    } else if (pv.mode === 'atk') { if (t % 40 === 15) doAttack(); }
+    else if (pv.mode === 'skill') { if (t % 210 === 20) doSkill(); }
+    updateProjectiles(); updateFx();
+    for (const m of mons) {
+      m.x += m.kb; m.kb *= 0.82; m.x += (m.home - m.x) * 0.06;
+      if (m.hurt > 0) m.hurt--; if (m.stun > 0) m.stun--;
+      m.hp = m.maxHp = 1e9; m.dead = false;
+    }
+    if (shake > 0) shake *= 0.85; if (shake < 0.5) shake = 0;
+  } finally { pvSwap(); }
+}
+function drawDummy(g, m) {
+  const x = m.x, y = GROUND, hit = m.hurt > 0, wob = Math.sin(m.hurt * 0.9) * (m.hurt / 12) * 0.25;
+  g.save(); g.translate(x, y); g.rotate(wob);
+  g.fillStyle = 'rgba(0,0,0,.2)'; ell(g, 0, 0, 18, 4);
+  g.fillStyle = '#6b4a2b'; g.fillRect(-3, -70, 6, 70); g.fillRect(-24, -54, 48, 5);
+  g.fillStyle = hit ? '#f0b090' : '#d9b56a'; g.beginPath(); g.ellipse(0, -38, 14, 20, 0, 0, TAU); g.fill();
+  g.strokeStyle = '#a07a3a'; g.lineWidth = 1.5; g.beginPath(); g.moveTo(-12, -32); g.lineTo(12, -32); g.moveTo(-12, -44); g.lineTo(12, -44); g.stroke();
+  g.fillStyle = hit ? '#f6c8a8' : '#e8cc8a'; ell(g, 0, -66, 11, 11);
+  g.strokeStyle = '#5a3a1a'; g.lineWidth = 1.6; g.beginPath(); g.moveTo(-5, -69); g.lineTo(-1, -65); g.moveTo(-1, -69); g.lineTo(-5, -65); g.moveTo(2, -69); g.lineTo(6, -65); g.moveTo(6, -69); g.lineTo(2, -65); g.stroke();
+  g.fillStyle = '#8a5a2a'; g.beginPath(); g.moveTo(-14, -74); g.lineTo(0, -86); g.lineTo(14, -74); g.closePath(); g.fill();
+  g.restore();
+}
+function pvRender() {
+  pvSwap();
+  try {
+    const g = ctx, cv = $('pvCv'), sc = cv.width / PV_VIEW_W;
+    g.setTransform(sc, 0, 0, sc, 0, 0);
+    const sk = g.createLinearGradient(0, 0, 0, PV_VIEW_H); sk.addColorStop(0, '#bfe0ea'); sk.addColorStop(1, '#eaf3e8');
+    g.fillStyle = sk; g.fillRect(0, 0, PV_VIEW_W, PV_VIEW_H);
+    g.fillStyle = 'rgba(120,150,110,.35)'; g.beginPath(); g.moveTo(0, 190); for (let x = 0; x <= PV_VIEW_W; x += 60) g.lineTo(x, 170 + Math.sin(x * 0.012) * 26); g.lineTo(PV_VIEW_W, PV_VIEW_H); g.lineTo(0, PV_VIEW_H); g.fill();
+    const sx = shake ? rnd(-shake, shake) : 0;
+    g.translate(sx, -PV_TOP);
+    g.fillStyle = '#7aa05a'; g.fillRect(-20, GROUND, PV_VIEW_W + 40, 8); g.fillStyle = '#b8935f'; g.fillRect(-20, GROUND + 8, PV_VIEW_W + 40, 60);
+    mons.forEach(m => drawDummy(g, m));
+    drawPerson(g, P.x, P.y, P.c.look, P.dir, { t: P.walkT, weapon: P.c.weapon, enh: P.enh, atk: P.atkAnim > 0 ? P.atkAnim / P.atkLen : 0, ranged: P.c.type === 'ranged' });
+    projs.forEach(drawProjectile); waves.forEach(drawWave); fx.forEach(drawFx); floats.forEach(drawFloat);
+    g.setTransform(sc, 0, 0, sc, 0, 0);
+    if (skillFlash) { g.fillStyle = `rgba(${skillFlash.c},${0.25 * skillFlash.life / skillFlash.max})`; g.fillRect(0, 0, PV_VIEW_W, PV_VIEW_H); }
+  } finally { pvSwap(); }
+}
+$('pvClose').addEventListener('click', e => { e.stopPropagation(); closePreview(); });
+$('pvAuto').addEventListener('click', e => { e.stopPropagation(); pvMode('auto'); });
+$('pvAtk').addEventListener('click', e => { e.stopPropagation(); pvMode('atk'); });
+$('pvSkill').addEventListener('click', e => { e.stopPropagation(); pvMode('skill'); });
+$('pvStart').addEventListener('click', e => { e.stopPropagation(); const c = pv.cid; closePreview(); goFullscreen(); startGame(c); });
 
 $('verLabel').textContent = VERSION; $('admVer').textContent = VERSION;
 showLogin();
