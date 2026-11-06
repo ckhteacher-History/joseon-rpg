@@ -351,7 +351,7 @@
     <div class="gdBox">
       <div class="gdHead"><h3>❓ 지금 무엇을 하면 될까?</h3><button id="gdClose" title="닫기 (Esc)">✕</button></div>
       <div id="gdBody"></div>
-      <div class="gdFoot">📍 지금 위치: <b id="gdHere"></b> · 머리 위 <b>!</b> 새 부탁 · <b>?</b> 보고하기 · <b>💬</b> 역사 이야기 · <b>📦</b> 물건 받기</div>
+      <div class="gdFoot">📍 지금 위치: <b id="gdHere"></b> · 머리 위 <b>!</b> 새 부탁 · <b>?</b> 보고 · <b>📜</b> 꼭 들을 역사 이야기 · <b>💬</b> 이미 들은 이야기 · <b>📦</b> 물건 받기</div>
     </div>
   </div>
   <div id="recallAsk" class="hidden">
@@ -422,7 +422,7 @@
 const SAVE_URL = '';
 
 // 버전 — 고칠 때마다 바꾸면, 화면에 보이는 버전으로 새 버전이 열렸는지 확인할 수 있어요.
-const VERSION = 'v8.9 (다음 할 일 도우미)';
+const VERSION = 'v9.0 (노트 대화 표시 · 흔들림 제거)';
 
 /* =========================================================
    조선유랑기 — 조선 후기 배경 횡스크롤 RPG
@@ -3688,6 +3688,7 @@ function drawPortal(pt) {
   if (Math.abs(P.x - x) < 42) { ctx.fillStyle = '#ffd76a'; ctx.font = F(12, true); ctx.fillText('↑ 이동', x, ty); }
 }
 
+const npcHasNewNote = id => !!TALKS[id] && TALKS[id].some(p => isNotePage(p) && NOTE_LIST.some(nt => nt.id === noteTitle(p.text)) && !NOTES_GOT[noteTitle(p.text)]);
 function drawNPC(n) {
   const esc = n.id === 'jeomsun' && ESC.on && !ESC.arrived && escortActive();
   drawPerson(ctx, n.x, GROUND, n.look, esc ? (ESC.moving ? 1 : (n.x < P.x ? 1 : -1)) : (n.x < P.x ? 1 : -1), { t: frame, walk: esc && ESC.moving });
@@ -3709,8 +3710,19 @@ function drawNPC(n) {
   }
   const st = npcStatus(n.id), by = GROUND - 96 + Math.sin(frame * 0.08) * 3;
   if (n.talk && !st) {
-    ctx.fillStyle = 'rgba(0,0,0,.3)'; ell(ctx, n.x, by - 7, 12, 12);
-    ctx.font = F(15, true); ctx.textAlign = 'center'; ctx.fillText('💬', n.x, by - 1);
+    if (npcHasNewNote(n.id)) {   // 아직 받지 않은 역사 노트가 있는 대화: 꼭 들어야 해요!
+      const bb = by - 4 + Math.sin(frame * 0.12) * 3, pulse = 0.5 + 0.5 * Math.sin(frame * 0.15);
+      ctx.save(); ctx.shadowColor = 'rgba(255,200,80,1)'; ctx.shadowBlur = 10 + pulse * 10;
+      ctx.fillStyle = '#ffcf5a'; ell(ctx, n.x, bb - 7, 14, 14); ctx.restore();
+      ctx.strokeStyle = '#8a3a2a'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(n.x, bb - 7, 14, 0, TAU); ctx.stroke();
+      ctx.font = F(16, true); ctx.textAlign = 'center'; ctx.fillText('📜', n.x, bb - 1);
+      ctx.font = F(11, true); const lt = '역사 노트!', lw = ctx.measureText(lt).width + 10;
+      ctx.fillStyle = 'rgba(138,58,42,.92)'; rr(ctx, n.x - lw / 2, bb - 39, lw, 16, 6); ctx.fill();
+      ctx.fillStyle = '#fff3dc'; ctx.fillText(lt, n.x, bb - 27);
+    } else {
+      ctx.fillStyle = 'rgba(0,0,0,.3)'; ell(ctx, n.x, by - 7, 12, 12);
+      ctx.font = F(15, true); ctx.textAlign = 'center'; ctx.fillText('💬', n.x, by - 1);
+    }
   }
   if (n.id === 'smith') {
     ctx.fillStyle = 'rgba(0,0,0,.35)'; ell(ctx, n.x, by - 7, 13, 13);
@@ -4622,7 +4634,7 @@ let notesOpen = false, noteSel = null, noteSeen = {};
   NOTE_LIST.forEach(n => {
     if (n.qid) { const q = QUESTS.find(x => x.id === n.qid); n.hint = `「${q.title}」 부탁을 마치면 얻어요`; }
     else { const npc = Object.entries(TALKS).find(([, pg]) => pg.some(p => isNotePage(p) && noteTitle(p.text) === n.id))[0];
-      n.hint = `${MAPS[NPCS[npc].map].name}의 💬 ${NPCS[npc].name}와(과) 이야기해 보세요`; }
+      n.hint = `${MAPS[NPCS[npc].map].name}의 📜 ${NPCS[npc].name}와(과) 이야기해 보세요`; }
   });
 })();
 function collectNote(text) {
@@ -4851,7 +4863,7 @@ function drawNoteFx() {
   }
   if (t >= 50) drawStamp(g, tw / 2 - 40, 14, 40, '錄', clamp(1 - (t - 50) / 8, 0, 1));
   g.restore();
-  if (t === 50) { shake = Math.max(shake, 4); beep(140, 0.12, 'square', 0.05, -60); }
+  if (t >= 50 && !noteFx.stamped) { noteFx.stamped = true; beep(140, 0.12, 'square', 0.05, -60); }
 }
 
 /* =========================================================
@@ -5093,7 +5105,7 @@ function guideItems() {
   // ④ 아직 안 모은 💬 노트 (지금 장)
   const curCh = MAP_CH[mapId] ?? 0, missTalk = NOTE_LIST.filter(n => !n.qid && n.ch <= curCh && !NOTES_GOT[n.id]);
   if (missTalk.length && !out.some(o => o.ic === '📜'))
-    out.push({ ic: '💬', html: `아직 듣지 못한 역사 이야기가 ${missTalk.length}개 있어요. 머리 위에 💬가 있는 사람과 이야기해 보세요.<span class="where">` + missTalk.slice(0, 3).map(n => `· ${n.hint}`).join('<br>') + '</span>' });
+    out.push({ ic: '💬', html: `아직 듣지 못한 역사 이야기가 ${missTalk.length}개 있어요. 머리 위에 <b>📜 역사 노트!</b> 표시가 있는 사람과 이야기해 보세요.<span class="where">` + missTalk.slice(0, 3).map(n => `· ${n.hint}`).join('<br>') + '</span>' });
   // ⑤ 다 끝냈을 때
   if (!out.length) {
     if (QS.q23 && QS.q23.state === 'done') out.push({ ic: '🏆', top: true, html: `모든 이야기를 마쳤어요! 수고 많았어요.<span class="where">· 👹 몬스터 도감 채우기 (${DEX_LIST.filter(d => DEX[d.t] > 0).length}/${DEX_LIST.length})<br>· ⚒ 무기를 +15까지 강화해 보기<br>· 📜 노트 창에서 🏆 완주 기록 다시 보기</span>` });
