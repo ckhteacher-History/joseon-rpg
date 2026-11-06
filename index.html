@@ -422,7 +422,7 @@
 const SAVE_URL = '';
 
 // 버전 — 고칠 때마다 바꾸면, 화면에 보이는 버전으로 새 버전이 열렸는지 확인할 수 있어요.
-const VERSION = 'v9.0 (노트 대화 표시 · 흔들림 제거)';
+const VERSION = 'v9.1 (중인 처방: 침 다섯 개)';
 
 /* =========================================================
    조선유랑기 — 조선 후기 배경 횡스크롤 RPG
@@ -616,7 +616,7 @@ const CLASSES = {
     hp: 95, mp: 60, atk: 9, speed: 3.5, jump: 11.2, cd: 13, hpUp: 12, mpUp: 6, atkUp: 2.2,
     tags: '원거리 · 빠른 공격 · 회복',
     desc: '의원·역관 같은 전문 기술직. 침을 재빠르게 던지고, 약으로 몸을 돌본다.',
-    skill: { name: '처방(處方)', mp: 25, cd: 240, desc: '체력 50% 회복 + 침 세 개 발사' },
+    skill: { name: '처방(處方)', mp: 25, cd: 240, desc: '체력 50% 회복 + 침 다섯 개를 앞으로 발사' },
   },
   pyeongmin: {
     name: '상민', hanja: '常民', look: 'pyeongmin', weapon: 'sickle', type: 'melee', reach: 80, maxHit: 2,
@@ -1843,7 +1843,7 @@ function doSkill() {
     fx.push({ type: 'pillar', x: cx, y: P.y, w: 70, h: 300, life: 60, max: 60, color: '120,235,160' });
     fx.push({ type: 'gring', x: cx, y: P.y, r: 10, max: 120, life: 50, max2: 50, color: '120,235,160' });
     for (let i = 0; i < 22; i++) fx.push({ type: 'tp', x: cx + rnd(-40, 40), y: P.y - rnd(0, 30), vx: 0, vy: -rnd(1.2, 2.4), text: '✚', size: rnd(14, 24), color: '#7fffb0', life: 50, max: 50, delay: Math.floor(i * 1.8) });
-    [-0.18, 0, 0.18].forEach(a => projs.push({ x: P.x + P.dir * 20, y: P.y - 34, vx: P.dir * 11 * Math.cos(a), vy: 11 * Math.sin(a), life: Math.round(45 * rangeMult()), kind: 'needle', mult: 1.4 * pw, big: true }));
+    [-0.08, -0.04, 0, 0.04, 0.08].forEach((a, i) => projs.push({ x: P.x + P.dir * (20 - Math.abs(i - 2) * 6), y: P.y - 34 + (i - 2) * 3, vx: P.dir * 11 * Math.cos(a), vy: 11 * Math.sin(a), life: Math.round(45 * rangeMult()), kind: 'needle', mult: 1.4 * pw, big: true }));
   } else if (P.cid === 'pyeongmin') {
     skillFlash = { c: '255,150,70', life: 20, max: 20 };
     fx.push({ type: 'glyph', x: cx, y: P.y - 150, text: '덩 기덕 쿵!', size: 50, color: '255,160,80', life: 70, max: 70 });
