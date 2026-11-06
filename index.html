@@ -185,6 +185,19 @@
     border:1.5px solid #a0584a;border-radius:8px;padding:5px 10px;cursor:pointer}
   body:not(.playing) #dexBtn{display:none}
   #ending.dexMode .endStats,#ending.dexMode .endTabs{display:none}
+  #guideBtn{position:absolute;left:12px;top:66px;z-index:2;font:700 13.5px 'Gowun Batang',serif;background:#8a3a2a;color:#fff3dc;border:1.5px solid #ffcf7a;
+    border-radius:8px;padding:5px 11px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.35);animation:gbPulse 2.4s ease-in-out infinite}
+  @keyframes gbPulse{50%{box-shadow:0 0 14px rgba(255,207,122,.75)}}
+  body:not(.playing) #guideBtn{display:none}
+  #guide{position:absolute;inset:0;background:rgba(10,8,6,.55);display:flex;align-items:center;justify-content:center;z-index:4}
+  .gdBox{width:620px;max-height:440px;display:flex;flex-direction:column;background:#f5ecd6;border:3px solid #8a3a2a;border-radius:14px;overflow:hidden;box-shadow:0 8px 30px rgba(0,0,0,.5)}
+  .gdHead{display:flex;align-items:center;padding:9px 16px;background:linear-gradient(90deg,#5a1e2e,#8a3a2a);color:#ffe6a8}
+  .gdHead h3{margin:0;font-size:19px;flex:1} .gdHead button{background:none;border:none;color:#ffe6a8;font-size:20px;cursor:pointer}
+  #gdBody{overflow-y:auto;padding:12px 16px}
+  .gdItem{display:flex;gap:10px;background:#fffaf0;border:1.5px solid #d8c9a6;border-radius:10px;padding:9px 12px;margin-bottom:8px;font-size:14.5px;line-height:1.55;color:#2b1d12}
+  .gdItem .ic{font-size:20px;line-height:1.2} .gdItem b{color:#8a3a2a} .gdItem .where{display:block;font-size:12.5px;color:#5b6a3e;margin-top:2px}
+  .gdItem.top{border-color:#c9a24a;background:#fff4d6}
+  .gdFoot{padding:7px 16px;font-size:12.5px;color:#6b5236;background:#efe4c8;border-top:2px solid #d8c9a6}
   #recallAsk{position:absolute;inset:0;background:rgba(10,8,6,.5);display:flex;align-items:center;justify-content:center;z-index:4}
   .rcBox{width:420px;background:#f5ecd6;border:3px solid #4a6a9a;border-radius:14px;padding:20px 24px 18px;text-align:center;color:#2b1d12;box-shadow:0 8px 30px rgba(0,0,0,.5)}
   .rcBox h3{margin:0 0 6px;font-size:21px;color:#2f4b73} .rcBox p{margin:4px 0 12px;font-size:14.5px;color:#5b4026}
@@ -325,6 +338,7 @@
   <button id="mapBtn">🗺 조선 지도 (M)</button>
   <button id="noteBtn">📜 노트 (N)</button>
   <button id="dexBtn">👹 도감 (K)</button>
+  <button id="guideBtn">❓ 다음 할 일 (G)</button>
   <button id="bgmBtn" title="배경 음악 켜기/끄기 (V)">🔊 음악</button>
   <div id="notes" class="hidden">
     <div class="notesBox">
@@ -333,6 +347,13 @@
     </div>
   </div>
 
+  <div id="guide" class="hidden">
+    <div class="gdBox">
+      <div class="gdHead"><h3>❓ 지금 무엇을 하면 될까?</h3><button id="gdClose" title="닫기 (Esc)">✕</button></div>
+      <div id="gdBody"></div>
+      <div class="gdFoot">📍 지금 위치: <b id="gdHere"></b> · 머리 위 <b>!</b> 새 부탁 · <b>?</b> 보고하기 · <b>💬</b> 역사 이야기 · <b>📦</b> 물건 받기</div>
+    </div>
+  </div>
   <div id="recallAsk" class="hidden">
     <div class="rcBox">
       <h3>🏠 기본 마을 '한양 장터'로 귀환하시겠습니까?</h3>
@@ -401,7 +422,7 @@
 const SAVE_URL = '';
 
 // 버전 — 고칠 때마다 바꾸면, 화면에 보이는 버전으로 새 버전이 열렸는지 확인할 수 있어요.
-const VERSION = 'v8.8 (오프닝 · 노트 획득 연출 · 직업 미리보기)';
+const VERSION = 'v8.9 (다음 할 일 도우미)';
 
 /* =========================================================
    조선유랑기 — 조선 후기 배경 횡스크롤 RPG
@@ -478,7 +499,7 @@ const KEYMAP = {
   Space: 'jump', KeyC: 'jump', AltLeft: 'jump', AltRight: 'jump',
   KeyZ: 'attack', ControlLeft: 'attack', ControlRight: 'attack',
   KeyX: 'skill', ShiftLeft: 'skill', ShiftRight: 'skill',
-  KeyA: 'potion', KeyH: 'help', KeyM: 'map', KeyN: 'notes', KeyK: 'dex', KeyE: 'forge', KeyB: 'recall', KeyV: 'bgm',
+  KeyA: 'potion', KeyH: 'help', KeyM: 'map', KeyN: 'notes', KeyK: 'dex', KeyE: 'forge', KeyB: 'recall', KeyV: 'bgm', KeyG: 'guide',
 };
 addEventListener('keydown', e => {
   if (admin.on && (e.code === 'F2' || (e.code === 'Escape' && adminOpen))) { e.preventDefault(); toggleAdmin(); return; }
@@ -488,6 +509,10 @@ addEventListener('keydown', e => {
     const k = ['Digit1', 'Digit2', 'Digit3', 'Digit4'].indexOf(e.code), k2 = ['Numpad1', 'Numpad2', 'Numpad3', 'Numpad4'].indexOf(e.code);
     const idx = k >= 0 ? k : k2;
     if (idx >= 0 && !curPage().quiz.a) { e.preventDefault(); answerQuiz(curPage().order[idx]); return; }
+  }
+  if (guideOpen) {
+    if (['Escape', 'Enter', 'KeyG'].includes(e.code)) { e.preventDefault(); closeGuide(); }
+    return;
   }
   if (recallOpen) {
     if (['Enter', 'KeyY'].includes(e.code)) { e.preventDefault(); answerRecall(true); }
@@ -1622,7 +1647,7 @@ function update() {
   frame++;
   if (noteFx) { if (++noteFx.t > NOTE_FX_LEN) noteFx = null; } else if (noteFxQ.length) noteFx = { id: noteFxQ.shift(), t: 0 };
   if (P && SKILL_SHORT[P.cid] && skillBtnFor !== P.cid) { skillBtnFor = P.cid; $('skillBtn').innerHTML = SKILL_SHORT[P.cid]; }
-  { const m = !!(notesOpen || endingOpen || forgeOpen || adminOpen || recallOpen); if (m !== document.body.classList.contains('modal')) document.body.classList.toggle('modal', m); }
+  { const m = !!(notesOpen || endingOpen || forgeOpen || adminOpen || recallOpen || guideOpen); if (m !== document.body.classList.contains('modal')) document.body.classList.toggle('modal', m); }
   if (state !== 'play') { titleCam = (titleCam + 0.6) % (MAPS.village.w - VW); return; }
 
   if (trans) {
@@ -1631,7 +1656,7 @@ function update() {
     if (trans.t >= 40) trans = null;
     clearPressed(); return;
   }
-  if (adminOpen || forgeOpen || notesOpen || endingOpen || recallOpen) { clearPressed(); return; }
+  if (adminOpen || forgeOpen || notesOpen || endingOpen || recallOpen || guideOpen) { clearPressed(); return; }
   if (dialog) {
     if (pressed.up || pressed.jump || pressed.attack) advanceDialog();
     clearPressed(); return;
@@ -1642,6 +1667,7 @@ function update() {
   if (pressed.recall) { askRecall(); clearPressed(); return; }
   if (pressed.notes) { openNotes(); clearPressed(); return; }
   if (pressed.dex) { openDex(); clearPressed(); return; }
+  if (pressed.guide) { openGuide(); clearPressed(); return; }
   if (pressed.forge) { openForge(nearSmith()); clearPressed(); return; }
   playFrames++;
   if (frame % 600 === 0) saveGame(false);          // 10초마다 기기에 저장
@@ -4034,7 +4060,7 @@ function drawToasts() {
 function drawHelp() {
   const a = Math.min(1, helpT / 40);
   ctx.globalAlpha = a;
-  const lines = ['← → 이동 · Space 점프 · 공중에서 Space 이단 점프 · ↓+Space 내려가기', 'Z(Ctrl) 공격(꾹 누르면 연속) · X(Shift) 기술 · A 국밥 먹기', '↑(Enter) 대화·포탈 · M 지도 · N 노트 · K 도감 · E 강화 · B 귀환 · V 음악'];
+  const lines = ['← → 이동 · Space 점프 · 공중에서 Space 이단 점프 · ↓+Space 내려가기', 'Z(Ctrl) 공격(꾹 누르면 연속) · X(Shift) 기술 · A 국밥 먹기', '↑(Enter) 대화·포탈 · G 다음 할 일 · M 지도 · N 노트 · K 도감 · E 강화 · B 귀환'];
   ctx.fillStyle = 'rgba(20,14,10,.78)'; rr(ctx, VW / 2 - 225, 12, 450, 68, 10); ctx.fill();
   ctx.font = F(13, true); ctx.textAlign = 'center'; ctx.fillStyle = '#f3e3c0';
   lines.forEach((l, i) => ctx.fillText(l, VW / 2, 33 + i * 19));
@@ -4288,7 +4314,7 @@ const enhMult = () => 1 + enhPct(P ? P.enh || 0 : 0) / 100;                   //
 let forgeOpen = false, forgeBusy = false, forgeAtSmith = false;
 
 function openForge(atSmith) {
-  if (!P || state !== 'play' || dialog || adminOpen || notesOpen || endingOpen || recallOpen) return;
+  if (!P || state !== 'play' || dialog || adminOpen || notesOpen || endingOpen || recallOpen || guideOpen) return;
   forgeAtSmith = !!atSmith;
   forgeOpen = true; $('forge').classList.remove('hidden');
   $('fgTitle').textContent = forgeAtSmith ? '⚒ 대장간 — 무기 강화 (성공 확률 +5%)' : '⚒ 무기 강화';
@@ -5008,6 +5034,87 @@ $('pvAuto').addEventListener('click', e => { e.stopPropagation(); pvMode('auto')
 $('pvAtk').addEventListener('click', e => { e.stopPropagation(); pvMode('atk'); });
 $('pvSkill').addEventListener('click', e => { e.stopPropagation(); pvMode('skill'); });
 $('pvStart').addEventListener('click', e => { e.stopPropagation(); const c = pv.cid; closePreview(); goFullscreen(); startGame(c); });
+
+/* =========================================================
+   ❓ 다음 할 일 도우미: 지금 진행 상황을 보고 다음에 할 일을 알려 줘요 (G 키 · 왼쪽 위 버튼)
+   ========================================================= */
+let guideOpen = false;
+function routeTo(to) {   // 그 맵으로 가는 길 안내
+  if (to === mapId) return '지금 있는 이 맵이에요';
+  if (to === 'village') return '<b>B 키</b>(모바일: 한양 귀환)로 바로 갈 수 있어요';
+  for (const [mid, mp] of Object.entries(MAPS)) {
+    const pt = mp.portals.find(p => (typeof p.to === 'function' ? p.to() : p.to) === to);
+    if (pt) {
+      const lbl = String((typeof pt.label === 'function' ? pt.label() : pt.label) || '').replace(/[◀▶]/g, '').replace(/\s+/g, ' ').trim();
+      return mid === mapId ? `이 맵의 「${lbl}」 포탈로 가세요` : `${MAPS[mid].name}의 「${lbl}」 포탈로 가세요` + (mid === 'village' && mapId !== 'village' ? ' (B 키로 한양 귀환)' : '');
+    }
+  }
+  return '';
+}
+const mapsOfMon = t => Object.keys(MAPS).filter(mid => (MAPS[mid].spawns || []).some(sp => sp.t === t) || (MAPS[mid].minions || []).includes(t));
+function guideItems() {
+  const out = [], npcAt = id => `${MAPS[NPCS[id].map].name} · ${NPCS[id].name}`;
+  const where = mid => `<span class="where">📍 ${MAPS[mid].name} — ${routeTo(mid)}</span>`;
+  // ① 보고할 퀘스트
+  QUESTS.filter(q => isActive(q) && QS[q.id].count >= q.need).forEach(q => {
+    const t = turninOf(q);
+    out.push({ ic: '✅', top: true, html: `「${q.title}」 완료! <b>${NPCS[t].name}</b>에게 돌아가 보고하세요. (머리 위 <b>?</b>)` + where(NPCS[t].map) });
+  });
+  // ② 진행 중인 퀘스트
+  QUESTS.filter(q => isActive(q) && QS[q.id].count < q.need).forEach(q => {
+    const c = QS[q.id].count;
+    if (q.steps) {
+      const left = q.steps.filter(st => !(QS[q.id].got || {})[st.npc]);
+      left.forEach(st => out.push({ ic: '📦', html: `「${q.title}」 — <b>${NPCS[st.npc].name}</b>에게서 <b>${st.item}</b>을(를) 받아 오세요. (머리 위 📦)` + where(NPCS[st.npc].map) }));
+    } else if (q.escort) {
+      out.push({ ic: '🛡', html: `「${q.title}」 — 도망 노비 <b>점순</b>을 <b>동쪽 고갯길</b>(깃발)까지 데려다주세요. 너무 멀리 떨어지지 말고, 점순을 노리는 추노꾼을 막아요!` + where('daegu') });
+    } else if (q.target) {
+      const mn = MON[q.target].name, ms = mapsOfMon(q.target).filter(mid => !MAPS[mid].minions || mid === 'cave' || MAPS[mid].spawns.some(sp => sp.t === q.target));
+      const what = q.item ? `<b>${mn}</b>을(를) 잡아 <b>${q.item}</b>을(를) ${q.need - c}개 더 모으세요` : `<b>${mn}</b>을(를) ${q.need - c}마리 더 물리치세요`;
+      out.push({ ic: MON[q.target].boss ? '⚔️' : '🗡', html: `「${q.title}」 — ${what}. (${c}/${q.need})` + (ms[0] ? where(ms[0]) : '') });
+    } else {
+      const t = turninOf(q);
+      out.push({ ic: '🚶', html: `「${q.title}」 — <b>${NPCS[t].name}</b>을(를) 찾아가 말을 거세요.` + where(NPCS[t].map) });
+    }
+  });
+  // ③ 새로 받을 수 있는 부탁 / 노트가 모자라 잠긴 부탁
+  const avail = QUESTS.filter(q => !QS[q.id] && questUnlocked(q));
+  avail.forEach(q => {
+    if (!notesReady(q)) {
+      const need = notesNeeded(q), miss = need.filter(n => !NOTES_GOT[n.id]);
+      const area = q.needNotes.ch !== undefined ? CH_NAMES[q.needNotes.ch] : MAPS[q.needNotes.map].name;
+      out.push({ ic: '📜', top: !out.length, html: `다음 이야기 「${q.title}」를 들으려면 먼저 <b>${area}</b>의 역사 노트를 모두 모아야 해요. (${need.length - miss.length}/${need.length})<span class="where">` +
+        miss.slice(0, 4).map(n => `· ${n.hint}`).join('<br>') + (miss.length > 4 ? `<br>· …그 밖에 ${miss.length - 4}개 (📜 노트 창에서 확인)` : '') + '</span>' });
+    } else {
+      const quiz = (QUIZZES[q.id] || []).some(z => !QZ[z.id]);
+      out.push({ ic: '❗', top: !out.length, html: `<b>${NPCS[q.npc].name}</b>에게 말을 걸면 새 부탁 「${q.title}」을(를) 받을 수 있어요. (머리 위 <b>!</b>)` + (quiz ? ' 먼저 역사 퀴즈를 맞혀야 해요!' : '') + where(NPCS[q.npc].map) });
+    }
+  });
+  // ④ 아직 안 모은 💬 노트 (지금 장)
+  const curCh = MAP_CH[mapId] ?? 0, missTalk = NOTE_LIST.filter(n => !n.qid && n.ch <= curCh && !NOTES_GOT[n.id]);
+  if (missTalk.length && !out.some(o => o.ic === '📜'))
+    out.push({ ic: '💬', html: `아직 듣지 못한 역사 이야기가 ${missTalk.length}개 있어요. 머리 위에 💬가 있는 사람과 이야기해 보세요.<span class="where">` + missTalk.slice(0, 3).map(n => `· ${n.hint}`).join('<br>') + '</span>' });
+  // ⑤ 다 끝냈을 때
+  if (!out.length) {
+    if (QS.q23 && QS.q23.state === 'done') out.push({ ic: '🏆', top: true, html: `모든 이야기를 마쳤어요! 수고 많았어요.<span class="where">· 👹 몬스터 도감 채우기 (${DEX_LIST.filter(d => DEX[d.t] > 0).length}/${DEX_LIST.length})<br>· ⚒ 무기를 +15까지 강화해 보기<br>· 📜 노트 창에서 🏆 완주 기록 다시 보기</span>` });
+    else out.push({ ic: '🔎', html: '지금은 특별히 할 일이 없어요. 맵을 돌아다니며 머리 위에 <b>!</b>나 <b>💬</b>가 뜬 사람을 찾아보세요.' });
+  }
+  if (P.hp < P.maxHp * 0.35) out.push({ ic: '🍲', html: `체력이 얼마 남지 않았어요! <b>A 키</b>(모바일: 국밥)로 국밥을 먹으세요. (국밥 ${admin.on ? '∞' : P.potions}그릇)` });
+  if (P.enh < 15 && P.coins >= enhCost(P.enh)) out.push({ ic: '⚒', html: `엽전이 넉넉해요! <b>E 키</b>(또는 화면 아래 무기 칸)로 무기를 강화해 보세요. (+${P.enh} → +${P.enh + 1}, ${enhCost(P.enh)}닢)` });
+  return out;
+}
+function openGuide() {
+  if (!P || state !== 'play' || dialog || adminOpen || forgeOpen || recallOpen || endingOpen) return;
+  if (notesOpen) closeNotes();
+  guideOpen = true;
+  $('gdHere').textContent = map.name;
+  $('gdBody').innerHTML = guideItems().map(o => `<div class="gdItem${o.top ? ' top' : ''}"><span class="ic">${o.ic}</span><div>${o.html}</div></div>`).join('');
+  $('guide').classList.remove('hidden'); beep(560, 0.06, 'sine', 0.03); clearPressed();
+}
+function closeGuide() { guideOpen = false; $('guide').classList.add('hidden'); clearPressed(); if (P) P.atkCd = Math.max(P.atkCd, 15); }
+$('guideBtn').addEventListener('click', e => { e.stopPropagation(); guideOpen ? closeGuide() : openGuide(); });
+$('gdClose').addEventListener('click', e => { e.stopPropagation(); closeGuide(); });
+$('guide').addEventListener('click', e => { if (e.target.id === 'guide') closeGuide(); });
 
 $('verLabel').textContent = VERSION; $('admVer').textContent = VERSION;
 showLogin();
