@@ -427,7 +427,7 @@
 const SAVE_URL = '';
 
 // 버전 — 고칠 때마다 바꾸면, 화면에 보이는 버전으로 새 버전이 열렸는지 확인할 수 있어요.
-const VERSION = 'v9.13 (오프닝 삭제)';
+const VERSION = 'v9.14 (상평통보 퀴즈는 보부상이)';
 
 /* =========================================================
    조선유랑기 — 조선 후기 배경 횡스크롤 RPG
@@ -1182,14 +1182,9 @@ Object.assign(QUIZZES, {   // 선생님이 정해 준 장별 퀴즈 (퀘스트�
   q2: [{ id: 'n1a', q: '조선 시대, 국가의 허락을 받지 않고 상업 활동을 하던 상인을 통틀어 뭐라고 부를까요? <small style="color:#8b6a3e">(P. 149)</small>', a: ['사상', '사상(私商)'],
     hint: '"개인 사(私)" 자에 "장사 상(商)" 자를 쓰오. 장터의 <b>난전 상인 박씨</b>에게 들어 보시오!',
     explain: '나라의 허가 없이 장사하던 상인을 사상이라 하오. 신해통공 뒤로 종루·이현·칠패 같은 시장에서 크게 활동했지.' }],
-  q3: [
-    { id: 'n1b', q: '18세기 중엽, 지방에서는 장시가 발달하여 전국에 1천여 개의 장시가 열렸습니다. 5일마다 열리는 장시를 돌아다니며 활발히 활동한 상인들은 누구일까요? <small style="color:#8b6a3e">(P. 149)</small>', a: ['보부상'],
+  q3: [{ id: 'n1b', q: '18세기 중엽, 지방에서는 장시가 발달하여 전국에 1천여 개의 장시가 열렸습니다. 5일마다 열리는 장시를 돌아다니며 활발히 활동한 상인들은 누구일까요? <small style="color:#8b6a3e">(P. 149)</small>', a: ['보부상'],
       hint: '봇짐과 등짐을 지고 장시를 도는 상인이라오. 장터 입구의 <b>보부상 김씨</b>를 만나 보시오.',
-      explain: '보부상은 여러 장시를 돌아다니며 물건을 팔던 상인으로, 자기들끼리 조직을 만들어 서로 도왔다오.' },
-    { id: 'n1c', img: 'sangpyeong', q: '조선 후기 널리 사용된 동전으로, 상품의 매매뿐만 아니라 품삯 지불, 세금과 지대 납부 등에도 사용된 것은? <small style="color:#8b6a3e">(P. 149)</small>', a: ['상평통보'],
-      hint: '"늘 고르게(常平) 통하는(通) 보배(寶)"라는 뜻이오. 보부상 김씨도 이 엽전 이야기를 했지.',
-      explain: '상평통보는 인조 때 처음 만들어졌다가 숙종 때 다시 발행되어 전국에서 널리 쓰였소.' },
-  ],
+      explain: '보부상은 여러 장시를 돌아다니며 물건을 팔던 상인으로, 자기들끼리 조직을 만들어 서로 도왔다오.' }],
   q4: [{ id: 'n1d', q: '조선 후기에는 광물의 수요가 늘어, 정부에 세금을 내고 광산을 개발하는 경우가 많아졌습니다. 특히, 청과의 무역이 활발해지며 거래 수단으로 많이 사용되며 수요가 늘어난 것은?', c: ['은', '금', '동', '인삼'],
     hint: '내가 이 산에 열려는 광산이 바로 그것을 캐는 광산이라오!',
     explain: '청과의 무역에서 은이 거래 수단으로 쓰이면서 은의 수요가 늘어 은광 개발이 활발해졌소.' }],
@@ -1229,6 +1224,12 @@ Object.assign(QUIZZES, {   // 선생님이 정해 준 장별 퀴즈 (퀘스트�
 });
 // 장 복습 퀴즈는 쓰지 않아요 (선생님 요청으로 v9.12에서 삭제). 다시 쓰려면 장 번호 순서대로 [{ id, q, a 또는 c, hint, explain }] 목록을 넣으면 돼요.
 const CHECKPOINTS = [];
+// 퀘스트 없이 대화만 하는 NPC가 이야기 끝에 내는 퀴즈 (맞히면 needQuiz로 묶인 퀘스트가 열려요)
+const TALK_QUIZZES = {
+  bobusang: [{ id: 'n1c', img: 'sangpyeong', q: '조선 후기 널리 사용된 동전으로, 상품의 매매뿐만 아니라 품삯 지불, 세금과 지대 납부 등에도 사용된 것은? <small style="color:#8b6a3e">(P. 149)</small>', a: ['상평통보'],
+      hint: '"늘 고르게(常平) 통하는(通) 보배(寶)"라는 뜻이오. 내가 방금 이야기한 그 엽전이라오!',
+      explain: '상평통보는 인조 때 처음 만들어졌다가 숙종 때 다시 발행되어 전국에서 널리 쓰였소.' }],
+};
 const CP = {};   // 통과한 장 복습 퀴즈(장 번호)
 const QZ = {};   // 맞힌 퀴즈 기록
 const QUESTS = [
@@ -1247,7 +1248,8 @@ const QUESTS = [
     idle: [`하늘 천, 따 지… 아이들 글 읽는 소리가 다시 들리니 좋구먼.`],
   },
   {
-    id: 'q3', npc: 'jumo', title: '산적 소탕', target: 'bandit', need: 4, reward: { exp: 200, coins: 60 },
+    id: 'q3', npc: 'jumo', title: '산적 소탕', target: 'bandit', need: 4, needQuiz: ['n1c'],
+    lock: `어서 오시오~ 장터 입구의 <b>보부상 김씨</b>는 만나 보았소? 장터 사정은 그 양반이 제일 잘 안다오. 이야기를 듣고 그가 내는 물음에 답하고 오시오.`, reward: { exp: 200, coins: 60 },
     offer: A => [
       `어서 오시오~ 주막에 들렀으면 국밥이라도 한 그릇 하고 가시오.`,
       `요즘 세상이 참 흉흉하오. <b>전정·군정·환곡</b>, 이 세 가지 세금 제도가 엉망이 되어 버티다 못한 농민들이 고향을 떠나 떠돌고 있소.`,
@@ -2558,7 +2560,7 @@ function questFor(npcId) {
 }
 function questUnlocked(q) {
   const req = Array.isArray(q.req) ? q.req : q.req ? [q.req] : [];
-  return req.every(r => QS[r] && QS[r].state === 'done');
+  return req.every(r => QS[r] && QS[r].state === 'done') && (q.needQuiz || []).every(id => QZ[id]);
 }
 // 다음 이야기로 넘어가려면 앞 장(또는 맵)의 역사 노트를 모두 모아야 해요
 function notesNeeded(q) {
@@ -2597,7 +2599,11 @@ function talk(npcId) {
     return;
   }
   const hasQuest = QUESTS.some(x => x.npc === npcId || x.turnin === npcId);
-  if (TALKS[npcId] && !hasQuest) { const n0 = NPCS[npcId]; openDialog(n0.name + (n0.real ? ' (실존 인물)' : ''), n0.look, TALKS[npcId].slice()); return; }
+  if (TALKS[npcId] && !hasQuest) {
+    const n0 = NPCS[npcId], tq = (TALK_QUIZZES[npcId] || []).filter(z => !QZ[z.id]);
+    const pages = TALKS[npcId].slice().concat(tq.length ? [QK(`자, 내 이야기를 잘 들었는지 하나 물어보리다!`)].concat(tq.map(z => ({ quiz: z }))) : []);
+    openDialog(n0.name + (n0.real ? ' (실존 인물)' : ''), n0.look, pages); return;
+  }
   const n = NPCS[npcId], q = questFor(npcId), A = ADDR[P.cid];
   let pages = [], onEnd = null;
   if (q && !questUnlocked(q)) pages = TALKS[npcId] ? [QK(q.lock || '…')].concat(TALKS[npcId]) : [QK(q.lock || '…')];
@@ -4870,6 +4876,7 @@ function adminJump(idx, stage) {
   // 퀴즈: 앞 퀘스트는 맞힌 것으로, 이 퀘스트는 '받기 전'이면 다시 풀 수 있게
   for (const k in QZ) delete QZ[k];
   QUESTS.slice(0, stage === 'before' ? idx : idx + 1).forEach(x => (QUIZZES[x.id] || []).forEach(z => { QZ[z.id] = 1; }));
+  QUESTS.slice(0, idx + 1).forEach(x => (x.needQuiz || []).forEach(id => { QZ[id] = 1; }));
   // 노트: 앞 장의 노트와 끝낸 퀘스트의 노트는 모은 것으로
   for (const k in NOTES_GOT) delete NOTES_GOT[k];
   const qch = QUEST_CH(q.id), doneIds = QUESTS.slice(0, idx).map(x => x.id);
