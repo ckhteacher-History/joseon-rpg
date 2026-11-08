@@ -422,7 +422,7 @@
 const SAVE_URL = '';
 
 // 버전 — 고칠 때마다 바꾸면, 화면에 보이는 버전으로 새 버전이 열렸는지 확인할 수 있어요.
-const VERSION = 'v9.7 (복습 퀴즈 교체)';
+const VERSION = 'v9.8 (4장 보스 성리학 도깨비)';
 
 /* =========================================================
    조선유랑기 — 조선 후기 배경 횡스크롤 RPG
@@ -669,8 +669,8 @@ const MON = {
   cheonwon: { name: '천원지방 도깨비', hp: 480, atk: 38, exp: 115, speed: 1.2, w: 44, h: 44, float: true, aggro: true, coin: [65, 110] },
   maleum: { name: '땅 욕심 마름', hp: 520, atk: 39, exp: 125, speed: 1.3, w: 34, h: 64, aggro: true, coin: [70, 115], person: 'maleum', weapon: 'club' },
   seosaeng: { name: '공리공론 서생', hp: 600, atk: 42, exp: 140, speed: 1.1, w: 30, h: 62, aggro: true, coin: [80, 130], person: 'seosaeng', weapon: 'brush', shoot: 1, glyph: '空' },
-  gongron: { name: '공리공론 도깨비', hp: 6500, atk: 54, exp: 4500, speed: 0.9, w: 150, h: 130, boss: true, coin: [260, 400],
-    title: '공리공론 도깨비 — 백성의 삶과 동떨어진 헛된 논쟁 (가상)', intro: '공리공론 도깨비: "이(理)가 먼저냐, 기(氣)가 먼저냐! 백성의 밥 걱정 따위는 내 알 바 아니다!"' },
+  seongri: { name: '성리학 도깨비', hp: 6500, atk: 54, exp: 4500, speed: 0.9, w: 150, h: 140, boss: true, coin: [260, 400],
+    title: '성리학 도깨비 — 낡은 성리학 질서와 관습을 고집하는 도깨비 (가상)', intro: '성리학 도깨비: "사농공상의 질서를 어지럽히지 마라! 오랑캐의 학문 따위는 이 서원에 들일 수 없다!"' },
 };
 
 const MAPS = {
@@ -837,8 +837,8 @@ const MAPS = {
     ],
     portals: [
       { x: 50, to: 'village', tx: 1300, label: '◀ 한양 장터로 돌아가기' },
-      { x: 3320, to: 'gongron', tx: 140, label: '서고 ▶', req: () => !!QS.q14f,
-        lock: '서고 문이 굳게 닫혀 있다…. 정약용 선생과 먼저 이야기해 보자.' },
+      { x: 3320, to: 'seongri', tx: 140, label: '낡은 서원 ▶', req: () => !!QS.q14f,
+        lock: '서원 문이 굳게 닫혀 있다…. 정약용 선생과 먼저 이야기해 보자.' },
     ],
     spawns: [
       { t: 'cheonwon', a: 2200, b: 2700, y: GROUND }, { t: 'cheonwon', a: 2600, b: 3200, y: GROUND }, { t: 'cheonwon', a: 2900, b: 3300, y: GROUND },
@@ -849,12 +849,12 @@ const MAPS = {
       { t: 'seosaeng', a: 3130, b: 3310, y: 286 }, { t: 'seosaeng', a: 2870, b: 3080, y: 372 },
     ],
   },
-  gongron: {
-    name: '공리공론의 서고', w: 1600, theme: 'dongheon', dark: 'night',
+  seongri: {
+    name: '낡은 서원', w: 1600, theme: 'dongheon', dark: 'night',
     platforms: [{ x: 300, y: 372, w: 180 }, { x: 1100, y: 372, w: 180 }],
-    decor: [{ t: 'tree', x: 180, s: 1 }, { t: 'pavilion', x: 1250, sign: '書 庫' }],
+    decor: [{ t: 'tree', x: 180, s: 1 }, { t: 'giwa', x: 420, sign: '書 院' }, { t: 'pavilion', x: 1250, sign: '講 堂' }],
     portals: [{ x: 60, to: 'silhak', tx: 3200, label: '◀ 새 학문의 마을' }],
-    spawns: [{ t: 'gongron', a: 400, b: 1450, y: GROUND }],
+    spawns: [{ t: 'seongri', a: 400, b: 1450, y: GROUND }],
     minions: ['cheonwon', 'maleum', 'seosaeng'],   // 보스와 함께 나오는 부하 (종류마다 5마리, 다시 살아나지 않음)
   },
 
@@ -1587,16 +1587,17 @@ const QUESTS = [
     idle: [`산줄기와 물줄기를 따라가면 길이 보인다오.`],
   },
   {
-    id: 'q14f', npc: 'jeongyy', title: '공리공론 도깨비', target: 'gongron', need: 1, req: ['q14b', 'q14c', 'q14d', 'q14e'], reward: { exp: 6500, coins: 550 },
+    id: 'q14f', npc: 'jeongyy', title: '성리학 도깨비', target: 'seongri', need: 1, req: ['q14b', 'q14c', 'q14d', 'q14e'], reward: { exp: 6500, coins: 550 },
     lock: `홍대용 선생, 박제가, 김정호의 부탁부터 들어주시오. 그래야 새 학문이 무엇인지 알 수 있을 것이오.`,
     offer: A => [
       `이제 새 학문이 무엇인지 알겠소? 땅을 고르게 나누자는 이, 상공업을 일으키자는 이, 우리 역사와 땅을 연구하는 이…. 모두 <b>백성의 삶에 실제로 도움이 되는 학문</b>, 곧 <b>실학</b>을 하고 있소.`,
-      `그런데 마을 동쪽 끝 서고에는 백성의 삶과 동떨어진 헛된 말싸움만 일삼는 생각이 뭉쳐 <b>공리공론 도깨비</b>가 되었다오. 새 학문이 나아갈 길을 가로막고 있소.`,
-      `서고로 들어가 <b>공리공론 도깨비</b>를 물리쳐 주시오!`,
+      `그런데 마을 동쪽 끝 <b>낡은 서원</b>에 <b>성리학 도깨비</b>가 버티고 있소. 바뀌는 세상은 보려 하지 않고 옛 <b>성리학 질서</b>와 <b>관습</b>만 지키려는 낡은 생각이 뭉쳐 생긴 도깨비라오.`,
+      `"사농공상의 차례를 어지럽히지 마라!", "오랑캐 청의 학문은 배울 것이 없다!", "조상의 법도는 한 글자도 바꿀 수 없다!" 하고 외치며 새 학문과 새 사상을 모두 가로막고 있지.`,
+      `오해는 마시오. 나도 성리학을 공부한 선비요. 성리학이 나쁘다는 것이 아니라, 백성의 삶을 외면한 채 옛것만 붙드는 것이 문제라는 말이오. 서원으로 들어가 <b>성리학 도깨비</b>를 물리쳐 주시오!`,
     ],
-    progress: () => `서고는 마을 동쪽 끝에 있소. 도깨비가 <b>空!</b>을 띄우면 하늘에서 책이 떨어지니 그림자를 보고 피하고, <b>論!</b>이면 글자가 날아오오. <b>!</b>를 띄우면 땅이 울리니 이단 점프로 피하시오!`,
+    progress: () => `낡은 서원은 마을 동쪽 끝에 있소. 도깨비가 <b>理!</b>를 띄우면 하늘에서 경전이 떨어지니 그림자를 보고 피하고, <b>禮!</b>면 예법 문서가 날아오오. <b>!</b>를 띄우면 땅이 울리니 이단 점프로 피하시오!`,
     done: () => [
-      `해냈구려! 헛된 말이 걷히니 서고에 바람이 통하는구려.`,
+      `해냈구려! 굳게 닫혀 있던 서원의 문이 열리고 바깥바람이 들어오는구려. 이제 새 학문도 숨을 쉴 수 있겠소.`,
       `실학자들의 주장이 나라 정책에 모두 쓰이지는 못했소. 하지만 현실을 바로 보고 백성의 삶을 생각한 이 학문은 훗날 <b>개화 사상</b>으로 이어지게 되오.`,
       note(`<b>새로운 사상의 등장</b> — 조선 후기에는 서양 문물이 들어오면서 세계관이 넓어지고, 천주교(서학)가 신앙으로 퍼졌어요. 또 최제우가 창시한 <b>동학</b>은 인간 평등을 내세워 농민들 사이에 퍼졌어요. 학자들 사이에서는 현실 문제를 해결하려는 <b>실학</b>이 나타나 토지 개혁, 상공업 진흥, 국학 연구를 주장했어요. 이러한 사상들은 신분 질서와 성리학 중심의 사회를 흔들었어요.`),
     ],
@@ -2226,8 +2227,8 @@ function updateMonsters() {
       byeokAI(m, dx);
     } else if (m.t === 'sedo') {
       sedoAI(m, dx);
-    } else if (m.t === 'gongron') {
-      gongronAI(m, dx);
+    } else if (m.t === 'seongri') {
+      seongriAI(m, dx);
     } else {
       if (m.d.shoot && near && Math.abs(dx) < 360 && Math.abs(P.y - m.y) < 100 && --m.timer <= 0) {
         m.timer = rnd(140, 220); m.dir = dx > 0 ? 1 : -1;
@@ -2375,23 +2376,23 @@ function byeokAI(m, dx) {
   m.x = clamp(m.x, roamLo(m), roamHi(m));
 }
 
-function gongronAI(m, dx) {
+function seongriAI(m, dx) {
   if (m.windup > 0) {
     m.windup--;
     if (m.windup === 0) {
-      if (m.next === 'rain') {   // 하늘에서 두꺼운 책이 쏟아져요
-        const G = ['空', '理', '空', '論'];
+      if (m.next === 'rain') {   // 하늘에서 두꺼운 경전이 쏟아져요
+        const G = ['理', '氣', '禮', '綱'];
         for (let i = 0; i < 6; i++) {
           const bx = clamp(P.x + (i - 2.5) * 85 + rnd(-15, 15), 40, map.w - 40);
           eprojs.push({ x: bx, y: -30 - i * 36, vx: 0, vy: 4.9, dmg: m.d.atk * 0.65, glyph: G[i % 4], brick: true, book: true, life: 220, spin: 0 });
         }
         beep(320, 0.25, 'square', 0.03, -180);
       } else if (m.next === 'volley') {
-        for (let i = 0; i < 5; i++) throwPaper(m.x + m.dir * 60, m.y - 120 + i * 20, m.dir * 4.6, (i - 2) * 0.42, m.d.atk * 0.6, '論');
+        for (let i = 0; i < 5; i++) throwPaper(m.x + m.dir * 60, m.y - 120 + i * 20, m.dir * 4.6, (i - 2) * 0.42, m.d.atk * 0.6, '禮');
         beep(700, 0.2, 'square', 0.03, -300);
-      } else {   // 헛된 말이 땅을 울려요
+      } else {   // 명분(名分)을 외치며 땅을 울려요
         shake = 12; beep(75, 0.35, 'sawtooth', 0.06, -20);
-        fx.push({ type: 'ring', x: m.x, y: GROUND - 8, r: 10, max: 210, life: 26, maxLife: 26, color: '150,120,200', glyph: '虛' });
+        fx.push({ type: 'ring', x: m.x, y: GROUND - 8, r: 10, max: 210, life: 26, maxLife: 26, color: '150,120,200', glyph: '分' });
         if (P.onGround && !P.dead && Math.abs(P.x - m.x) < 210) hurtPlayer(m.d.atk, m.x);
       }
     }
@@ -2402,7 +2403,7 @@ function gongronAI(m, dx) {
       const r = Math.random();
       m.next = r < 0.4 ? 'rain' : r < 0.75 ? 'volley' : 'ring';
       m.windup = m.next === 'ring' ? 44 : 34; m.timer = rnd(110, 165);
-      addFloat(m.x, m.y - m.d.h - 30, m.next === 'ring' ? '!' : m.next === 'rain' ? '空!' : '論!', 'warn');
+      addFloat(m.x, m.y - m.d.h - 30, m.next === 'ring' ? '!' : m.next === 'rain' ? '理!' : '禮!', 'warn');
     }
   }
   m.x += m.kb * 0.5; m.kb *= 0.8;
@@ -3230,7 +3231,7 @@ function drawMonster(m) {
   else if (m.t === 'samjeong') drawSamjeong(m.x, fy, m.phase, m.dir);
   else if (m.t === 'byeok') drawByeok(m, fy);
   else if (m.t === 'cheonwon') drawCheonwon(m.x, fy, m.phase, m.dir);
-  else if (m.t === 'gongron') drawGongron(m, fy);
+  else if (m.t === 'seongri') drawSeongri(m, fy);
   ctx.restore();
   if (!m.dead && (m.showHp > 0 || m.d.boss) && !m.d.boss) {
     const w = 46, x = m.x - w / 2, y = fy - m.d.h - 12;
@@ -3438,35 +3439,58 @@ function drawCheonwon(x, y, ph, dir) {
   ctx.restore();
 }
 
-// 공리공론 도깨비: 헛된 말만 가득한 거대한 책
-function drawGongron(m, y) {
-  const x = m.x, hov = Math.sin(m.phase) * 6, by = y - 38 + hov;
-  ctx.fillStyle = 'rgba(0,0,0,.28)'; ell(ctx, x, y, 72, 9);
-  const gr = ctx.createRadialGradient(x, by - 50, 10, x, by - 50, 120);
-  gr.addColorStop(0, 'rgba(160,110,220,.35)'); gr.addColorStop(1, 'rgba(120,70,190,0)');
-  ctx.fillStyle = gr; ell(ctx, x, by - 50, 120, 110);
-  ctx.save(); ctx.translate(x, by);
-  const flap = m.windup > 0 ? Math.sin(frame * 0.7) * 7 : Math.sin(m.phase * 2) * 3;
-  ctx.fillStyle = '#4a2a5a'; rr(ctx, -84, -94, 168, 98, 8); ctx.fill();
-  ctx.fillStyle = '#f3ead2';
-  ctx.beginPath(); ctx.moveTo(-78, -86 + flap); ctx.quadraticCurveTo(-40, -94, -3, -84); ctx.lineTo(-3, -4); ctx.quadraticCurveTo(-40, -12, -78, -6 + flap); ctx.closePath(); ctx.fill();
-  ctx.beginPath(); ctx.moveTo(78, -86 + flap); ctx.quadraticCurveTo(40, -94, 3, -84); ctx.lineTo(3, -4); ctx.quadraticCurveTo(40, -12, 78, -6 + flap); ctx.closePath(); ctx.fill();
-  ctx.strokeStyle = '#8a7a5a'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(0, -86); ctx.lineTo(0, -2); ctx.stroke();
-  ctx.fillStyle = '#5a2a3a'; ctx.font = F(24, true); ctx.textAlign = 'center';
-  ctx.fillText('空', -40, -50); ctx.fillText('理', -40, -20); ctx.fillText('空', 40, -50); ctx.fillText('論', 40, -20);
-  // 책 위로 툭 튀어나온 두 눈
-  [-38, 38].forEach(ex => {
-    ctx.fillStyle = '#4a2a5a'; ell(ctx, ex, -98, 15, 13);
-    ctx.fillStyle = '#fff'; ell(ctx, ex, -100, 11, 11);
-    ctx.fillStyle = m.windup > 0 ? '#ff3b2b' : '#2a1030'; ell(ctx, ex + m.dir * 4, -99, 5, 6);
-  });
-  // 입
-  ctx.fillStyle = '#2a0a2a'; ctx.beginPath(); ctx.ellipse(0, 4, 26, m.windup > 0 ? 12 : 7, 0, 0, Math.PI); ctx.fill();
-  ctx.fillStyle = '#fff'; [-16, -6, 4, 14].forEach(tx => { ctx.beginPath(); ctx.moveTo(tx - 3, 4); ctx.lineTo(tx, 10); ctx.lineTo(tx + 3, 4); ctx.fill(); });
+// 성리학 도깨비: 갓과 도포를 갖추고 경전을 펼쳐 든 고집스러운 늙은 도깨비
+function drawSeongri(m, y) {
+  const x = m.x, crouch = m.windup > 0 ? 0.9 : 1, sway = Math.sin(m.phase) * 2;
+  ctx.fillStyle = 'rgba(0,0,0,.28)'; ell(ctx, x, y, 70, 9);
+  const gr = ctx.createRadialGradient(x, y - 80, 10, x, y - 80, 130);
+  gr.addColorStop(0, 'rgba(150,140,190,.3)'); gr.addColorStop(1, 'rgba(110,100,160,0)');
+  ctx.fillStyle = gr; ell(ctx, x, y - 80, 130, 120);
+  ctx.save(); ctx.translate(x, y); ctx.scale(m.dir, crouch);
+  // 도포 (흰 두루마기 같은 긴 옷)
+  ctx.fillStyle = '#efeadc';
+  ctx.beginPath(); ctx.moveTo(-34, -96); ctx.lineTo(34, -96); ctx.lineTo(54, -2); ctx.lineTo(-54, -2); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle = '#bdb4a0'; ctx.lineWidth = 2; ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(0, -96); ctx.lineTo(-10, -60); ctx.lineTo(0, -2); ctx.stroke();
+  ctx.fillStyle = '#3a3a5a'; ctx.fillRect(-36, -62, 72, 7);   // 세조대(띠)
+  ctx.fillStyle = '#2a2a2a'; ell(ctx, -22, -2, 14, 5); ell(ctx, 22, -2, 14, 5);   // 신
+  // 얼굴 (푸르스름한 도깨비 얼굴)
+  ctx.fillStyle = '#7f8fa8'; ell(ctx, 0, -118, 34, 30);
+  ctx.fillStyle = '#e8d06a';
+  ctx.beginPath(); ctx.moveTo(-26, -136); ctx.lineTo(-34, -160); ctx.lineTo(-16, -142); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(26, -136); ctx.lineTo(34, -160); ctx.lineTo(16, -142); ctx.fill();
+  // 꾹 찌푸린 눈썹과 눈
+  ctx.strokeStyle = '#2a2a2a'; ctx.lineWidth = 4; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(-20, -134); ctx.lineTo(-4, -128); ctx.moveTo(20, -134); ctx.lineTo(4, -128); ctx.stroke();
+  ctx.fillStyle = '#fff'; ell(ctx, -11, -121, 7, 6); ell(ctx, 11, -121, 7, 6);
+  ctx.fillStyle = m.windup > 0 ? '#ff3b2b' : '#1a1a2a'; ell(ctx, -9, -120, 3.2, 3.6); ell(ctx, 13, -120, 3.2, 3.6);
+  // 긴 흰 수염
+  ctx.fillStyle = '#f4f4f0';
+  ctx.beginPath(); ctx.moveTo(-18, -104); ctx.quadraticCurveTo(0, -96, 18, -104); ctx.lineTo(8, -62 + sway); ctx.lineTo(0, -54 + sway); ctx.lineTo(-8, -62 + sway); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle = '#2a1a1a'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(-9, -106); ctx.lineTo(9, -106); ctx.stroke();
+  // 갓
+  ctx.fillStyle = 'rgba(25,25,30,.92)'; ell(ctx, 0, -144, 52, 8);
+  ctx.fillStyle = '#1a1a1f'; rr(ctx, -16, -176, 32, 32, 6); ctx.fill();
+  ctx.strokeStyle = '#1a1a1f'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(-28, -140); ctx.lineTo(-24, -100); ctx.moveTo(28, -140); ctx.lineTo(24, -100); ctx.stroke();
+  // 펼쳐 든 경전
+  const lift = m.windup > 0 ? -16 : 0;
+  ctx.save(); ctx.translate(40, -78 + lift); ctx.rotate(-0.15);
+  ctx.fillStyle = '#3a2a4a'; ctx.fillRect(-4, -26, 58, 46);
+  ctx.fillStyle = '#f3ead2'; ctx.fillRect(0, -23, 25, 40); ctx.fillRect(27, -23, 25, 40);
+  ctx.fillStyle = '#5a2a3a'; ctx.font = F(14, true); ctx.textAlign = 'center';
+  const pgs = m.dir > 0 ? [['三', '綱'], ['五', '倫']] : [['五', '倫'], ['三', '綱']];   // 왼쪽을 볼 때도 글자가 뒤집히지 않게
+  pgs.forEach((pg, k) => pg.forEach((ch, r) => { ctx.save(); ctx.translate(12 + k * 27, -6 + r * 18); ctx.scale(m.dir, 1); ctx.fillText(ch, 0, 0); ctx.restore(); }));
   ctx.restore();
-  // 주위를 맴도는 헛된 말들
-  ['虛', '禮', '名'].forEach((ch, i) => {
-    const a = m.phase * 1.3 + i * TAU / 3, px = x + Math.cos(a) * 100, py = by - 50 + Math.sin(a) * 26;
+  ctx.fillStyle = '#7f8fa8'; ell(ctx, 38, -74 + lift, 8, 7);   // 손
+  // 다른 손: 회초리
+  ctx.save(); ctx.translate(-40, -76); ctx.rotate(m.windup > 0 ? -1.4 + Math.sin(frame * 0.6) * 0.3 : -0.5 + Math.sin(m.phase) * 0.15);
+  ctx.strokeStyle = '#7a5230'; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(-6, -56); ctx.stroke();
+  ctx.fillStyle = '#7f8fa8'; ell(ctx, 0, 0, 8, 7);
+  ctx.restore();
+  ctx.restore();
+  // 주위를 맴도는 낡은 명분
+  ['禮', '名', '分'].forEach((ch, i) => {
+    const a = m.phase * 1.3 + i * TAU / 3, px = x + Math.cos(a) * 105, py = y - 95 + Math.sin(a) * 26;
     ctx.fillStyle = '#f3e7c8'; ctx.fillRect(px - 9, py - 10, 18, 20);
     ctx.strokeStyle = '#6a4a8a'; ctx.lineWidth = 1; ctx.strokeRect(px - 9, py - 10, 18, 20);
     ctx.fillStyle = '#5a2a6a'; ctx.font = F(12, true); ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(ch, px, py + 1);
@@ -4325,7 +4349,7 @@ const KOREA = [[124.35,40.05],[124.9,40.45],[125.6,40.85],[126.4,41.35],[126.9,4
   [125.3,37.75],[124.75,38.05],[125.0,38.45],[125.15,38.7],[125.3,38.85],[125.1,39.3],[125.35,39.55],[124.9,39.65],[124.6,39.85]];
 const PROVINCES = [['함경도', 128.7, 41.0], ['평안도', 125.9, 40.15], ['황해도', 125.65, 38.35], ['강원도', 128.35, 37.85],
   ['경기도', 127.35, 37.2], ['충청도', 127.0, 36.55], ['전라도', 126.85, 35.05], ['경상도', 128.55, 36.2]];
-const MAP_PLACE = { village: 'hanyang', mountain: 'hanyang', cave: 'hanyang', goeul: 'namwon', dongheon: 'namwon', jeongju: 'jeongju', jinju: 'jinju', jinjuseong: 'jinju', silhak: 'suwon', gongron: 'suwon', daegu: 'daegu', byeok: 'daegu', changdeok: 'hanyang', bibyeonsa: 'hanyang' };
+const MAP_PLACE = { village: 'hanyang', mountain: 'hanyang', cave: 'hanyang', goeul: 'namwon', dongheon: 'namwon', jeongju: 'jeongju', jinju: 'jinju', jinjuseong: 'jinju', silhak: 'suwon', seongri: 'suwon', daegu: 'daegu', byeok: 'daegu', changdeok: 'hanyang', bibyeonsa: 'hanyang' };
 const PLACES = {
   hanyang: { name: '한양', lon: 126.98, lat: 37.57 },
   namwon: { name: '남원', lon: 127.39, lat: 35.42 },
@@ -4921,7 +4945,7 @@ const BGM_FILES = {
   changdeok: 'bgm/changdeok.mp3',    // 1850년대 창덕궁 — 대궤 행진
   bibyeonsa: 'bgm/bibyeonsa_boss.mp3', // 비변사 (보스) — Creeping Fade
 };
-const BGM_FALLBACK = { silhak: 'mountain', gongron: 'bibyeonsa' };   // 새 맵을 만들었는데 곡이 아직 없으면 { 새맵: '비슷한 맵' } 처럼 적어 두세요
+const BGM_FALLBACK = { silhak: 'mountain', seongri: 'bibyeonsa' };   // 새 맵을 만들었는데 곡이 아직 없으면 { 새맵: '비슷한 맵' } 처럼 적어 두세요
 const BGM_VOL = 0.32;
 let bgmOn = (() => { try { return localStorage.getItem('joseonRPG_bgm') !== 'off'; } catch (e) { return true; } })();
 let bgmCur = null, bgmSrc = null;
@@ -4969,7 +4993,7 @@ document.addEventListener('visibilitychange', () => {
 const NOTES_GOT = {};
 const NOTE_LIST = [];
 const CH_NAMES = ['1장 · 상품 화폐 경제가 발달하다', '2장 · 삼정의 문란', '3장 · 들고일어난 백성들', '4장 · 새로운 사상의 등장', '5장 · 흔들리는 신분제', '6장 · 세도 정치의 그늘'];
-const MAP_CH = { village: 0, mountain: 0, cave: 0, goeul: 1, dongheon: 1, jeongju: 2, jinju: 2, jinjuseong: 2, silhak: 3, gongron: 3, daegu: 4, byeok: 4, changdeok: 5, bibyeonsa: 5 };
+const MAP_CH = { village: 0, mountain: 0, cave: 0, goeul: 1, dongheon: 1, jeongju: 2, jinju: 2, jinjuseong: 2, silhak: 3, seongri: 3, daegu: 4, byeok: 4, changdeok: 5, bibyeonsa: 5 };
 // 퀘스트의 장 = 보고하는 NPC가 있는 맵의 장
 const QUEST_CH = id => { const q = QUESTS.find(x => x.id === id); return MAP_CH[NPCS[turninOf(q)].map] ?? 0; };
 const noteTitle = t => { const m = /<b>(.*?)<\/b>/.exec(t); return (m ? m[1] : t.slice(0, 20)).replace(/<[^>]+>/g, ''); };
@@ -5066,7 +5090,7 @@ const DEX_INFO = {
   cheonwon: '"하늘은 둥글고 땅은 네모나다(天圓地方)"는 옛 생각을 나타낸 도깨비예요. 서양의 세계 지도와 과학이 들어오면서 땅이 둥글다는 생각이 퍼졌어요.',
   maleum: '지주 대신 소작지를 관리하던 마름 가운데에는 소작농을 괴롭히는 이도 있었어요. 실학자들은 농민이 자기 땅을 갖게 하는 토지 개혁을 주장했어요.',
   seosaeng: '백성의 삶과 동떨어진 이론만 따지는 선비를 나타낸 몬스터예요. 북학파는 청의 앞선 문물을 배우자고 주장했어요.',
-  gongron: '현실과 동떨어진 헛된 이론(공리공론)을 나타낸 가상 보스예요. 실학자들은 성리학이 사회 변화에 대응하지 못한다고 보고 실생활에 쓸모 있는 학문을 강조했어요.',
+  seongri: '옛 성리학 질서와 관습만 지키려 하며 새 학문과 새 사상을 가로막는 낡은 생각을 나타낸 가상 보스예요. 조선 후기 성리학은 과거 시험을 위한 학문이 되어 사회 변화에 대응하지 못했고, 이를 비판하며 실학이 등장했어요.',
   boar: '인왕산 산길을 누비는 멧돼지. 조선 사람들에게 산짐승은 농사를 망치는 골칫거리이기도 했어요.',
   noru: '날쌘 노루. 산짐승 가죽과 고기는 장시에서 사고팔리기도 했어요.',
   bandit: '살기 어려워진 백성 가운데에는 산으로 들어가 도적이 된 이들도 있었어요.',
