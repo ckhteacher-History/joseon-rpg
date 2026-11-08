@@ -427,7 +427,7 @@
 const SAVE_URL = '';
 
 // 버전 — 고칠 때마다 바꾸면, 화면에 보이는 버전으로 새 버전이 열렸는지 확인할 수 있어요.
-const VERSION = 'v9.16 (2장 최 서방 부탁 동시에)';
+const VERSION = 'v9.17 (수원 화성 배경)';
 
 /* =========================================================
    조선유랑기 — 조선 후기 배경 횡스크롤 RPG
@@ -831,7 +831,7 @@ const MAPS = {
 
   /* ---------- 4장 · 새로운 사상의 등장 ---------- */
   silhak: {
-    name: '수원 화성 아래 · 새 학문의 마을', w: 3400, theme: 'goeul',
+    name: '수원 화성 아래 · 새 학문의 마을', w: 3400, theme: 'hwaseong',
     platforms: [
       { x: 2250, y: 372, w: 220 }, { x: 2550, y: 286, w: 200 }, { x: 2850, y: 372, w: 240 }, { x: 3120, y: 286, w: 200 },
     ],
@@ -3611,6 +3611,7 @@ function drawBackground(theme, cam) {
     ctx.fillStyle = '#3a3f47'; for (let sx = off - 60; sx < VW + 60; sx += 12) ctx.fillRect(sx, 366, 6, 4);
     return;
   }
+  if (theme === 'hwaseong') { drawHwaseongBg(cam, gr); return; }
   if (theme === 'jinju') {
     gr.addColorStop(0, '#a9cde3'); gr.addColorStop(0.7, '#f1e6cc');
     ctx.fillStyle = gr; ctx.fillRect(0, 0, VW, VH);
@@ -3667,9 +3668,110 @@ function drawBackground(theme, cam) {
   }
 }
 
+/* ---------- 4장 · 수원 화성 배경: 팔달산 아래로 이어진 성곽, 옹성을 두른 팔달문, 성 위의 각루와 깃발 ---------- */
+function hsRoof(cx, eaveY, hw, h, col) {   // 끝이 살짝 들린 기와지붕
+  ctx.fillStyle = col;
+  ctx.beginPath();
+  ctx.moveTo(cx - hw - 8, eaveY - 12);
+  ctx.quadraticCurveTo(cx - hw * 0.6, eaveY + 4, cx, eaveY + 4);
+  ctx.quadraticCurveTo(cx + hw * 0.6, eaveY + 4, cx + hw + 8, eaveY - 12);
+  ctx.quadraticCurveTo(cx + hw * 0.75, eaveY - h * 0.55, cx + hw * 0.5, eaveY - h);
+  ctx.lineTo(cx - hw * 0.5, eaveY - h);
+  ctx.quadraticCurveTo(cx - hw * 0.75, eaveY - h * 0.55, cx - hw - 8, eaveY - 12);
+  ctx.closePath(); ctx.fill();
+  ctx.strokeStyle = 'rgba(255,255,255,.12)'; ctx.lineWidth = 1;
+  for (let x = cx - hw * 0.9; x < cx + hw * 0.9; x += 7) { ctx.beginPath(); ctx.moveTo(x, eaveY + 1); ctx.lineTo(cx + (x - cx) * 0.55, eaveY - h + 3); ctx.stroke(); }
+  ctx.fillStyle = '#25282c'; ctx.fillRect(cx - hw * 0.52, eaveY - h - 4, hw * 1.04, 6);   // 용마루
+  ctx.beginPath(); ctx.moveTo(cx - hw * 0.52, eaveY - h + 2); ctx.lineTo(cx - hw * 0.6, eaveY - h - 8); ctx.lineTo(cx - hw * 0.46, eaveY - h - 3); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(cx + hw * 0.52, eaveY - h + 2); ctx.lineTo(cx + hw * 0.6, eaveY - h - 8); ctx.lineTo(cx + hw * 0.46, eaveY - h - 3); ctx.fill();
+  ctx.fillStyle = '#d8d4c8'; ctx.fillRect(cx - hw - 4, eaveY - 4, (hw + 4) * 2, 2);   // 처마 끝 흰 줄
+}
+function hsBody(cx, top, bot, hw) {   // 단청을 칠한 누각 몸체
+  ctx.fillStyle = '#7a2a22'; ctx.fillRect(cx - hw, top, hw * 2, bot - top);
+  ctx.fillStyle = '#3d7b6b'; ctx.fillRect(cx - hw, top, hw * 2, 6);
+  ctx.fillStyle = '#c9a24a'; for (let x = cx - hw + 6; x < cx + hw - 4; x += 10) ctx.fillRect(x, top + 1, 4, 4);
+  ctx.fillStyle = '#5a1e18'; for (let x = cx - hw + 2; x <= cx + hw - 6; x += (hw * 2 - 8) / 5) ctx.fillRect(x, top + 6, 5, bot - top - 6);
+}
+function hsGate(cx) {   // 팔달문
+  const B = 414;
+  // 문루를 받치는 석축 (밝은 화강암)
+  ctx.fillStyle = '#d2c3a0'; ctx.fillRect(cx - 96, 262, 192, B - 262);
+  ctx.strokeStyle = 'rgba(120,100,70,.35)'; ctx.lineWidth = 1;
+  for (let y = 270; y < B; y += 12) { ctx.beginPath(); ctx.moveTo(cx - 96, y); ctx.lineTo(cx + 96, y); ctx.stroke();
+    for (let x = cx - 96 + ((y / 12) % 2) * 14; x < cx + 96; x += 28) { ctx.beginPath(); ctx.moveTo(x, y - 12); ctx.lineTo(x, y); ctx.stroke(); } }
+  ctx.fillStyle = '#9a8f80'; ctx.fillRect(cx - 100, 256, 200, 8);
+  // 2층 문루
+  hsBody(cx, 222, 258, 88);
+  hsRoof(cx, 224, 128, 30, '#3c4045');
+  hsBody(cx, 172, 200, 66);
+  ctx.fillStyle = '#2a2420'; ctx.fillRect(cx - 24, 177, 48, 16);
+  ctx.fillStyle = '#f2e6c4'; ctx.font = F(11, true); ctx.textAlign = 'center'; ctx.fillText('八達門', cx, 189);
+  hsRoof(cx, 174, 104, 36, '#3c4045');
+  // 반원 모양의 옹성 (어두운 벽돌)
+  const R = 160;
+  ctx.fillStyle = '#5d5a55';
+  ctx.beginPath(); ctx.moveTo(cx - R, B);
+  for (let dx = -R; dx <= R; dx += 8) ctx.lineTo(cx + dx, 324 + (dx / R) * (dx / R) * 22);
+  ctx.lineTo(cx + R, B); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle = 'rgba(30,28,26,.35)';
+  for (let y = 340; y < B; y += 9) { ctx.beginPath(); ctx.moveTo(cx - R, y); ctx.lineTo(cx + R, y); ctx.stroke(); }
+  ctx.fillStyle = '#6f6b64';
+  for (let dx = -R + 2; dx < R - 10; dx += 22) { const ty = 324 + (dx / R) * (dx / R) * 22; ctx.fillRect(cx + dx, ty - 14, 15, 15); ctx.fillStyle = '#2c2a27'; ctx.fillRect(cx + dx + 6, ty - 9, 3, 5); ctx.fillStyle = '#6f6b64'; }
+  // 옹성 문
+  ctx.fillStyle = '#e2d8c2'; ctx.beginPath(); ctx.moveTo(cx - 30, B); ctx.lineTo(cx - 30, 368); ctx.arc(cx, 368, 30, Math.PI, 0); ctx.lineTo(cx + 30, B); ctx.fill();
+  ctx.fillStyle = '#9a3328'; ctx.beginPath(); ctx.moveTo(cx - 24, B); ctx.lineTo(cx - 24, 370); ctx.arc(cx, 370, 24, Math.PI, 0); ctx.lineTo(cx + 24, B); ctx.fill();
+  ctx.strokeStyle = '#5a1e18'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(cx, 348); ctx.lineTo(cx, B); ctx.stroke();
+  // 옹성 위 작은 적대 누각
+  hsBody(cx + 104, 318, 334, 22); hsRoof(cx + 104, 320, 34, 14, '#43474c');
+}
+function hsTower(cx) {   // 성벽 위 각루(포루)
+  ctx.fillStyle = '#6a665f'; ctx.fillRect(cx - 34, 318, 68, 50);
+  hsBody(cx, 296, 320, 30); hsRoof(cx, 298, 44, 20, '#43474c');
+}
+function drawHwaseongBg(cam, gr) {
+  gr.addColorStop(0, '#7fbde8'); gr.addColorStop(0.72, '#eef3ec');
+  ctx.fillStyle = gr; ctx.fillRect(0, 0, VW, VH);
+  if (!(state === 'play' && map.dark)) { ctx.fillStyle = 'rgba(255,245,210,.9)'; ell(ctx, 790, 86, 32, 32); }
+  ctx.fillStyle = 'rgba(255,255,255,.8)';
+  for (let i = 0; i < 6; i++) {
+    const sx = ((i * 260 - cam * 0.08 - frame * 0.15) % 1560 + 1560) % 1560 - 200, sy = 50 + hash(i + 3) * 80;
+    ell(ctx, sx, sy, 50, 14); ell(ctx, sx + 30, sy - 8, 34, 14); ell(ctx, sx - 28, sy + 2, 30, 10);
+  }
+  ridge(cam, 0.06, 270, 70, 31, '#b2c6d3');
+  ridge(cam, 0.14, 318, 52, 34, '#86a58a');   // 팔달산
+  // 성곽: 여장(凹凸 담)과 총안, 벽돌 줄눈
+  const par = 0.3, off = cam * par, wy = wx => Math.sin(wx * 0.0021) * 8;
+  ctx.fillStyle = '#6f6b64'; ctx.beginPath(); ctx.moveTo(0, VH);
+  for (let sx = 0; sx <= VW + 6; sx += 6) ctx.lineTo(sx, 360 + wy(sx + off));
+  ctx.lineTo(VW, VH); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle = 'rgba(35,32,30,.28)'; ctx.lineWidth = 1;
+  for (let r = 0; r < 6; r++) { ctx.beginPath(); for (let sx = 0; sx <= VW; sx += 12) { const y = 370 + r * 8 + wy(sx + off); sx ? ctx.lineTo(sx, y) : ctx.moveTo(sx, y); } ctx.stroke(); }
+  const step = 34, k0 = Math.floor(off / step) - 1;
+  for (let k = k0; k < k0 + VW / step + 3; k++) {
+    const sx = k * step - off, y = 360 + wy(k * step);
+    ctx.fillStyle = '#857f74'; ctx.fillRect(sx, y - 16, 24, 17);
+    ctx.fillStyle = '#5c5850'; ctx.fillRect(sx - 1, y - 18, 26, 3);
+    ctx.fillStyle = '#2c2a27'; ctx.fillRect(sx + 10, y - 11, 4, 6);
+  }
+  // 성 위 깃발 (빨강·노랑·파랑·초록·흰색)
+  const FC = ['#c0392b', '#e0b93a', '#2f6fae', '#2f8a5a', '#f4f0e6'], fs = 150, f0 = Math.floor(off / fs) - 1;
+  for (let k = f0; k < f0 + VW / fs + 3; k++) {
+    const sx = k * fs + 60 - off, y = 344 + wy(k * fs + 60), w = Math.sin(frame * 0.08 + k) * 3;
+    ctx.strokeStyle = '#5a4630'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(sx, y); ctx.lineTo(sx, y - 38); ctx.stroke();
+    ctx.fillStyle = FC[((k % 5) + 5) % 5]; ctx.beginPath(); ctx.moveTo(sx, y - 38); ctx.quadraticCurveTo(sx + 10, y - 33 + w, sx + 20, y - 30 + w); ctx.lineTo(sx, y - 22); ctx.fill();
+  }
+  // 팔달문과 각루 (일정한 간격으로 반복)
+  const gs = 1500, g0 = Math.floor((off - 400) / gs);
+  for (let k = g0; k <= g0 + 2; k++) {
+    const gx = k * gs + 520 - off, tx = k * gs + 1180 - off;
+    if (tx > -80 && tx < VW + 80) hsTower(tx);
+    if (gx > -260 && gx < VW + 260) hsGate(gx);
+  }
+}
+
 function drawGround(theme, cam) {
-  const top = { village: '#7da35a', mountain: '#5f8f45', cave: '#55443a', goeul: '#7da35a', dongheon: '#b8b0a0', winter: '#ffffff', jinju: '#7da35a', palace: '#aaa293' }[theme];
-  const dirt = { village: '#cfae7c', mountain: '#9a7a52', cave: '#3d2f25', goeul: '#c4a274', dongheon: '#d8cdb8', winter: '#dfe5ea', jinju: '#c9b58a', palace: '#cdc6b6' }[theme];
+  const top = { hwaseong: '#7da35a', village: '#7da35a', mountain: '#5f8f45', cave: '#55443a', goeul: '#7da35a', dongheon: '#b8b0a0', winter: '#ffffff', jinju: '#7da35a', palace: '#aaa293' }[theme];
+  const dirt = { hwaseong: '#cdbb92', village: '#cfae7c', mountain: '#9a7a52', cave: '#3d2f25', goeul: '#c4a274', dongheon: '#d8cdb8', winter: '#dfe5ea', jinju: '#c9b58a', palace: '#cdc6b6' }[theme];
   const x0 = Math.floor(cam) - 10;
   ctx.fillStyle = dirt; ctx.fillRect(x0, GROUND, VW + 20, VH - GROUND);
   ctx.fillStyle = top; ctx.fillRect(x0, GROUND, VW + 20, 7);
