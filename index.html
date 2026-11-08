@@ -383,7 +383,7 @@
     <div id="cards"></div>
     <div class="keys"><b>← →</b> 이동 &nbsp; <b>Space</b> 점프(×2 이단) &nbsp; <b>Z</b> 공격 &nbsp; <b>X</b> 기술 &nbsp; <b>↑</b> 대화·포탈 &nbsp; <b>A</b> 국밥 먹기 &nbsp; <b>E</b> 무기 강화 &nbsp; <b>B</b> 한양 귀환 &nbsp; <b>↓+Space</b> 아래로 내려가기</div>
     <div class="credit">제작: 역사교사 최경환</div>
-    <button class="opAgain" id="opAgain">🎬 오프닝 다시 보기</button>
+    <button class="opAgain hidden" id="opAgain">🎬 오프닝 다시 보기</button>
   </div>
 
   <div id="preview" class="hidden">
@@ -427,7 +427,7 @@
 const SAVE_URL = '';
 
 // 버전 — 고칠 때마다 바꾸면, 화면에 보이는 버전으로 새 버전이 열렸는지 확인할 수 있어요.
-const VERSION = 'v9.12 (장 복습 퀴즈 삭제)';
+const VERSION = 'v9.13 (오프닝 삭제)';
 
 /* =========================================================
    조선유랑기 — 조선 후기 배경 횡스크롤 RPG
@@ -1760,7 +1760,6 @@ function startGame(cid) {
   helpT = 720;
   saveGame(true);
   openDialog('이야기', null, [
-    `때는 18세기 말, 정조 임금이 다스리던 조선. 장시가 열리고 엽전이 돌며 한양 장터는 사람들로 북적인다…`,
     `<b>${P.c.name}</b> <b>${escapeHtml(user.nick)}</b>, 당신은 오늘 한양 장터에서 길을 나선다. 머리 위에 <b>!</b> 표시가 뜬 사람에게 다가가 <b>↑ 키</b>(모바일은 <b>대화</b>)로 말을 걸어 보자.`,
   ]);
 }
@@ -4634,7 +4633,8 @@ async function doLogin() {
   }
 }
 function goClassSelect(noOpening) {
-  if (!noOpening) { playOpening(() => goClassSelect(true)); return; }
+  // 오프닝(두루마리 이야기)은 v9.13에서 뺐어요. 다시 쓰려면 아래 줄의 주석을 푸세요.
+  // if (!noOpening) { playOpening(() => goClassSelect(true)); return; }
   state = 'title';
   $('login').classList.add('hidden'); $('title').classList.remove('hidden');
   $('hello').innerHTML = `<b>${escapeHtml(user.nick)}</b> 님, 어떤 신분으로 길을 떠날까요? (${escapeHtml(user.sid)} ${escapeHtml(user.name)})`;
