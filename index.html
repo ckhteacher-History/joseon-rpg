@@ -427,7 +427,7 @@
 const SAVE_URL = '';
 
 // 버전 — 고칠 때마다 바꾸면, 화면에 보이는 버전으로 새 버전이 열렸는지 확인할 수 있어요.
-const VERSION = 'v9.9 (유물 사진)';
+const VERSION = 'v9.10 (성리학 도깨비 땅파기)';
 
 /* =========================================================
    조선유랑기 — 조선 후기 배경 횡스크롤 RPG
@@ -1601,7 +1601,7 @@ const QUESTS = [
       `"사농공상의 차례를 어지럽히지 마라!", "오랑캐 청의 학문은 배울 것이 없다!", "조상의 법도는 한 글자도 바꿀 수 없다!" 하고 외치며 새 학문과 새 사상을 모두 가로막고 있지.`,
       `오해는 마시오. 나도 성리학을 공부한 선비요. 성리학이 나쁘다는 것이 아니라, 백성의 삶을 외면한 채 옛것만 붙드는 것이 문제라는 말이오. 서원으로 들어가 <b>성리학 도깨비</b>를 물리쳐 주시오!`,
     ],
-    progress: () => `낡은 서원은 마을 동쪽 끝에 있소. 도깨비가 <b>理!</b>를 띄우면 하늘에서 경전이 떨어지니 그림자를 보고 피하고, <b>禮!</b>면 예법 문서가 날아오오. <b>!</b>를 띄우면 땅이 울리니 이단 점프로 피하시오!`,
+    progress: () => `낡은 서원은 마을 동쪽 끝에 있소. 도깨비가 <b>理!</b>를 띄우면 하늘에서 경전이 떨어지니 그림자를 보고 피하고, <b>禮!</b>면 예법 문서가 날아오오. <b>!</b>를 띄우면 땅이 울리니 이단 점프로 피하시오! <b>땅파기!</b>를 외치면 땅속으로 숨어 흙더미가 쫓아오니, 땅이 갈라지면(<b>!!</b>) 얼른 그 자리를 벗어나시오!`,
     done: () => [
       `해냈구려! 굳게 닫혀 있던 서원의 문이 열리고 바깥바람이 들어오는구려. 이제 새 학문도 숨을 쉴 수 있겠소.`,
       `실학자들의 주장이 나라 정책에 모두 쓰이지는 못했소. 하지만 현실을 바로 보고 백성의 삶을 생각한 이 학문은 훗날 <b>개화 사상</b>으로 이어지게 되오.`,
@@ -2006,7 +2006,8 @@ function roll(mult) {
 
 function playerBox() { return { x1: P.x - 13, x2: P.x + 13, y1: P.y - 56, y2: P.y }; }
 function monY(m) { return (m.d.float ? m.y - 42 + Math.sin(m.phase) * 8 : m.y) - (m.alt || 0); }
-function monBox(m) { const fy = monY(m); return { x1: m.x - m.d.w / 2, x2: m.x + m.d.w / 2, y1: fy - m.d.h, y2: fy }; }
+function monBox(m) { if (m.under) return { x1: -1e9, x2: -1e9, y1: 0, y2: 0 };   // 땅속에 숨으면 맞지 않아요
+  const fy = monY(m); return { x1: m.x - m.d.w / 2, x2: m.x + m.d.w / 2, y1: fy - m.d.h, y2: fy }; }
 const overlap = (a, b) => a.x1 < b.x2 && a.x2 > b.x1 && a.y1 < b.y2 && a.y2 > b.y1;
 
 // 강화할수록 사거리도 늘어나요: 단계마다 +4% (+15면 +60%)
@@ -2383,6 +2384,34 @@ function byeokAI(m, dx) {
 }
 
 function seongriAI(m, dx) {
+  // 땅파기: 땅속으로 사라졌다가(dig) → 땅속을 따라 쫓아오고(under) → 갑자기 솟아올라 공격(rise)
+  if (m.burrow) {
+    const B = m.burrow; B.t++;
+    const dirt = (x, n, up) => { for (let i = 0; i < n; i++) fx.push({ type: 'p', x: x + rnd(-40, 40), y: GROUND - 4, vx: rnd(-3, 3), vy: rnd(-up, -1), life: 26, max: 26, color: Math.random() < 0.5 ? '#7a5a3a' : '#a07a4a', s: rnd(3, 6) }); };
+    if (B.stage === 'dig') {
+      m.sink = Math.min(1, B.t / 50); shake = Math.max(shake, 3);
+      if (B.t % 4 === 0) dirt(m.x, 3, 4);
+      if (B.t % 12 === 0) beep(90 + rnd(0, 30), 0.08, 'sawtooth', 0.03, -10);
+      if (B.t >= 50) { B.stage = 'under'; B.t = 0; m.under = true; B.tx = m.x; B.lock = 0; }
+    } else if (B.stage === 'under') {
+      // 땅속에서 흙더미가 플레이어를 쫓아와요. 마지막엔 자리를 굳히고 땅이 갈라져요
+      if (B.t < 80) B.tx += clamp(P.x - B.tx, -6.5, 6.5);
+      else if (!B.lock) { B.lock = 1; addFloat(B.tx, GROUND - 60, '!!', 'warn'); beep(180, 0.3, 'square', 0.04, 120); }
+      m.x = clamp(B.tx, roamLo(m), roamHi(m)); B.tx = m.x;
+      if (B.t % 6 === 0) dirt(m.x, 1, 2.5);
+      if (B.lock) shake = Math.max(shake, 2);
+      if (B.t >= 112) {
+        B.stage = 'rise'; B.t = 0; m.under = false; shake = 16;
+        beep(60, 0.45, 'sawtooth', 0.08, -10); dirt(m.x, 26, 9);
+        fx.push({ type: 'ring', x: m.x, y: GROUND - 8, r: 10, max: 130, life: 22, maxLife: 22, color: '160,120,70', glyph: '土' });
+        if (!P.dead && Math.abs(P.x - m.x) < 95 && P.y > GROUND - 190) { hurtPlayer(m.d.atk * 1.4, m.x); P.vy = -11; }
+      }
+    } else if (B.stage === 'rise') {
+      m.sink = Math.max(0, 1 - B.t / 14);
+      if (B.t >= 40) { m.burrow = null; m.sink = 0; m.timer = rnd(90, 130); }
+    }
+    m.kb = 0; return;
+  }
   if (m.windup > 0) {
     m.windup--;
     if (m.windup === 0) {
@@ -2407,7 +2436,11 @@ function seongriAI(m, dx) {
     if (Math.abs(dx) > 110) m.x += m.dir * m.d.speed;
     if (--m.timer <= 0) {
       const r = Math.random();
-      m.next = r < 0.4 ? 'rain' : r < 0.75 ? 'volley' : 'ring';
+      if (r < 0.28 && m.lastPat !== 'burrow') {   // 땅을 파고 사라지기 (두 번 연속은 안 해요)
+        m.lastPat = 'burrow'; m.burrow = { stage: 'dig', t: 0 }; m.timer = 999;
+        addFloat(m.x, m.y - m.d.h - 30, '땅파기!', 'warn'); return;
+      }
+      m.next = r < 0.52 ? 'rain' : r < 0.8 ? 'volley' : 'ring'; m.lastPat = m.next;
       m.windup = m.next === 'ring' ? 44 : 34; m.timer = rnd(110, 165);
       addFloat(m.x, m.y - m.d.h - 30, m.next === 'ring' ? '!' : m.next === 'rain' ? '理!' : '禮!', 'warn');
     }
@@ -3249,14 +3282,29 @@ function drawMonster(m) {
   else if (m.t === 'samjeong') drawSamjeong(m.x, fy, m.phase, m.dir);
   else if (m.t === 'byeok') drawByeok(m, fy);
   else if (m.t === 'cheonwon') drawCheonwon(m.x, fy, m.phase, m.dir);
-  else if (m.t === 'seongri') drawSeongri(m, fy);
+  else if (m.t === 'seongri') {
+    if (m.under) {   // 땅속을 기어 오는 흙더미
+      const B = m.burrow, k = B && B.lock ? 1 + Math.sin(frame * 0.8) * 0.15 : 1;
+      ctx.fillStyle = B && B.lock ? 'rgba(120,40,30,.35)' : 'rgba(0,0,0,.18)'; ell(ctx, m.x, GROUND, 80, 8);
+      ctx.fillStyle = '#7a5a3a'; ctx.beginPath(); ctx.ellipse(m.x, GROUND, 46 * k, 16 * k, 0, Math.PI, 0); ctx.fill();
+      ctx.fillStyle = '#a07a4a'; ctx.beginPath(); ctx.ellipse(m.x - 6, GROUND - 2, 26 * k, 9 * k, 0, Math.PI, 0); ctx.fill();
+      if (B && B.lock) {   // 땅이 쩍쩍 갈라져요
+        ctx.strokeStyle = '#2a1a10'; ctx.lineWidth = 3;
+        for (let i = -2; i <= 2; i++) { ctx.beginPath(); ctx.moveTo(m.x + i * 8, GROUND - 4); ctx.lineTo(m.x + i * 26, GROUND + 6); ctx.stroke(); }
+      }
+    } else if (m.sink > 0) {
+      ctx.save(); ctx.beginPath(); ctx.rect(m.x - 200, -1000, 400, 1000 + GROUND + 2); ctx.clip();
+      ctx.translate(0, m.sink * 185); drawSeongri(m, fy); ctx.restore();
+      ctx.fillStyle = '#7a5a3a'; ctx.beginPath(); ctx.ellipse(m.x, GROUND, 70, 14, 0, Math.PI, 0); ctx.fill();
+    } else drawSeongri(m, fy);
+  }
   ctx.restore();
   if (!m.dead && (m.showHp > 0 || m.d.boss) && !m.d.boss) {
     const w = 46, x = m.x - w / 2, y = fy - m.d.h - 12;
     ctx.fillStyle = 'rgba(0,0,0,.6)'; ctx.fillRect(x - 1, y - 1, w + 2, 6);
     ctx.fillStyle = '#e04a3a'; ctx.fillRect(x, y, w * Math.max(0, m.hp / m.maxHp), 4);
   }
-  if (!m.dead && (m.showHp > 0 || m.d.boss)) {
+  if (!m.dead && !m.under && (m.showHp > 0 || m.d.boss)) {
     ctx.font = F(11, true); ctx.textAlign = 'center';
     const tw = ctx.measureText(m.d.name).width + 10;
     ctx.fillStyle = 'rgba(0,0,0,.55)'; rr(ctx, m.x - tw / 2, m.y + 4, tw, 16, 4); ctx.fill();
