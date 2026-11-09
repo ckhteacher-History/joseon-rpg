@@ -451,7 +451,7 @@
 const SAVE_URL = '';
 
 // 버전 — 고칠 때마다 바꾸면, 화면에 보이는 버전으로 새 버전이 열렸는지 확인할 수 있어요.
-const VERSION = 'v9.25 (모바일 대화창 글씨 확대)';
+const VERSION = 'v9.26 (태블릿 키보드 입력)';
 // 수업용 버전: 주소 끝에 ?mode=class (또는 /class/ 주소) → 1·4·5·6장만 해요. 2장(삼정의 문란)·3장(들고일어난 백성들)은 건너뛰어요.
 const CLASS_MODE = /[?&]mode=class\b/.test(location.search);
 const SKIP_CH = CLASS_MODE ? [1, 2] : [];
@@ -479,6 +479,7 @@ function safeArea() {
   const cs = getComputedStyle(saProbe), n = v => parseFloat(v) || 0;
   return { t: n(cs.paddingTop), r: n(cs.paddingRight), b: n(cs.paddingBottom), l: n(cs.paddingLeft) };
 }
+let lastScale = 0;
 function resize() {
   // 모바일은 주소창·툴바 때문에 innerHeight가 실제 보이는 화면보다 클 수 있어요 → visualViewport 기준으로 맞춤
   const vv = window.visualViewport;
@@ -487,9 +488,18 @@ function resize() {
   // 노치·홈 바 영역(safe area)은 피해서 그려요
   const sa = safeArea(); ox += sa.l; oy += sa.t;
   const W = Math.max(100, w - sa.l - sa.r), H = Math.max(100, h - sa.t - sa.b);
-  const s = Math.min(W / VW, H / VH);
+  let s = Math.min(W / VW, H / VH);
   const st = $('stage');
-  st.style.left = (ox + (W - VW * s) / 2) + 'px'; st.style.top = (oy + (H - VH * s) / 2) + 'px';
+  let kb = false;
+  try { kb = document.body.classList.contains('touch') && typing() && !!lastScale && state === 'play'; } catch (e) {}
+  if (kb) {
+    s = lastScale;   // 키보드 때문에 줄어든 높이로 다시 계산하지 않아요 (계속 커졌다 작아졌다 흔들리지 않게)
+    st.style.left = (ox + (W - VW * s) / 2) + 'px';
+    st.style.top = Math.min(oy + (H - VH * s) / 2, oy + H - (VH - 40) * s) + 'px';   // 대화창 아래 끝이 키보드 바로 위에 오게
+  } else {
+    lastScale = s;
+    st.style.left = (ox + (W - VW * s) / 2) + 'px'; st.style.top = (oy + (H - VH * s) / 2) + 'px';
+  }
   st.style.transform = `scale(${s})`;
   // 터치 버튼층도 '실제로 보이는 화면'에 붙여요. (주소창·하단 툴바·확대 때문에 조이스틱이 화면 밖으로 밀려나 안 보이던 문제)
   const tl = $('touch');
@@ -674,7 +684,13 @@ function fsHelp() {
     fb.addEventListener('touchstart', e => e.stopPropagation(), { passive: true });
   } }
 // 전체 화면이 풀려 있으면, 게임 화면을 터치할 때마다 다시 전체 화면으로 들어가요 (실수로 나가도 바로 돌아옴)
-['touchend', 'pointerup'].forEach(ev => addEventListener(ev, () => { if (state === 'play' && !isFs()) goFullscreen(); }, true));
+function typing() { const a = document.activeElement; return !!(a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA')); }
+['touchend', 'pointerup'].forEach(ev => addEventListener(ev, e => {
+  if (state !== 'play' || isFs() || typing()) return;
+  if (e.target && e.target.closest && e.target.closest('input, textarea, .qtext, .qbtn')) return;
+  if (dialog && isQuizPage()) return;   // 퀴즈를 푸는 동안에는 건드리지 않아요
+  goFullscreen();
+}, true));
 updateFsBtn();
 document.addEventListener('fullscreenchange', () => { updateFsBtn(); [50, 300].forEach(t => setTimeout(resize, t)); });
 document.addEventListener('webkitfullscreenchange', () => { updateFsBtn(); [50, 300].forEach(t => setTimeout(resize, t)); });
@@ -2780,7 +2796,10 @@ function showDialogPage() {
       ['pointerdown', 'click'].forEach(ev => { inp.addEventListener(ev, e => e.stopPropagation()); $('qOk').addEventListener(ev, e => e.stopPropagation()); });
       $('qOk').addEventListener('click', () => answerText(inp.value));
       inp.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); answerText(inp.value); } });
-      setTimeout(() => inp.focus(), 50);
+      if (!document.body.classList.contains('touch')) setTimeout(() => inp.focus(), 50);
+      else inp.placeholder = '여기를 눌러 답을 적어 보세요';
+      inp.addEventListener('focus', () => [60, 350, 700].forEach(t => setTimeout(resize, t)));
+      inp.addEventListener('blur', () => [60, 350].forEach(t => setTimeout(resize, t)));
     } else {
       p.order = p.order || shuffle([0, 1, 2, 3]);
       $('dlgText').innerHTML = `<div class="qzq">${tag}📝 ${z.q}</div><div class="qzc">` +
