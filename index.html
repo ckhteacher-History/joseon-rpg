@@ -194,6 +194,15 @@
   #bgmBtn{position:absolute;right:362px;top:10px;z-index:2;font:700 13px 'Gowun Batang',serif;background:rgba(24,18,14,.8);color:#f3e3c0;
     border:1.5px solid #8b6a3e;border-radius:8px;padding:5px 9px;cursor:pointer}
   body:not(.playing) #bgmBtn{display:none}
+  #jobBtn{position:absolute;right:446px;top:10px;z-index:2;font:700 13px 'Gowun Batang',serif;background:rgba(24,18,14,.8);color:#a8d8ff;
+    border:1.5px solid #8b6a3e;border-radius:8px;padding:5px 9px;cursor:pointer}
+  body:not(.playing) #jobBtn{display:none}
+  .card .clv{position:absolute;left:8px;top:8px;z-index:1;font:700 12px 'Gowun Batang',serif;padding:2px 8px;border-radius:10px;background:#8b6a3e;color:#fff3dc;display:none}
+  .card .clv.now{background:#a0442c}
+  .card .clv.new{background:#5a7a4a}
+  body.switching .card .clv{display:block}
+  #jobBack{display:none;margin-top:10px}
+  body.switching #jobBack{display:inline-block}
   #noteBtn{position:absolute;right:158px;top:10px;z-index:2;font:700 13px 'Gowun Batang',serif;background:rgba(24,18,14,.8);color:#bfe8a8;
     border:1.5px solid #6a9a5a;border-radius:8px;padding:5px 10px;cursor:pointer}
   body:not(.playing) #noteBtn{display:none}
@@ -307,7 +316,7 @@
     </div>
     <div class="loginBox hidden" id="resume">
       <div class="info" id="resumeInfo"></div>
-      <div class="btns"><button class="btn" id="btnResume">이어하기</button><button class="btn sub2" id="btnNew">처음부터</button></div>
+      <div class="btns"><button class="btn" id="btnResume">이어하기</button><button class="btn sub2" id="btnJob">직업 바꿔 이어하기</button><button class="btn sub2" id="btnNew">처음부터</button></div>
       <div style="margin-top:10px"><button class="btn sub2" id="btnBack" style="font-size:13px;padding:5px 12px">← 다른 사람으로 하기</button></div>
     </div>
     <div id="recent" class="hidden"><div class="rt">이 기기에 저장된 기록 — 누르면 바로 불러와요</div><div id="recentList"></div></div>
@@ -367,6 +376,7 @@
   <button id="dexBtn">👹 도감 (K)</button>
   <button id="guideBtn">❓ 다음 할 일 (G)</button>
   <button id="bgmBtn" title="배경 음악 켜기/끄기 (V)">🔊 음악</button>
+  <button id="jobBtn" title="직업 바꾸기 (J)">🔄 직업 (J)</button>
   <div id="notes" class="hidden">
     <div class="notesBox">
       <div class="nhead"><span>📜 역사 노트 보관함 <small id="nCount"></small></span><button id="nEnd" class="hidden" style="font-size:13px;border:1.5px solid #ffe6a8;border-radius:8px;padding:3px 10px;margin-right:10px">🏆 완주 기록 · 도감</button><button id="nClose" title="닫기 (N / Esc)">✕</button></div>
@@ -404,6 +414,7 @@
     <div class="sub">朝鮮流浪記 · 19세기 조선, 신분을 골라 길을 떠나라</div>
     <div class="hello" id="hello"></div>
     <div id="cards"></div>
+    <button class="btn sub2" id="jobBack">← 직업 바꾸지 않고 돌아가기</button>
     <div class="keys"><b>← →</b> 이동 &nbsp; <b>Space</b> 점프(×2 이단) &nbsp; <b>Z</b> 공격 &nbsp; <b>X</b> 기술 &nbsp; <b>↑</b> 대화·포탈 &nbsp; <b>A</b> 국밥 먹기 &nbsp; <b>E</b> 무기 강화 &nbsp; <b>B</b> 한양 귀환 &nbsp; <b>↓+Space</b> 아래로 내려가기</div>
     <div class="credit">제작: 역사교사 최경환</div>
     <button class="opAgain hidden" id="opAgain">🎬 오프닝 다시 보기</button>
@@ -451,7 +462,7 @@
 const SAVE_URL = '';
 
 // 버전 — 고칠 때마다 바꾸면, 화면에 보이는 버전으로 새 버전이 열렸는지 확인할 수 있어요.
-const VERSION = 'v9.29 (무기 강화 +20)';
+const VERSION = 'v9.30 (직업 바꾸기)';
 // 수업용 버전: 주소 끝에 ?mode=class (또는 /class/ 주소) → 1·4·5·6장만 해요. 2장(삼정의 문란)·3장(들고일어난 백성들)은 건너뛰어요.
 const CLASS_MODE = /[?&]mode=class\b/.test(location.search);
 const SKIP_CH = CLASS_MODE ? [1, 2] : [];
@@ -550,7 +561,7 @@ const KEYMAP = {
   Space: 'jump', KeyC: 'jump', AltLeft: 'jump', AltRight: 'jump',
   KeyZ: 'attack', ControlLeft: 'attack', ControlRight: 'attack',
   KeyX: 'skill', ShiftLeft: 'skill', ShiftRight: 'skill',
-  KeyA: 'potion', KeyH: 'help', KeyM: 'map', KeyN: 'notes', KeyK: 'dex', KeyE: 'forge', KeyB: 'recall', KeyV: 'bgm', KeyG: 'guide',
+  KeyA: 'potion', KeyH: 'help', KeyM: 'map', KeyN: 'notes', KeyK: 'dex', KeyE: 'forge', KeyB: 'recall', KeyV: 'bgm', KeyG: 'guide', KeyJ: 'job',
 };
 addEventListener('keydown', e => {
   if (admin.on && (e.code === 'F2' || (e.code === 'Escape' && adminOpen))) { e.preventDefault(); toggleAdmin(); return; }
@@ -1844,6 +1855,8 @@ function newPlayer(cid) {
 
 function startGame(cid) {
   if (state !== 'title') return;
+  if (jobSwitch) { doJobSwitch(cid); return; }
+  classStore = {};
   beep(660, 0.1, 'triangle', 0.05);
   $('title').classList.add('hidden');
   P = newPlayer(cid);
@@ -1946,6 +1959,7 @@ function update() {
   if (pressed.notes) { openNotes(); clearPressed(); return; }
   if (pressed.dex) { openDex(); clearPressed(); return; }
   if (pressed.guide) { openGuide(); clearPressed(); return; }
+  if (pressed.job) { openJobSwitch(); clearPressed(); return; }
   if (pressed.forge) { openForge(nearSmith()); clearPressed(); return; }
   playFrames++;
   if (frame % 600 === 0) saveGame(false);          // 10초마다 기기에 저장
@@ -4763,7 +4777,7 @@ function snapshot() {
     v: 1, sid: user.sid, name: user.name, nick: user.nick, cid: P.cid,
     lv: P.lv, exp: P.exp, hp: Math.round(P.hp), mp: Math.round(P.mp), maxHp: P.maxHp, maxMp: P.maxMp, atk: +P.atk.toFixed(1),
     coins: P.coins, potions: P.potions, enh: P.enh, qs: JSON.parse(JSON.stringify(QS)), map: mapId, x: Math.round(P.x),
-    ended, play: playFrames, quiz: Object.keys(QZ), cp: Object.keys(CP), cpv: 2, notes: Object.keys(NOTES_GOT), dex: Object.assign({}, DEX), seen: [...SEEN], savedAt: Date.now(),
+    ended, play: playFrames, classes: Object.assign({}, classStore, { [P.cid]: classSnap(P) }), quiz: Object.keys(QZ), cp: Object.keys(CP), cpv: 2, notes: Object.keys(NOTES_GOT), dex: Object.assign({}, DEX), seen: [...SEEN], savedAt: Date.now(),
   };
 }
 
@@ -4869,10 +4883,15 @@ function goClassSelect(noOpening) {
   $('login').classList.add('hidden'); $('title').classList.remove('hidden');
   $('hello').innerHTML = `<b>${escapeHtml(user.nick)}</b> 님, 어떤 신분으로 길을 떠날까요? (${escapeHtml(user.sid)} ${escapeHtml(user.name)})`;
 }
-function resumeGame(sv) {
-  $('login').classList.add('hidden');
-  P = newPlayer(sv.cid);
-  ['lv', 'exp', 'hp', 'mp', 'maxHp', 'maxMp', 'atk', 'coins', 'potions', 'enh'].forEach(k => { if (typeof sv[k] === 'number') P[k] = sv[k]; });
+function resumeGame(sv, cid) {
+  $('login').classList.add('hidden'); $('title').classList.add('hidden');
+  cid = cid && CLASSES[cid] ? cid : sv.cid;
+  classStore = Object.assign({}, sv.classes || {});
+  classStore[sv.cid] = classSnap(sv);   // 저장할 때 쓰던 직업의 성장 기록
+  P = newPlayer(cid);
+  const st = classStore[cid];   // 이 직업으로 키워 둔 기록 (없으면 Lv.1부터)
+  if (st) CLASS_KEYS.forEach(k => { if (typeof st[k] === 'number') P[k] = st[k]; });
+  ['coins', 'potions'].forEach(k => { if (typeof sv[k] === 'number') P[k] = sv[k]; });   // 엽전·국밥은 함께 써요
   P.hp = Math.max(P.hp, Math.round(P.maxHp * 0.5));
   for (const k in QS) delete QS[k];
   Object.assign(QS, sv.qs || {});
@@ -4891,17 +4910,61 @@ function resumeGame(sv) {
   NOTE_LIST.forEach(nt => { if (nt.qid && QS[nt.qid] && QS[nt.qid].state === 'done') NOTES_GOT[nt.id] = 1; });
   state = 'play'; document.body.classList.add('playing');
   let m = MAPS[sv.map] ? sv.map : 'village';
+  if (cid !== sv.cid) m = 'village';   // 직업을 바꾸면 한양 장터에서 다시 출발해요
   if (m === 'cave' && !QS.q4) m = 'mountain';
   enterMap(m, clamp(sv.x || 150, 30, MAPS[m].w - 30));
   helpT = 300;
-  toast(`${user.nick} 님, 다시 오신 걸 환영합니다!`, '#ffd76a', 220);
+  if (cid !== sv.cid) toast(`🔄 ${CLASSES[cid].name}(으)로 길을 이어 갑니다! (Lv.${P.lv}) 부탁·역사 노트·엽전은 그대로예요.`, '#a8d8ff', 320);
+  else toast(`${user.nick} 님, 다시 오신 걸 환영합니다!`, '#ffd76a', 220);
+  saveGame(true);
 }
+/* ---------- 직업 바꾸기: 진행(부탁·노트·도감·엽전)은 그대로, 레벨·무기 강화는 직업마다 따로 ---------- */
+const CLASS_KEYS = ['lv', 'exp', 'hp', 'mp', 'maxHp', 'maxMp', 'atk', 'enh'];
+let classStore = {}, jobSwitch = null;   // jobSwitch: null | { from: 'login', sv } | { from: 'game' }
+const classSnap = o => { const r = {}; CLASS_KEYS.forEach(k => { if (typeof o[k] === 'number') r[k] = k === 'atk' ? +o[k].toFixed(1) : Math.round(o[k]); }); return r; };
+function showJobCards(curCid, store) {
+  document.body.classList.add('switching');
+  document.querySelectorAll('#cards .card').forEach(d => {
+    const b = d.querySelector('.clv'), id = d.dataset.cid, st = store[id];
+    b.className = 'clv' + (id === curCid ? ' now' : st ? '' : ' new');
+    b.textContent = id === curCid ? `지금 · Lv.${st ? st.lv : 1}` : st ? `Lv.${st.lv} 이어서` : 'Lv.1 새로 시작';
+  });
+  state = 'title';
+  $('login').classList.add('hidden'); $('title').classList.remove('hidden');
+  $('hello').innerHTML = `<b>${escapeHtml(user.nick)}</b> 님, 어떤 신분으로 바꿔 볼까요? <small>(끝낸 부탁·역사 노트·도감·엽전은 그대로, 레벨과 무기는 신분마다 따로 키워요)</small>`;
+}
+function openJobSwitch() {
+  if (!P || state !== 'play' || dialog || trans || admin.on || notesOpen || endingOpen || forgeOpen || recallOpen || guideOpen) return;
+  saveGame(true);
+  const store = Object.assign({}, classStore, { [P.cid]: classSnap(P) });
+  jobSwitch = { from: 'game', sv: snapshot() };
+  document.body.classList.remove('playing');
+  showJobCards(P.cid, store);
+}
+function doJobSwitch(cid) {
+  const js = jobSwitch; jobSwitch = null; document.body.classList.remove('switching');
+  resumeGame(js.sv, cid);
+}
+function cancelJobSwitch() {
+  const js = jobSwitch; if (!js) return;
+  jobSwitch = null; document.body.classList.remove('switching');
+  $('title').classList.add('hidden');
+  if (js.from === 'game') { state = 'play'; document.body.classList.add('playing'); }
+  else { pendingSave = js.sv; state = 'login'; $('login').classList.remove('hidden'); }
+}
+$('jobBtn').addEventListener('click', e => { e.stopPropagation(); openJobSwitch(); });
+$('jobBack').addEventListener('click', e => { e.stopPropagation(); cancelJobSwitch(); });
+$('btnJob').onclick = () => {
+  const sv = pendingSave; if (!sv) return;
+  jobSwitch = { from: 'login', sv };
+  showJobCards(sv.cid, Object.assign({}, sv.classes || {}, { [sv.cid]: classSnap(sv) }));
+};
 $('btnLogin').onclick = doLogin;
 ['inId', 'inName', 'inNick'].forEach(id => $(id).addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); doLogin(); } }));
 $('btnResume').onclick = () => { const sv = pendingSave; pendingSave = null; resumeGame(sv); };
 $('btnNew').onclick = () => {
   if (!confirm('지금까지의 기록을 지우고 처음부터 시작할까요?')) return;
-  pendingSave = null; goClassSelect();
+  pendingSave = null; jobSwitch = null; document.body.classList.remove('switching'); goClassSelect();
 };
 $('btnBack').onclick = () => { pendingSave = null; user = null; $('inNick').value = ''; showLogin(); };
 
@@ -5146,12 +5209,13 @@ function loop(now) {
 /* ---------- 직업 선택 카드 ---------- */
 Object.entries(CLASSES).forEach(([id, c], i) => {
   const d = document.createElement('div');
-  d.className = 'card'; d.tabIndex = 0;
+  d.className = 'card'; d.tabIndex = 0; d.dataset.cid = id;
   d.innerHTML = `<button class="pvBtn" title="공격·기술 미리보기">▶ 미리보기</button><canvas width="200" height="210"></canvas><h2>${c.name}</h2><div class="hj">${c.hanja} · ${i + 1}번</div>
     <div class="tags">${c.tags}</div><p>${c.desc}</p><div class="sk"><b>[X] ${c.skill.name}</b><br>${c.skill.desc}</div>`;
   const g = d.querySelector('canvas').getContext('2d');
   g.setTransform(2.5, 0, 0, 2.5, 0, 0);
   drawPerson(g, 40, 80, c.look, 1, { weapon: c.weapon });
+  d.insertAdjacentHTML('afterbegin', '<span class="clv"></span>');
   d.querySelector('.pvBtn').addEventListener('click', e => { e.stopPropagation(); openPreview(id); });
   d.addEventListener('click', () => { goFullscreen(); startGame(id); });
   d.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); startGame(id); } });
