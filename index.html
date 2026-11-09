@@ -98,7 +98,8 @@
   @keyframes blink{50%{opacity:.35}}
 
   /* 모바일 터치 버튼 */
-  #touch{display:none;position:fixed;left:0;top:0;width:100vw;height:100vh;pointer-events:none;z-index:5}
+  #touch{display:none;position:fixed;left:0;top:0;width:100vw;height:100vh;pointer-events:none;z-index:5;transform-origin:0 0}
+  html,body{touch-action:manipulation}
   #fsBtn{display:none}
   body.canfs #fsBtn{display:block}
   body.touch #touch{display:block}
@@ -434,7 +435,7 @@
 const SAVE_URL = '';
 
 // 버전 — 고칠 때마다 바꾸면, 화면에 보이는 버전으로 새 버전이 열렸는지 확인할 수 있어요.
-const VERSION = 'v9.19 (모바일 조이스틱·전체 화면)';
+const VERSION = 'v9.20 (조이스틱 터치 대응·전체 화면 버튼)';
 
 /* =========================================================
    조선유랑기 — 조선 후기 배경 횡스크롤 RPG
@@ -473,7 +474,9 @@ function resize() {
   st.style.transform = `scale(${s})`;
   // 터치 버튼층도 '실제로 보이는 화면'에 붙여요. (주소창·하단 툴바·확대 때문에 조이스틱이 화면 밖으로 밀려나 안 보이던 문제)
   const tl = $('touch');
-  if (tl) { tl.style.left = ox + 'px'; tl.style.top = oy + 'px'; tl.style.width = W + 'px'; tl.style.height = H + 'px'; }
+  // 버튼 크기는 '손가락에 맞는 실제 크기'로: 화면이 확대(핀치 줌)돼 있으면 그만큼 되돌리고, 화면이 낮으면 조금 줄여요
+  const z = vv && vv.scale ? vv.scale : 1, k = (1 / z) * Math.min(1, (H * z) / 360);
+  if (tl) { tl.style.left = ox + 'px'; tl.style.top = oy + 'px'; tl.style.width = (W / k) + 'px'; tl.style.height = (H / k) + 'px'; tl.style.transform = `scale(${k})`; }
   const dpr = window.devicePixelRatio || 1;
   K = s * dpr;
   cv.width = Math.round(VW * K); cv.height = Math.round(VH * K);
@@ -481,7 +484,11 @@ function resize() {
 addEventListener('resize', resize); resize();
 if (window.visualViewport) { visualViewport.addEventListener('resize', resize); visualViewport.addEventListener('scroll', resize); }
 addEventListener('orientationchange', () => [100, 350, 800].forEach(t => setTimeout(resize, t)));
-if ('ontouchstart' in window || matchMedia('(pointer:coarse)').matches) document.body.classList.add('touch');
+const HAS_TOUCH_EV = 'ontouchstart' in window || (window.TouchEvent !== undefined);
+if (HAS_TOUCH_EV || navigator.maxTouchPoints > 0 || matchMedia('(pointer:coarse)').matches || matchMedia('(any-pointer:coarse)').matches) document.body.classList.add('touch');
+// 판별이 빗나간 기기(키보드 덮개를 단 태블릿 등)도, 손가락으로 화면을 누르는 순간 터치 조작을 보여 줘요
+addEventListener('touchstart', () => { if (!document.body.classList.contains('touch')) { document.body.classList.add('touch'); resize(); updateFsBtn && updateFsBtn(); } }, { passive: true, capture: true });
+addEventListener('pointerdown', e => { if (e.pointerType === 'touch' && !document.body.classList.contains('touch')) { document.body.classList.add('touch'); resize(); } }, true);
 
 /* ---------- 소리 (간단한 효과음) ---------- */
 let AC = null;
@@ -573,10 +580,14 @@ addEventListener('blur', () => { for (const k in keys) keys[k] = false; });
 const clearPressed = () => { for (const k in pressed) delete pressed[k]; };
 document.querySelectorAll('#touch button').forEach(b => {
   const k = b.dataset.k;
-  const on = e => { e.preventDefault(); if (!keys[k]) pressed[k] = true; keys[k] = true; b.classList.add('on'); };
-  const off = e => { e.preventDefault(); keys[k] = false; b.classList.remove('on'); };
-  b.addEventListener('pointerdown', on); b.addEventListener('pointerup', off);
-  b.addEventListener('pointercancel', off); b.addEventListener('pointerleave', off);
+  if (!k) return;
+  const on = e => { if (e.cancelable) e.preventDefault(); if (!keys[k]) pressed[k] = true; keys[k] = true; b.classList.add('on'); };
+  const off = e => { if (e.cancelable) e.preventDefault(); keys[k] = false; b.classList.remove('on'); };
+  // 손가락은 터치 이벤트로 (오래된 기기·앱 속 브라우저에서도 확실히 동작), 마우스·펜은 포인터 이벤트로
+  b.addEventListener('touchstart', on, { passive: false }); b.addEventListener('touchend', off, { passive: false }); b.addEventListener('touchcancel', off, { passive: false });
+  const notTouch = f => e => { if (e.pointerType !== 'touch' || !HAS_TOUCH_EV) f(e); };
+  b.addEventListener('pointerdown', notTouch(on)); b.addEventListener('pointerup', notTouch(off));
+  b.addEventListener('pointercancel', notTouch(off)); b.addEventListener('pointerleave', notTouch(off));
 });
 
 // 조이스틱: 좌우로 밀면 이동, 아래로 깊게 당기면 ↓(발판 아래로 내려가기)
@@ -585,7 +596,7 @@ document.querySelectorAll('#touch button').forEach(b => {
   let pid = null;
   const set = (k, v) => { if (v && !keys[k]) pressed[k] = true; keys[k] = v; };
   const move = e => {
-    const r = base.getBoundingClientRect(), R = r.width / 2;
+    const r = base.getBoundingClientRect(), R = r.width / 2 || 75;
     let dx = e.clientX - (r.left + R), dy = e.clientY - (r.top + R);
     const max = R * 0.62, d = Math.hypot(dx, dy); if (d > max) { dx *= max / d; dy *= max / d; }
     dy = Math.max(-max * 0.35, dy);   // 위쪽으로는 조금만 (좌우 조이스틱)
@@ -593,41 +604,70 @@ document.querySelectorAll('#touch button').forEach(b => {
     set('left', dx < -R * 0.18); set('right', dx > R * 0.18); set('down', dy > R * 0.42);
   };
   const end = e => { if (e.pointerId !== pid) return; pid = null; base.classList.remove('on'); knob.style.transform = ''; set('left', false); set('right', false); set('down', false); };
-  base.addEventListener('pointerdown', e => { e.preventDefault(); pid = e.pointerId; base.setPointerCapture(pid); base.classList.add('on'); move(e); });
+  const reset = () => { pid = null; base.classList.remove('on'); knob.style.transform = ''; set('left', false); set('right', false); set('down', false); };
+  // 손가락: 터치 이벤트 (어떤 손가락이 조이스틱을 잡았는지 identifier로 따라가요. 화면 밖으로 미끄러져도 계속 따라감)
+  let tid = null;
+  const findT = list => { for (let i = 0; i < list.length; i++) if (list[i].identifier === tid) return list[i]; return null; };
+  base.addEventListener('touchstart', e => { e.preventDefault(); if (tid !== null) return; const t = e.changedTouches[0]; tid = t.identifier; base.classList.add('on'); move(t); }, { passive: false });
+  base.addEventListener('touchmove', e => { const t = findT(e.changedTouches); if (t) { e.preventDefault(); move(t); } }, { passive: false });
+  const tEnd = e => { if (findT(e.changedTouches)) { tid = null; reset(); } };
+  base.addEventListener('touchend', tEnd, { passive: false }); base.addEventListener('touchcancel', tEnd, { passive: false });
+  // 마우스·펜: 포인터 이벤트
+  base.addEventListener('pointerdown', e => { if (e.pointerType === 'touch' && HAS_TOUCH_EV) return; e.preventDefault(); pid = e.pointerId; try { base.setPointerCapture(pid); } catch (er) {} base.classList.add('on'); move(e); });
   base.addEventListener('pointermove', e => { if (e.pointerId === pid) { e.preventDefault(); move(e); } });
   base.addEventListener('pointerup', end); base.addEventListener('pointercancel', end);
+  // 창이 가려지거나 전체 화면이 바뀌면 누르고 있던 방향을 풀어요 (캐릭터가 혼자 계속 걸어가지 않게)
+  ['blur', 'fullscreenchange', 'webkitfullscreenchange', 'orientationchange'].forEach(ev => (ev.includes('fullscreen') ? document : window).addEventListener(ev, () => { tid = null; reset(); }));
 })();
 
-// 모바일: 게임을 시작할 때 전체 화면으로 (지원하는 브라우저에서만)
-function goFullscreen() {
-  if (!document.body.classList.contains('touch')) return;
-  const el = document.documentElement, fs = document.fullscreenElement || document.webkitFullscreenElement;
-  if (fs) return;
-  const req = el.requestFullscreen || el.webkitRequestFullscreen;
-  if (!req) return;
+// 모바일: 게임을 시작할 때 전체 화면으로
+const UA = navigator.userAgent || '';
+const IN_APP = /KAKAOTALK|NAVER\(inapp|NAVER|Instagram|FBAN|FBAV|Line\/|DaumApps|everytimeApp|; wv\)/i.test(UA);
+const IS_IOS = /iPhone|iPod/.test(UA) || (/iPad|Macintosh/.test(UA) && navigator.maxTouchPoints > 1);
+const STANDALONE = () => navigator.standalone || matchMedia('(display-mode: fullscreen)').matches || matchMedia('(display-mode: standalone)').matches;
+const fsSupported = () => { const de = document.documentElement; return !!(de.requestFullscreen || de.webkitRequestFullscreen); };
+const isFs = () => !!(document.fullscreenElement || document.webkitFullscreenElement) || STANDALONE();
+function goFullscreen(force) {
+  if (!force && !document.body.classList.contains('touch')) return false;
+  if (isFs() || !fsSupported()) return false;
+  const el = document.documentElement, req = el.requestFullscreen || el.webkitRequestFullscreen;
   try {
     const p = req.call(el, { navigationUI: 'hide' });
     const lock = () => { try { screen.orientation && screen.orientation.lock && screen.orientation.lock('landscape').catch(() => {}); } catch (e) {} };
     if (p && p.then) p.then(lock).catch(() => {}); else lock();
-  } catch (e) {}
+  } catch (e) { return false; }
+  return true;
 }
-['btnLogin', 'btnResume', 'btnNew'].forEach(id => { const b = document.getElementById(id); if (b) b.addEventListener('click', goFullscreen); });
-// 전체 화면을 지원하는 기기(안드로이드 크롬·삼성 인터넷 등)에서, 전체 화면이 풀려 있으면 '전체 화면' 버튼을 보여 줘요.
-// (아이폰 사파리·카카오톡/네이버 앱 안의 브라우저는 웹페이지 전체 화면을 지원하지 않아요 → 버튼이 나오지 않아요)
-function updateFsBtn() {
-  const de = document.documentElement, can = !!(de.requestFullscreen || de.webkitRequestFullscreen);
-  const fs = document.fullscreenElement || document.webkitFullscreenElement;
-  document.body.classList.toggle('canfs', can && !fs && document.body.classList.contains('touch'));
+['btnLogin', 'btnResume', 'btnNew'].forEach(id => { const b = document.getElementById(id); if (b) b.addEventListener('click', () => goFullscreen()); });
+// 전체 화면이 아닐 때 '전체 화면' 버튼을 보여 줘요 (터치 기기)
+function updateFsBtn() { document.body.classList.toggle('canfs', document.body.classList.contains('touch') && !isFs()); }
+function fsHelp() {
+  const msg = IN_APP ? '카카오톡·네이버 같은 앱 안에서는 전체 화면이 안 돼요. 오른쪽 위 메뉴(⋮)에서 "다른 브라우저로 열기"를 눌러 주세요.'
+    : IS_IOS ? '아이폰은 웹페이지 전체 화면을 막아 두었어요. 사파리 아래쪽 공유 버튼 → "홈 화면에 추가"를 한 뒤, 홈 화면의 조선유랑기 아이콘으로 열면 꽉 찬 화면으로 할 수 있어요.'
+    : '이 브라우저는 전체 화면을 지원하지 않아요. 크롬이나 삼성 인터넷으로 열어 주세요.';
+  if (typeof toast === 'function' && state === 'play') toast('📱 ' + msg, '#ffe9b0', 420); else alert(msg);
 }
 { const fb = document.getElementById('fsBtn');
-  if (fb) { fb.addEventListener('pointerdown', e => e.stopPropagation()); fb.addEventListener('click', e => { e.stopPropagation(); goFullscreen(); }); } }
-// 저장된 기록으로 바로 이어하면 버튼을 누를 일이 없어서, 게임 화면을 처음 터치할 때 한 번 더 시도해요
-{ let tried = false; addEventListener('pointerup', () => { if (!tried && state === 'play') { tried = true; goFullscreen(); } }, true); }
+  if (fb) {
+    const go = e => { e.preventDefault(); e.stopPropagation(); if (!goFullscreen(true)) fsHelp(); };
+    fb.addEventListener('touchend', go, { passive: false });
+    fb.addEventListener('click', e => { if (!HAS_TOUCH_EV) go(e); });
+    fb.addEventListener('touchstart', e => e.stopPropagation(), { passive: true });
+  } }
+// 전체 화면이 풀려 있으면, 게임 화면을 터치할 때마다 다시 전체 화면으로 들어가요 (실수로 나가도 바로 돌아옴)
+['touchend', 'pointerup'].forEach(ev => addEventListener(ev, () => { if (state === 'play' && !isFs()) goFullscreen(); }, true));
 updateFsBtn();
-document.addEventListener('fullscreenchange', updateFsBtn);
-document.addEventListener('webkitfullscreenchange', updateFsBtn);
-document.addEventListener('fullscreenchange', () => [50, 300].forEach(t => setTimeout(resize, t)));
-document.addEventListener('webkitfullscreenchange', () => [50, 300].forEach(t => setTimeout(resize, t)));
+document.addEventListener('fullscreenchange', () => { updateFsBtn(); [50, 300].forEach(t => setTimeout(resize, t)); });
+document.addEventListener('webkitfullscreenchange', () => { updateFsBtn(); [50, 300].forEach(t => setTimeout(resize, t)); });
+// 카카오톡 앱 안에서 열리면 기본 브라우저로 바로 옮겨 열어요 (앱 안 브라우저는 전체 화면이 안 돼요)
+if (/KAKAOTALK/i.test(UA) && !sessionStorage.getItem('extTried')) {
+  sessionStorage.setItem('extTried', '1');
+  location.href = 'kakaotalk://web/openExternal?url=' + encodeURIComponent(location.href);
+} else if (IN_APP && /Android/i.test(UA) && !sessionStorage.getItem('extTried')) {
+  // 안드로이드의 다른 앱 속 브라우저(네이버 등) → 크롬으로 열기 (크롬이 없으면 그대로)
+  sessionStorage.setItem('extTried', '1');
+  location.href = 'intent://' + location.href.replace(/^https?:\/\//, '') + '#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=' + encodeURIComponent(location.href) + ';end';
+}
 
 /* =========================================================
    데이터: 직업 · 몬스터 · 맵 · NPC · 퀘스트
