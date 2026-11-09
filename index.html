@@ -462,7 +462,7 @@
 const SAVE_URL = '';
 
 // 버전 — 고칠 때마다 바꾸면, 화면에 보이는 버전으로 새 버전이 열렸는지 확인할 수 있어요.
-const VERSION = 'v9.33 (보스 강화·강화비 인하·풍물 6타)';
+const VERSION = 'v9.34 (풍물놀이 2초·10타)';
 // 수업용 버전: 주소 끝에 ?mode=class (또는 /class/ 주소) → 1·4·5·6장만 해요. 2장(삼정의 문란)·3장(들고일어난 백성들)은 건너뛰어요.
 const CLASS_MODE = /[?&]mode=class\b/.test(location.search);
 const SKIP_CH = CLASS_MODE ? [1, 2] : [];
@@ -2161,7 +2161,7 @@ function doSkill() {
 }
 
 // ---------- 상민 풍물놀이: 회오리 ----------
-const WHIRL_LEN = 96, WHIRL_TICK = 16;   // 1.6초 동안 약 0.27초마다 한 번씩, 모두 6번 베어요
+const WHIRL_LEN = 120, WHIRL_TICK = 12;   // 2초 동안 0.2초마다 한 번씩, 모두 10번 베어요
 function whirlTick() {
   const t = WHIRL_LEN - P.whirl; P.whirl--;
   const R = 130 * rangeMult(), pull = 290 * rangeMult(), pw = skillPow();
