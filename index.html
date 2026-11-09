@@ -435,7 +435,7 @@
 const SAVE_URL = '';
 
 // 버전 — 고칠 때마다 바꾸면, 화면에 보이는 버전으로 새 버전이 열렸는지 확인할 수 있어요.
-const VERSION = 'v9.21 (수업용 버전 추가)';
+const VERSION = 'v9.22 (대화 대기 1.2초)';
 // 수업용 버전: 주소 끝에 ?mode=class (또는 /class/ 주소) → 1·4·5·6장만 해요. 2장(삼정의 문란)·3장(들고일어난 백성들)은 건너뛰어요.
 const CLASS_MODE = /[?&]mode=class\b/.test(location.search);
 const SKIP_CH = CLASS_MODE ? [1, 2] : [];
@@ -2828,7 +2828,7 @@ function answerQuiz(o) {
   }
   showDialogPage();
 }
-const DLG_MIN_MS = 1500;   // 대화 한 쪽을 넘기기 전 최소 읽기 시간 (역사 내용이 있는 쪽만)
+const DLG_MIN_MS = 1200;   // 대화 한 쪽을 넘기기 전 최소 읽기 시간 (역사 내용이 있는 쪽만)
 const QK = t => ({ text: t, quick: true });   // 역사 내용이 없는 안내용 쪽 → 기다리지 않고 바로 넘김
 // 한 번 끝까지 읽은 쪽은 기억해 두었다가, 다시 볼 때는 기다리지 않고 바로 넘길 수 있어요
 const SEEN = new Set();
