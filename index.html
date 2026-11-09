@@ -462,7 +462,7 @@
 const SAVE_URL = '';
 
 // 버전 — 고칠 때마다 바꾸면, 화면에 보이는 버전으로 새 버전이 열렸는지 확인할 수 있어요.
-const VERSION = 'v9.34 (풍물놀이 2초·10타)';
+const VERSION = 'v9.35 (직업 바꿔도 그 자리에서)';
 // 수업용 버전: 주소 끝에 ?mode=class (또는 /class/ 주소) → 1·4·5·6장만 해요. 2장(삼정의 문란)·3장(들고일어난 백성들)은 건너뛰어요.
 const CLASS_MODE = /[?&]mode=class\b/.test(location.search);
 const SKIP_CH = CLASS_MODE ? [1, 2] : [];
@@ -4951,11 +4951,10 @@ function resumeGame(sv, cid) {
   NOTE_LIST.forEach(nt => { if (nt.qid && QS[nt.qid] && QS[nt.qid].state === 'done') NOTES_GOT[nt.id] = 1; });
   state = 'play'; document.body.classList.add('playing');
   let m = MAPS[sv.map] ? sv.map : 'village';
-  if (cid !== sv.cid) m = 'village';   // 직업을 바꾸면 한양 장터에서 다시 출발해요
   if (m === 'cave' && !QS.q4) m = 'mountain';
   enterMap(m, clamp(sv.x || 150, 30, MAPS[m].w - 30));
   helpT = 300;
-  if (cid !== sv.cid) toast(`🔄 ${CLASSES[cid].name}(으)로 길을 이어 갑니다! (Lv.${P.lv}) 부탁·역사 노트·엽전은 그대로예요.`, '#a8d8ff', 320);
+  if (cid !== sv.cid) toast(`🔄 ${CLASSES[cid].name}(으)로 바꿔 이 자리에서 이어 갑니다! (Lv.${P.lv}) 부탁·역사 노트·엽전은 그대로예요.`, '#a8d8ff', 320);
   else toast(`${user.nick} 님, 다시 오신 걸 환영합니다!`, '#ffd76a', 220);
   saveGame(true);
 }
@@ -4975,7 +4974,7 @@ function showJobCards(curCid, store) {
   $('hello').innerHTML = `<b>${escapeHtml(user.nick)}</b> 님, 어떤 신분으로 바꿔 볼까요? <small>(끝낸 부탁·역사 노트·도감·엽전은 그대로, 레벨과 무기는 신분마다 따로 키워요)</small>`;
 }
 function openJobSwitch() {
-  if (!P || state !== 'play' || dialog || trans || admin.on || notesOpen || endingOpen || forgeOpen || recallOpen || guideOpen) return;
+  if (!P || state !== 'play' || dialog || trans || notesOpen || endingOpen || forgeOpen || recallOpen || guideOpen) return;
   saveGame(true);
   const store = Object.assign({}, classStore, { [P.cid]: classSnap(P) });
   jobSwitch = { from: 'game', sv: snapshot() };
@@ -5181,7 +5180,12 @@ function buildAdminPanel() {
 function adminEnsurePlayer(force) {
   if (dialog) { dialog = null; $('dlg').classList.add('hidden'); }
   if (!P || force) {
+    const old = P;
+    if (old) classStore[old.cid] = classSnap(old);
     P = newPlayer(admin.cls);
+    const st = classStore[admin.cls];
+    if (st) CLASS_KEYS.forEach(k => { if (typeof st[k] === 'number') P[k] = st[k]; });
+    if (old) { P.coins = old.coins; P.potions = old.potions; P.x = old.x; P.y = old.y; }
     if (!map || state !== 'play') { state = 'play'; enterMap('village', 150); }
   }
   state = 'play'; document.body.classList.add('playing');
