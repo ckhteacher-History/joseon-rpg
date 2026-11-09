@@ -346,7 +346,7 @@
         </div>
         <button class="btn" id="fgBtn">⚒ 강화하기</button>
         <div id="fgMsg"></div>
-        <div class="fgHint">강화할 때마다 사거리 +4%. +7까지는 단계마다 공격력 +10%, <b style="color:#ffcf7a">+8부터는 성공할 때마다 +20%</b> (최대 +30). 실패해도 강화 단계는 그대로예요. 엽전만 사라져요. · Space/Enter: 강화 · E/Esc: 닫기</div>
+        <div class="fgHint">강화할 때마다 사거리 +4%. +7까지는 단계마다 공격력 +15%, <b style="color:#ffcf7a">+8부터는 성공할 때마다 +25%</b> (최대 +30). 실패해도 강화 단계는 그대로예요. 엽전만 사라져요. · Space/Enter: 강화 · E/Esc: 닫기</div>
       </div>
     </div>
   </div>
@@ -462,7 +462,7 @@
 const SAVE_URL = '';
 
 // 버전 — 고칠 때마다 바꾸면, 화면에 보이는 버전으로 새 버전이 열렸는지 확인할 수 있어요.
-const VERSION = 'v9.38 (기술 위력 상향)';
+const VERSION = 'v9.39 (강화 공격력 상향)';
 // 수업용 버전: 주소 끝에 ?mode=class (또는 /class/ 주소) → 1·4·5·6장만 해요. 2장(삼정의 문란)·3장(들고일어난 백성들)은 건너뛰어요.
 const CLASS_MODE = /[?&]mode=class\b/.test(location.search);
 const SKIP_CH = CLASS_MODE ? [1, 2] : [];
@@ -5033,8 +5033,8 @@ const enhBase = n => n < 15 ? Math.max(0.3, 0.95 - 0.07 * n) : n < 20 ? 0.3 - 0.
 const SMITH_BONUS = 0.05;                                               // 대장간에서 강화하면 성공 확률 +5%
 const enhRate = n => Math.min(1, enhBase(n) + (forgeAtSmith ? SMITH_BONUS : 0));
 const nearSmith = () => mapId === 'village' && Math.abs(P.x - NPCS.smith.x) < 140;
-const enhPct = n => 10 * Math.min(n, 7) + 20 * Math.max(0, n - 7);   // +7까지 10%씩, +8부터 20%씩
-const enhMult = () => 1 + enhPct(P ? P.enh || 0 : 0) / 100;                   // 강화 1단계마다 공격력 +10%
+const enhPct = n => 15 * Math.min(n, 7) + 25 * Math.max(0, n - 7);   // +7까지 15%씩, +8부터 25%씩
+const enhMult = () => 1 + enhPct(P ? P.enh || 0 : 0) / 100;                   // 강화 단계마다 공격력 +15%(+8부터 +25%)
 let forgeOpen = false, forgeBusy = false, forgeAtSmith = false;
 
 function openForge(atSmith) {
