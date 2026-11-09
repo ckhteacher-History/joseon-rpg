@@ -337,7 +337,7 @@
         </div>
         <button class="btn" id="fgBtn">⚒ 강화하기</button>
         <div id="fgMsg"></div>
-        <div class="fgHint">강화할 때마다 사거리 +4%. +7까지는 단계마다 공격력 +10%, <b style="color:#ffcf7a">+8부터는 성공할 때마다 +20%</b> (최대 +15). 실패해도 강화 단계는 그대로예요. 엽전만 사라져요. · Space/Enter: 강화 · E/Esc: 닫기</div>
+        <div class="fgHint">강화할 때마다 사거리 +4%. +7까지는 단계마다 공격력 +10%, <b style="color:#ffcf7a">+8부터는 성공할 때마다 +20%</b> (최대 +20). 실패해도 강화 단계는 그대로예요. 엽전만 사라져요. · Space/Enter: 강화 · E/Esc: 닫기</div>
       </div>
     </div>
   </div>
@@ -349,7 +349,7 @@
         <div class="arow"><b>직업</b><span id="admCls"></span></div>
         <div class="arow"><b>레벨</b><input type="number" id="admLv" min="1" max="40" value="1"><button class="abtn" id="admLvSet">적용</button>
           <span style="width:16px"></span>
-          <b style="width:auto;margin-left:6px">무기 강화 +</b><input type="number" id="admEnh" min="0" max="15" value="0"><button class="abtn" id="admEnhSet">적용</button>
+          <b style="width:auto;margin-left:6px">무기 강화 +</b><input type="number" id="admEnh" min="0" max="20" value="0"><button class="abtn" id="admEnhSet">적용</button>
           <button class="abtn" id="admNotes">노트 모두 모으기</button>
           <label title="몬스터에 부딪히거나 공격을 맞아도 체력이 줄지 않아요"><input type="checkbox" id="admGod"> 무적(기본 켜짐)</label>
           <label><input type="checkbox" id="admPow"> 공격력 ×10</label>
@@ -451,7 +451,7 @@
 const SAVE_URL = '';
 
 // 버전 — 고칠 때마다 바꾸면, 화면에 보이는 버전으로 새 버전이 열렸는지 확인할 수 있어요.
-const VERSION = 'v9.28 (수업용 두루마리 포탈)';
+const VERSION = 'v9.29 (무기 강화 +20)';
 // 수업용 버전: 주소 끝에 ?mode=class (또는 /class/ 주소) → 1·4·5·6장만 해요. 2장(삼정의 문란)·3장(들고일어난 백성들)은 건너뛰어요.
 const CLASS_MODE = /[?&]mode=class\b/.test(location.search);
 const SKIP_CH = CLASS_MODE ? [1, 2] : [];
@@ -3177,7 +3177,7 @@ function drawPerson(g, x, y, look, dir, o = {}) {
   if (o.weapon) {
     const wa = o.atk > 0 ? a * 0.87 - 0.46 : -0.9;
     g.save(); g.translate(hx, hy); g.rotate(wa);
-    if (o.enh >= 3) { g.shadowColor = o.enh >= 10 ? '#ffcf3a' : o.enh >= 6 ? '#c06aff' : '#5ab0ff'; g.shadowBlur = 6 + Math.min(o.enh, 15) * 0.8; }
+    if (o.enh >= 3) { g.shadowColor = o.enh >= 16 ? '#ff5a2a' : o.enh >= 10 ? '#ffcf3a' : o.enh >= 6 ? '#c06aff' : '#5ab0ff'; g.shadowBlur = 6 + Math.min(o.enh, 20) * 0.8; }
     drawWeapon(g, o.weapon); g.restore();
   }
   g.strokeStyle = L.robe; g.lineWidth = 6; g.beginPath(); g.moveTo(sx, sy); g.lineTo(hx, hy); g.stroke();
@@ -4520,7 +4520,7 @@ function drawHUD() {
   // 국밥 · 기술
   slot(490, '국밥', admin.on ? '×∞' : `×${P.potions}`, 'A', 0, '#e8d6a0');
   slot(575, c.skill.name, `MP ${c.skill.mp} · ${(skillCdOf() / 60).toFixed(1)}초`, 'X', P.skillCd / skillCdOf(), P.mp >= c.skill.mp ? '#ffd76a' : '#888');
-  slot(660, `${weaponName(c.weapon, P.enh, true)} +${P.enh}`, `공격+${enhPct(P.enh)}% · 눌러 강화`, 'E', 0, P.enh >= 10 ? '#ffcf3a' : P.enh >= 6 ? '#d9a6ff' : P.enh >= 3 ? '#8ac6ff' : '#e8d6a0');
+  slot(660, `${weaponName(c.weapon, P.enh, true)} +${P.enh}`, `공격+${enhPct(P.enh)}% · 눌러 강화`, 'E', 0, P.enh >= 16 ? '#ff8a5a' : P.enh >= 10 ? '#ffcf3a' : P.enh >= 6 ? '#d9a6ff' : P.enh >= 3 ? '#8ac6ff' : '#e8d6a0');
   // EXP
   const need = expNeed(P.lv);
   ctx.fillStyle = '#120c08'; ctx.fillRect(0, 536, VW, 4);
@@ -4909,18 +4909,18 @@ $('btnBack').onclick = () => { pendingSave = null; user = null; $('inNick').valu
    무기 강화 — 한양 장터 대장장이 강씨
    ========================================================= */
 const WEAPON_NAME = { brush: '붓', needle: '침', sickle: '낫', club: '몽둥이' };
-// 강화 수식어: +5까지는 기본 이름, +6부터 2단계마다 새 이름 [정식 이름, HUD용 짧은 이름]
+// 강화 수식어: +5까지는 기본 이름, +6부터 2단계마다 새 이름 (+20이 마지막) [정식 이름, HUD용 짧은 이름]
 const WEAPON_TIERS = {
-  brush: [['족제비털 붓', '족제비털 붓'], ['강직한 선비의 붓', '선비의 붓'], ['찬란히 빛나는 붓', '빛나는 붓'], ['일필휘지 명필의 붓', '명필의 붓'], ['천하를 호령하는 신필(神筆)', '신필(神筆)']],
-  needle: [['은빛 날 선 침', '은빛 침'], ['명의의 금침(金鍼)', '금침(金鍼)'], ['기혈을 꿰뚫는 신통한 침', '신통한 침'], ['허준도 탐낼 명침', '명침(名鍼)'], ['백 가지 병을 다스리는 신침(神鍼)', '신침(神鍼)']],
-  sickle: [['숫돌에 벼린 낫', '벼린 낫'], ['대장장이가 두드린 강철 낫', '강철 낫'], ['서슬 퍼런 낫', '서슬 퍼런 낫'], ['들판을 휩쓰는 풍년 낫', '풍년 낫'], ['하늘을 가르는 천하제일 낫', '천하제일 낫']],
-  club: [['단단한 박달나무 몽둥이', '박달 몽둥이'], ['옹이 박힌 참나무 몽둥이', '참나무 몽둥이'], ['쇠테 두른 몽둥이', '쇠테 몽둥이'], ['무쇠 몽둥이', '무쇠 몽둥이'], ['전설의 몽둥이', '전설의 몽둥이']],
+  brush: [['족제비털 붓', '족제비털 붓'], ['강직한 선비의 붓', '선비의 붓'], ['찬란히 빛나는 붓', '빛나는 붓'], ['일필휘지 명필의 붓', '명필의 붓'], ['천하를 호령하는 신필(神筆)', '신필(神筆)'], ['용이 깃든 붓', '용의 붓'], ['붓끝에서 바람이 이는 풍운의 붓', '풍운의 붓'], ['하늘과 땅을 그리는 천지필(天地筆)', '천지필']],
+  needle: [['은빛 날 선 침', '은빛 침'], ['명의의 금침(金鍼)', '금침(金鍼)'], ['기혈을 꿰뚫는 신통한 침', '신통한 침'], ['허준도 탐낼 명침', '명침(名鍼)'], ['백 가지 병을 다스리는 신침(神鍼)', '신침(神鍼)'], ['번개를 품은 뇌침(雷鍼)', '뇌침(雷鍼)'], ['혈자리를 꿰뚫는 비전의 침', '비전의 침'], ['신선이 남긴 선침(仙鍼)', '선침(仙鍼)']],
+  sickle: [['숫돌에 벼린 낫', '벼린 낫'], ['대장장이가 두드린 강철 낫', '강철 낫'], ['서슬 퍼런 낫', '서슬 퍼런 낫'], ['들판을 휩쓰는 풍년 낫', '풍년 낫'], ['하늘을 가르는 천하제일 낫', '천하제일 낫'], ['바람을 베는 질풍 낫', '질풍 낫'], ['달빛을 머금은 월광 낫', '월광 낫'], ['산을 가르는 개산(開山) 낫', '개산 낫']],
+  club: [['단단한 박달나무 몽둥이', '박달 몽둥이'], ['옹이 박힌 참나무 몽둥이', '참나무 몽둥이'], ['쇠테 두른 몽둥이', '쇠테 몽둥이'], ['무쇠 몽둥이', '무쇠 몽둥이'], ['전설의 몽둥이', '전설의 몽둥이'], ['우레 같은 철퇴 몽둥이', '철퇴 몽둥이'], ['산군도 피하는 호랑이 몽둥이', '호랑이 몽둥이'], ['천하무적 신목(神木) 몽둥이', '신목 몽둥이']],
 };
-const wTier = n => n < 6 ? -1 : Math.min(4, Math.floor((n - 6) / 2));
+const wTier = n => n < 6 ? -1 : Math.min(7, Math.floor((n - 6) / 2));   // +6·8·10·12·14·16·18·20마다 새 이름
 const weaponName = (w, n, short) => { const t = wTier(n || 0); return t < 0 ? WEAPON_NAME[w] : WEAPON_TIERS[w][t][short ? 1 : 0]; };
-const ENH_MAX = 15;
-const enhCost = n => Math.max(10, Math.round(30 * Math.pow(1.45, n) * 0.6 / 10) * 10);     // 예전 값의 약 60% (+0→+1: 20닢)
-const enhBase = n => Math.max(0.3, 0.95 - 0.07 * n);                    // 95%부터 단계마다 7%씩, 최저 30%
+const ENH_MAX = 20;
+const enhCost = n => Math.max(10, Math.round(30 * Math.pow(1.45, Math.min(n, 14)) * Math.pow(1.2, Math.max(0, n - 14)) * 0.6 / 10) * 10);   // +14부터는 값이 천천히 올라요
+const enhBase = n => n < 15 ? Math.max(0.3, 0.95 - 0.07 * n) : Math.max(0.15, 0.3 - 0.03 * (n - 14));   // 95%부터 7%씩, +15부터는 30%→15%
 const SMITH_BONUS = 0.05;                                               // 대장간에서 강화하면 성공 확률 +5%
 const enhRate = n => Math.min(1, enhBase(n) + (forgeAtSmith ? SMITH_BONUS : 0));
 const nearSmith = () => mapId === 'village' && Math.abs(P.x - NPCS.smith.x) < 140;
@@ -4948,12 +4948,12 @@ function drawForgeWeapon() {
   const g = $('fgCanvas').getContext('2d');
   g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, 240, 240);
   g.setTransform(4, 0, 0, 4, 0, 0); g.translate(30, 32); g.rotate(-0.75);
-  if (P.enh >= 3) { g.shadowColor = P.enh >= 10 ? '#ffcf3a' : P.enh >= 6 ? '#c06aff' : '#5ab0ff'; g.shadowBlur = 10 + P.enh; }
+  if (P.enh >= 3) { g.shadowColor = P.enh >= 16 ? '#ff5a2a' : P.enh >= 10 ? '#ffcf3a' : P.enh >= 6 ? '#c06aff' : '#5ab0ff'; g.shadowBlur = 10 + P.enh; }
   g.translate(-16, 0); drawWeapon(g, P.c.weapon);
 }
 function updateForge() {
   const n = P.enh, w = weaponName(P.c.weapon, n);
-  const nextLv = n < 6 ? 6 : n < 14 ? n + (n % 2 === 0 ? 2 : 1) : 0;
+  const nextLv = n < 6 ? 6 : n < ENH_MAX - 1 ? n + (n % 2 === 0 ? 2 : 1) : n < ENH_MAX ? ENH_MAX : 0;
   $('fgName').innerHTML = `${escapeHtml(w)} +${n}` + (nextLv && n < ENH_MAX ? `<div style="font-size:12px;font-weight:400;color:#cdb88e;margin-top:2px">+${nextLv}이 되면 「${escapeHtml(weaponName(P.c.weapon, nextLv))}」(으)로 거듭나요</div>` : '');
   drawForgeWeapon();
   if (n >= ENH_MAX) {
@@ -5757,7 +5757,7 @@ function guideItems() {
     else out.push({ ic: '🔎', html: '지금은 특별히 할 일이 없어요. 맵을 돌아다니며 머리 위에 <b>!</b>나 <b>💬</b>가 뜬 사람을 찾아보세요.' });
   }
   if (P.hp < P.maxHp * 0.35) out.push({ ic: '🍲', html: `체력이 얼마 남지 않았어요! <b>A 키</b>(모바일: 국밥)로 국밥을 먹으세요. (국밥 ${admin.on ? '∞' : P.potions}그릇)` });
-  if (P.enh < 15 && P.coins >= enhCost(P.enh)) out.push({ ic: '⚒', html: `엽전이 넉넉해요! <b>E 키</b>(또는 화면 아래 무기 칸)로 무기를 강화해 보세요. (+${P.enh} → +${P.enh + 1}, ${enhCost(P.enh)}닢)` });
+  if (P.enh < ENH_MAX && P.coins >= enhCost(P.enh)) out.push({ ic: '⚒', html: `엽전이 넉넉해요! <b>E 키</b>(또는 화면 아래 무기 칸)로 무기를 강화해 보세요. (+${P.enh} → +${P.enh + 1}, ${enhCost(P.enh)}닢)` });
   return out;
 }
 function openGuide() {
