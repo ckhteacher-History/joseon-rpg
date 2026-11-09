@@ -462,7 +462,7 @@
 const SAVE_URL = '';
 
 // 버전 — 고칠 때마다 바꾸면, 화면에 보이는 버전으로 새 버전이 열렸는지 확인할 수 있어요.
-const VERSION = 'v9.31 (무기 강화 +30)';
+const VERSION = 'v9.32 (상민 풍물놀이 회오리)';
 // 수업용 버전: 주소 끝에 ?mode=class (또는 /class/ 주소) → 1·4·5·6장만 해요. 2장(삼정의 문란)·3장(들고일어난 백성들)은 건너뛰어요.
 const CLASS_MODE = /[?&]mode=class\b/.test(location.search);
 const SKIP_CH = CLASS_MODE ? [1, 2] : [];
@@ -738,7 +738,7 @@ const CLASSES = {
     hp: 115, mp: 45, atk: 14, speed: 3.6, jump: 11.5, cd: 22, hpUp: 15, mpUp: 4, atkUp: 3,
     tags: '근거리 · 균형형',
     desc: '농사짓고 세금을 내는 조선 백성의 대부분. 낫을 휘두르고 풍물 소리로 적을 흩어 놓는다.',
-    skill: { name: '풍물놀이', mp: 18, cd: 180, desc: '주변 적을 밀쳐 내며 피해' },
+    skill: { name: '풍물놀이', mp: 18, cd: 180, desc: '제자리에서 회오리처럼 빙글빙글 돌며 낫을 휘둘러, 주변 적을 빨아들이며 여러 번 벤다' },
   },
   nobi: {
     name: '천민', hanja: '賤民', look: 'nobi', weapon: 'club', type: 'melee', reach: 86, maxHit: 3,
@@ -2012,6 +2012,7 @@ function updatePlayer() {
     }
   }
   if (P.spin > 0) P.spin--;
+  if (P.whirl > 0) whirlTick();
   if (P.enh >= 10 && frame % 6 === 0) fx.push({ type: 'p', x: P.x + P.dir * rnd(10, 28), y: P.y - rnd(20, 50), vx: 0, vy: -0.6, life: 26, max: 26, color: '#ffe27a', s: 2 });
   if (P.drop > 0) P.drop--;
   P.vy = Math.min(P.vy + GRAV, 13);
@@ -2032,7 +2033,7 @@ function updatePlayer() {
   P.mp = Math.min(P.maxMp, P.mp + 0.045);
   if (frame % 50 === 0 && P.hp < P.maxHp) P.hp = Math.min(P.maxHp, P.hp + 1);
 
-  if (keys.attack && P.atkCd <= 0) doAttack();
+  if (keys.attack && P.atkCd <= 0 && !(P.whirl > 0)) doAttack();
   if (pressed.skill) doSkill();
   if (pressed.potion) usePotion();
   if (pressed.up) interact();
@@ -2138,16 +2139,13 @@ function doSkill() {
     for (let i = 0; i < 22; i++) fx.push({ type: 'tp', x: cx + rnd(-40, 40), y: P.y - rnd(0, 30), vx: 0, vy: -rnd(1.2, 2.4), text: '✚', size: rnd(14, 24), color: '#7fffb0', life: 50, max: 50, delay: Math.floor(i * 1.8) });
     [-0.08, -0.04, 0, 0.04, 0.08].forEach((a, i) => projs.push({ x: P.x + P.dir * (20 - Math.abs(i - 2) * 6), y: P.y - 34 + (i - 2) * 3, vx: P.dir * 11 * Math.cos(a), vy: 11 * Math.sin(a), life: Math.round(45 * rangeMult()), kind: 'needle', mult: 1.4 * pw, big: true }));
   } else if (P.cid === 'pyeongmin') {
+    // 풍물놀이: 회오리처럼 돌며 낫을 휘둘러요 (약 1.6초, 걸으며 돌 수 있음) — 주변 적을 빨아들이며 여러 번 베어요
     skillFlash = { c: '255,150,70', life: 20, max: 20 };
     fx.push({ type: 'glyph', x: cx, y: P.y - 150, text: '덩 기덕 쿵!', size: 50, color: '255,160,80', life: 70, max: 70 });
-    [0, 8, 16, 24].forEach((d, i) => fx.push({ type: 'ring', x: cx, y: cy, r: 10, max: (250 - i * 25) * rangeMult(), life: 34, maxLife: 34, color: i % 2 ? '90,150,235' : '240,120,60', delay: d, w: 9 }));
-    [0, 12].forEach(d => fx.push({ type: 'gring', x: cx, y: P.y, r: 10, max: 260, life: 40, max2: 40, color: '240,150,70', delay: d }));
     const notesT = ['♪', '♫', '♬', '♩'];
-    for (let i = 0; i < 18; i++) { const a = -Math.PI * (i / 17); fx.push({ type: 'tp', x: cx, y: cy, vx: Math.cos(a) * rnd(3, 6), vy: Math.sin(a) * rnd(2.5, 5), text: notesT[i % 4], size: rnd(20, 30), color: i % 2 ? '#8fc0ff' : '#ffb070', life: 55, max: 55, wob: true, delay: (i % 3) * 5 }); }
-    for (let i = 0; i < 20; i++) fx.push({ type: 'p', x: cx + rnd(-30, 30), y: P.y - 2, vx: rnd(-5, 5), vy: -rnd(1, 3), life: 34, max: 34, color: 'rgba(200,170,120,.8)', s: rnd(4, 8) });
-    mons.filter(m => !m.dead && Math.hypot(m.x - P.x, monY(m) - P.y) < 240 * rangeMult())
-      .forEach(m => damageMon(m, roll(1.8 * pw), Math.sign(m.x - P.x) || 1, 4, 70));
-    shake = 8;
+    for (let i = 0; i < 12; i++) { const a = i / 12 * TAU; fx.push({ type: 'tp', x: cx + Math.cos(a) * 40, y: cy + Math.sin(a) * 20, vx: Math.cos(a) * rnd(2, 4), vy: -rnd(1.5, 3), text: notesT[i % 4], size: rnd(18, 26), color: i % 2 ? '#8fc0ff' : '#ffb070', life: 50, max: 50, wob: true }); }
+    P.whirl = WHIRL_LEN; P.atkAnim = 0;
+    shake = 6;
   } else {
     P.atkAnim = P.atkLen = 22;
     skillFlash = { c: '255,90,60', life: 18, max: 18 };
@@ -2160,6 +2158,51 @@ function doSkill() {
     waves.push({ x: P.x + P.dir * 60, y: P.y, dir: P.dir, go: 0, max: Math.round(460 * rangeMult()), mult: 2.2 * pw, hit: new Set(), delay: 6 });
     shake = 12;
   }
+}
+
+// ---------- 상민 풍물놀이: 회오리 ----------
+const WHIRL_LEN = 96, WHIRL_TICK = 12;   // 1.6초 동안 0.2초마다 한 번씩, 모두 8번 베어요
+function whirlTick() {
+  const t = WHIRL_LEN - P.whirl; P.whirl--;
+  const R = 130 * rangeMult(), pull = 290 * rangeMult(), pw = skillPow();
+  // 회오리 바람이 주변 적을 빨아들여요 (보스는 조금만)
+  mons.forEach(m => {
+    if (m.dead || m.under) return;
+    const dx = P.x - m.x, d = Math.abs(dx);
+    if (d < pull && d > 34 && Math.abs(monY(m) - P.y) < 160) m.x += Math.sign(dx) * (m.d.boss ? 0.7 : 2.8);
+  });
+  if (t % WHIRL_TICK === 0) {
+    const k = (t / WHIRL_TICK) % 3;   // 덩 · 기덕 · 쿵
+    beep(k === 2 ? 80 : k === 1 ? 260 : 150, 0.13, k === 2 ? 'sawtooth' : 'square', 0.05, -40);
+    mons.filter(m => !m.dead && !m.under && Math.abs(m.x - P.x) < R && Math.abs(monY(m) - (P.y - 30)) < 110)
+      .forEach(m => damageMon(m, roll(0.42 * pw), Math.sign(m.x - P.x) || 1, 0, 14));
+    fx.push({ type: 'ring', x: P.x, y: P.y - 30, r: 20, max: R, life: 16, maxLife: 16, color: k % 2 ? '120,170,240' : '250,160,80', w: 5 });
+    shake = Math.max(shake, 3);
+  }
+  if (t % 3 === 0) {   // 흙먼지와 가락
+    const a = t * 0.5;
+    fx.push({ type: 'p', x: P.x + Math.cos(a) * 60, y: P.y - 4, vx: -Math.sin(a) * 3, vy: -rnd(0.5, 2), life: 26, max: 26, color: 'rgba(200,170,120,.8)', s: rnd(3, 6) });
+    if (t % 9 === 0) fx.push({ type: 'tp', x: P.x + Math.cos(a) * 50, y: P.y - 60 + Math.sin(a) * 10, vx: -Math.sin(a) * 2.5, vy: -1.2, text: ['♪', '♫', '♬'][t % 3], size: 20, color: t % 2 ? '#8fc0ff' : '#ffb070', life: 40, max: 40, wob: true });
+  }
+}
+function drawWhirl() {
+  const t = WHIRL_LEN - P.whirl, a = t * 0.6, fade = Math.min(1, P.whirl / 20);
+  // 뒤쪽 회오리
+  for (let i = 0; i < 4; i++) {
+    ctx.strokeStyle = `rgba(${i % 2 ? '120,170,240' : '250,170,90'},${0.55 * fade})`; ctx.lineWidth = 5 - i;
+    ctx.beginPath(); ctx.ellipse(P.x, P.y - 8 - i * 24, 46 + i * 14, 10 + i * 3, 0, Math.PI + a + i, Math.PI + a + i + Math.PI * 0.9); ctx.stroke();
+  }
+  // 몸이 빙글빙글 (좌우로 눕혀 그려 도는 것처럼)
+  ctx.save(); ctx.translate(P.x, 0); const sc = Math.cos(a); ctx.scale(Math.abs(sc) < 0.08 ? 0.08 * Math.sign(sc || 1) : sc, 1); ctx.translate(-P.x, 0);
+  drawPerson(ctx, P.x, P.y, P.c.look, P.dir, { t: 0, weapon: P.c.weapon, enh: P.enh, atk: 0.55 });
+  ctx.restore();
+  // 앞쪽 회오리와 낫이 그리는 빛줄기
+  for (let i = 0; i < 4; i++) {
+    ctx.strokeStyle = `rgba(${i % 2 ? '150,190,255' : '255,190,110'},${0.75 * fade})`; ctx.lineWidth = 6 - i;
+    ctx.beginPath(); ctx.ellipse(P.x, P.y - 8 - i * 24, 46 + i * 14, 10 + i * 3, 0, a + i, a + i + Math.PI * 0.9); ctx.stroke();
+  }
+  ctx.strokeStyle = `rgba(255,248,220,${0.8 * fade})`; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.ellipse(P.x, P.y - 36, 72, 18, 0, a * 1.6, a * 1.6 + 1.6); ctx.stroke();
 }
 
 function usePotion() {
@@ -4350,6 +4393,7 @@ function drawPlayer() {
     return;
   }
   const blink = P.inv > 0 && Math.floor(P.inv / 4) % 2 === 0;
+  if (P.whirl > 0) drawWhirl(); else {
   ctx.save();
   if (P.spin > 0) {
     const a = (1 - P.spin / 26) * TAU * P.dir;
@@ -4362,6 +4406,7 @@ function drawPlayer() {
     atk: P.atkAnim > 0 ? P.atkAnim / P.atkLen : 0, ranged: P.c.type === 'ranged', alpha: blink ? 0.45 : 1, hurt: P.inv > 50,
   });
   ctx.restore();
+  }
   ctx.font = F(12, true); ctx.textAlign = 'center';
   const label = `Lv.${P.lv} ${user ? user.nick : P.c.name}`, tw = ctx.measureText(label).width + 12;
   ctx.fillStyle = 'rgba(0,0,0,.6)'; rr(ctx, P.x - tw / 2, P.y + 5, tw, 18, 4); ctx.fill();
@@ -5705,6 +5750,7 @@ function pvUpdate() {
     const t = ++pv.t;
     P.walkT = (P.walkT || 0) + 1; P.skillCd = 0; P.mp = 999; P.inv = 0;
     if (P.atkAnim > 0) P.atkAnim--; if (P.atkCd > 0) P.atkCd--;
+    if (P.whirl > 0) whirlTick();
     if (pv.mode === 'auto') {
       if ([20, 60, 100].includes(t)) { doAttack(); pvCaption('atk'); }
       if (t === 165) { doSkill(); pvCaption('skill'); }
@@ -5744,7 +5790,7 @@ function pvRender() {
     g.translate(sx, -PV_TOP);
     g.fillStyle = '#7aa05a'; g.fillRect(-20, GROUND, PV_VIEW_W + 40, 8); g.fillStyle = '#b8935f'; g.fillRect(-20, GROUND + 8, PV_VIEW_W + 40, 60);
     mons.forEach(m => drawDummy(g, m));
-    drawPerson(g, P.x, P.y, P.c.look, P.dir, { t: P.walkT, weapon: P.c.weapon, enh: P.enh, atk: P.atkAnim > 0 ? P.atkAnim / P.atkLen : 0, ranged: P.c.type === 'ranged' });
+    if (P.whirl > 0) drawWhirl(); else drawPerson(g, P.x, P.y, P.c.look, P.dir, { t: P.walkT, weapon: P.c.weapon, enh: P.enh, atk: P.atkAnim > 0 ? P.atkAnim / P.atkLen : 0, ranged: P.c.type === 'ranged' });
     projs.forEach(drawProjectile); waves.forEach(drawWave); fx.forEach(drawFx); floats.forEach(drawFloat);
     g.setTransform(sc, 0, 0, sc, 0, 0);
     if (skillFlash) { g.fillStyle = `rgba(${skillFlash.c},${0.25 * skillFlash.life / skillFlash.max})`; g.fillRect(0, 0, PV_VIEW_W, PV_VIEW_H); }
