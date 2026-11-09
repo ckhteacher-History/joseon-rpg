@@ -269,6 +269,17 @@
   .ePor{float:right;margin:0 0 6px 14px;width:96px;text-align:center}
   .ePor canvas{width:96px;height:106px;display:block;background:radial-gradient(circle at 50% 60%,#fffaf0,#e8d9b4);border:2px solid #c9b48a;border-radius:50% 50% 10px 10px}
   .ePor figcaption{font-size:12px}
+  /* 모바일: 화면이 작아 대화창 글씨를 크게, 창을 위로 넓게 */
+  body.touch #dlg{left:28px;right:28px;bottom:56px;min-height:178px;max-height:476px;padding:14px 18px 30px;gap:16px}
+  body.touch #dlgPor{width:118px;height:130px}
+  body.touch #dlgName{font-size:23px}
+  body.touch #dlgText{font-size:23px;line-height:1.55;overflow-y:auto;max-height:410px}
+  body.touch #dlg.note #dlgText{font-size:21px}
+  body.touch #dlgHint{font-size:16px}
+  body.touch .qbtn{font-size:20px;padding:9px 12px}
+  body.touch .qtext input{font-size:21px}
+  body.touch .qtext button{font-size:19px}
+  body.touch .hchart{font-size:15px}
   .qlock .qbtn,.qlock .qtext{opacity:.45;pointer-events:none;transition:opacity .2s}
   #nView .empty{color:#8b6a3e;text-align:center;margin-top:120px;line-height:2}
   #mapBtn{position:absolute;right:10px;top:10px;z-index:2;font:700 13px 'Gowun Batang',serif;background:rgba(24,18,14,.8);color:#ffd76a;
@@ -440,7 +451,7 @@
 const SAVE_URL = '';
 
 // 버전 — 고칠 때마다 바꾸면, 화면에 보이는 버전으로 새 버전이 열렸는지 확인할 수 있어요.
-const VERSION = 'v9.24 (보스 등장 대사)';
+const VERSION = 'v9.25 (모바일 대화창 글씨 확대)';
 // 수업용 버전: 주소 끝에 ?mode=class (또는 /class/ 주소) → 1·4·5·6장만 해요. 2장(삼정의 문란)·3장(들고일어난 백성들)은 건너뛰어요.
 const CLASS_MODE = /[?&]mode=class\b/.test(location.search);
 const SKIP_CH = CLASS_MODE ? [1, 2] : [];
@@ -1898,7 +1909,7 @@ function update() {
   frame++;
   if (noteFx) { if (++noteFx.t > NOTE_FX_LEN) noteFx = null; } else if (noteFxQ.length) noteFx = { id: noteFxQ.shift(), t: 0 };
   if (P && SKILL_SHORT[P.cid] && skillBtnFor !== P.cid) { skillBtnFor = P.cid; $('skillBtn').innerHTML = SKILL_SHORT[P.cid]; }
-  { const m = !!(notesOpen || endingOpen || forgeOpen || adminOpen || recallOpen || guideOpen); if (m !== document.body.classList.contains('modal')) document.body.classList.toggle('modal', m); }
+  { const m = !!(notesOpen || endingOpen || forgeOpen || adminOpen || recallOpen || guideOpen || dialog); if (m !== document.body.classList.contains('modal')) document.body.classList.toggle('modal', m); }   // 대화 중에는 조이스틱·버튼을 숨겨 글씨를 가리지 않게 (대화창을 누르면 넘어가요)
   if (state !== 'play') { titleCam = (titleCam + 0.6) % (MAPS.village.w - VW); return; }
 
   if (trans) {
