@@ -435,7 +435,7 @@
 const SAVE_URL = '';
 
 // 버전 — 고칠 때마다 바꾸면, 화면에 보이는 버전으로 새 버전이 열렸는지 확인할 수 있어요.
-const VERSION = 'v9.22 (대화 대기 1.2초)';
+const VERSION = 'v9.23 (기술 성장 완화)';
 // 수업용 버전: 주소 끝에 ?mode=class (또는 /class/ 주소) → 1·4·5·6장만 해요. 2장(삼정의 문란)·3장(들고일어난 백성들)은 건너뛰어요.
 const CLASS_MODE = /[?&]mode=class\b/.test(location.search);
 const SKIP_CH = CLASS_MODE ? [1, 2] : [];
@@ -2038,8 +2038,8 @@ function meleeHit(x1, x2, y1, y2, mult, maxN, kb = 1, stun = 0) {
   return list.length;
 }
 
-// 레벨이 오를수록 기술이 강해져요: 위력 +3.5%/레벨, 쿨타임 -3%/레벨(최대 절반까지), 기본 공격 속도도 조금씩 빨라짐
-const skillPow = () => 1 + 0.035 * (P.lv - 1);   // 레벨마다 기술 위력 +3.5%
+// 레벨이 오를수록 기술이 강해져요: 위력 +2.5%/레벨, 쿨타임 -3%/레벨(최대 절반까지), 기본 공격 속도도 조금씩 빨라짐
+const skillPow = () => 1 + 0.025 * (P.lv - 1);   // 레벨마다 기술 위력 +2.5%
 const skillCdOf = () => Math.round(P.c.skill.cd * Math.max(0.5, 1 - 0.03 * (P.lv - 1)));
 const atkCdOf = () => Math.round(P.c.cd * Math.max(0.7, 1 - 0.015 * (P.lv - 1)));
 function doSkill() {
@@ -2154,7 +2154,7 @@ function gainExp(n) {
     P.maxHp += c.hpUp; P.maxMp += c.mpUp; P.atk += c.atkUp;
     P.hp = P.maxHp; P.mp = P.maxMp;
     SFX.lvl(); toast(`레벨 업! Lv.${P.lv}`, '#ffd76a', 200);
-    toast(`체력 +${c.hpUp} · 기력 +${c.mpUp} · 공격 +${c.atkUp} · ${c.skill.name} 위력 +3.5%·쿨타임 단축`, '#bfe8a8', 220);
+    toast(`체력 +${c.hpUp} · 기력 +${c.mpUp} · 공격 +${c.atkUp} · ${c.skill.name} 위력 +2.5%·쿨타임 단축`, '#bfe8a8', 220);
     fx.push({ type: 'lvl', x: P.x, y: P.y, life: 80, max: 80 });
     saveGame(true);
   }
