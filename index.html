@@ -3,6 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.json">
 <title>조선유랑기 — 조선 후기 RPG</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -94,7 +98,9 @@
   @keyframes blink{50%{opacity:.35}}
 
   /* 모바일 터치 버튼 */
-  #touch{display:none;position:fixed;top:env(safe-area-inset-top);bottom:env(safe-area-inset-bottom);left:env(safe-area-inset-left);right:env(safe-area-inset-right);pointer-events:none;z-index:5}
+  #touch{display:none;position:fixed;left:0;top:0;width:100vw;height:100vh;pointer-events:none;z-index:5}
+  #fsBtn{display:none}
+  body.canfs #fsBtn{display:block}
   body.touch #touch{display:block}
   #touch button{pointer-events:auto;position:absolute;width:62px;height:62px;border-radius:50%;border:2px solid rgba(255,240,210,.65);
     background:rgba(40,26,14,.5);color:#fff3dc;font:700 15px 'Gowun Batang',serif;touch-action:none;padding:0}
@@ -414,6 +420,7 @@
   <button data-k="up"    style="right:94px;bottom:136px">대화</button>
   <button data-k="potion" style="right:166px;bottom:56px;width:50px;height:50px;font-size:13px">국밥</button>
   <button data-k="recall" style="left:14px;bottom:196px;width:50px;height:50px;font-size:12px;line-height:1.1">한양<br>귀환</button>
+  <button id="fsBtn" style="left:72px;bottom:196px;width:50px;height:50px;font-size:12px;line-height:1.1">전체<br>화면</button>
 </div>
 <div id="rotate">📱 화면을 가로로 돌려 주세요<br><small>조선유랑기는 가로 화면에서 즐길 수 있어요</small></div>
 
@@ -427,7 +434,7 @@
 const SAVE_URL = '';
 
 // 버전 — 고칠 때마다 바꾸면, 화면에 보이는 버전으로 새 버전이 열렸는지 확인할 수 있어요.
-const VERSION = 'v9.18 (여전론 문제 쪽수)';
+const VERSION = 'v9.19 (모바일 조이스틱·전체 화면)';
 
 /* =========================================================
    조선유랑기 — 조선 후기 배경 횡스크롤 RPG
@@ -464,6 +471,9 @@ function resize() {
   const st = $('stage');
   st.style.left = (ox + (W - VW * s) / 2) + 'px'; st.style.top = (oy + (H - VH * s) / 2) + 'px';
   st.style.transform = `scale(${s})`;
+  // 터치 버튼층도 '실제로 보이는 화면'에 붙여요. (주소창·하단 툴바·확대 때문에 조이스틱이 화면 밖으로 밀려나 안 보이던 문제)
+  const tl = $('touch');
+  if (tl) { tl.style.left = ox + 'px'; tl.style.top = oy + 'px'; tl.style.width = W + 'px'; tl.style.height = H + 'px'; }
   const dpr = window.devicePixelRatio || 1;
   K = s * dpr;
   cv.width = Math.round(VW * K); cv.height = Math.round(VH * K);
@@ -602,6 +612,20 @@ function goFullscreen() {
   } catch (e) {}
 }
 ['btnLogin', 'btnResume', 'btnNew'].forEach(id => { const b = document.getElementById(id); if (b) b.addEventListener('click', goFullscreen); });
+// 전체 화면을 지원하는 기기(안드로이드 크롬·삼성 인터넷 등)에서, 전체 화면이 풀려 있으면 '전체 화면' 버튼을 보여 줘요.
+// (아이폰 사파리·카카오톡/네이버 앱 안의 브라우저는 웹페이지 전체 화면을 지원하지 않아요 → 버튼이 나오지 않아요)
+function updateFsBtn() {
+  const de = document.documentElement, can = !!(de.requestFullscreen || de.webkitRequestFullscreen);
+  const fs = document.fullscreenElement || document.webkitFullscreenElement;
+  document.body.classList.toggle('canfs', can && !fs && document.body.classList.contains('touch'));
+}
+{ const fb = document.getElementById('fsBtn');
+  if (fb) { fb.addEventListener('pointerdown', e => e.stopPropagation()); fb.addEventListener('click', e => { e.stopPropagation(); goFullscreen(); }); } }
+// 저장된 기록으로 바로 이어하면 버튼을 누를 일이 없어서, 게임 화면을 처음 터치할 때 한 번 더 시도해요
+{ let tried = false; addEventListener('pointerup', () => { if (!tried && state === 'play') { tried = true; goFullscreen(); } }, true); }
+updateFsBtn();
+document.addEventListener('fullscreenchange', updateFsBtn);
+document.addEventListener('webkitfullscreenchange', updateFsBtn);
 document.addEventListener('fullscreenchange', () => [50, 300].forEach(t => setTimeout(resize, t)));
 document.addEventListener('webkitfullscreenchange', () => [50, 300].forEach(t => setTimeout(resize, t)));
 
