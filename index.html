@@ -152,15 +152,29 @@
   #title .hello b{color:#a0442c}
   /* 대장간(무기 강화) */
   #forge{position:absolute;inset:0;background:rgba(10,8,6,.5);display:flex;align-items:center;justify-content:center;z-index:3}
-  .forgeBox{width:420px;background:#2a1e16;border:3px solid #c9a24a;border-radius:14px;color:#f3e3c0;box-shadow:0 8px 30px rgba(0,0,0,.6);overflow:hidden}
+  #fgFx{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:2}
+  .forgeBox.shake{animation:fgShake .16s}
+  .forgeBox.shake2{animation:fgShake .12s 3}
+  @keyframes fgShake{0%{transform:translate(0)}25%{transform:translate(-7px,3px) rotate(-.6deg)}50%{transform:translate(6px,-4px) rotate(.6deg)}75%{transform:translate(-3px,-2px)}100%{transform:translate(0)}}
+  .forgeBox.charge #fgCanvas{animation:fgCharge .9s ease-in forwards}
+  @keyframes fgCharge{from{box-shadow:0 0 0 0 rgba(255,210,90,0)}to{box-shadow:0 0 46px 18px rgba(255,220,120,.95);transform:scale(1.12)}}
+  .forgeBox.dim{filter:brightness(.82)}
+  #fgMsg{height:40px;line-height:40px;white-space:nowrap}
+  #fgMsg.big{font-size:26px;animation:fgPop .55s cubic-bezier(.2,1.6,.4,1)}
+  @keyframes fgPop{0%{transform:scale(.2);opacity:0}100%{transform:scale(1);opacity:1}}
+  #fgMsg.beat{animation:fgBeat .42s infinite}
+  @keyframes fgBeat{0%,100%{transform:scale(1)}30%{transform:scale(1.18)}}
+  .fgFlash{position:absolute;inset:0;pointer-events:none;z-index:3;animation:fgFlash .7s forwards}
+  @keyframes fgFlash{from{opacity:.95}to{opacity:0}}
+  .forgeBox{position:relative;width:420px;background:#2a1e16;border:3px solid #c9a24a;border-radius:14px;color:#f3e3c0;box-shadow:0 8px 30px rgba(0,0,0,.6);overflow:hidden}
   .forgeHead{background:#4a2e1c;padding:9px 16px;font-weight:700;font-size:17px;display:flex;align-items:center}
   .forgeHead span{flex:1}
   .forgeHead button{background:none;border:none;color:#f3e3c0;font-size:20px;cursor:pointer}
-  .forgeBody{padding:14px 18px 16px;text-align:center}
-  #fgCanvas{width:120px;height:120px;background:radial-gradient(circle,#5a3a22 0%,#2a1e16 70%);border-radius:50%;display:block;margin:0 auto 6px}
+  .forgeBody{padding:10px 18px 10px;text-align:center}
+  #fgCanvas{width:104px;height:104px;background:radial-gradient(circle,#5a3a22 0%,#2a1e16 70%);border-radius:50%;display:block;margin:0 auto 6px}
   #fgName{font-size:24px;font-weight:700;color:#ffd76a}
   #fgStat{font-size:14px;margin:4px 0 10px;color:#e8d6b0}
-  .fgGrid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:12px}
+  .fgGrid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:8px}
   .fgGrid div{background:#3a2a1e;border-radius:8px;padding:6px 4px;font-size:12px;color:#cdb88e}
   .fgGrid b{display:block;font-size:17px;color:#fff3dc;margin-top:2px}
   #fgBtn{width:100%;font-size:18px;padding:11px}
@@ -333,6 +347,7 @@
 
   <div id="forge" class="hidden">
     <div class="forgeBox">
+      <canvas id="fgFx"></canvas>
       <div class="forgeHead"><span id="fgTitle">⚒ 무기 강화</span><button id="fgClose" title="닫기 (Esc)">✕</button></div>
       <div class="forgeBody">
         <canvas id="fgCanvas" width="240" height="240"></canvas>
@@ -462,7 +477,7 @@
 const SAVE_URL = '';
 
 // 버전 — 고칠 때마다 바꾸면, 화면에 보이는 버전으로 새 버전이 열렸는지 확인할 수 있어요.
-const VERSION = 'v9.39 (강화 공격력 상향)';
+const VERSION = 'v9.40 (강화 연출·비용 인하·확률 +5%)';
 // 수업용 버전: 주소 끝에 ?mode=class (또는 /class/ 주소) → 1·4·5·6장만 해요. 2장(삼정의 문란)·3장(들고일어난 백성들)은 건너뛰어요.
 const CLASS_MODE = /[?&]mode=class\b/.test(location.search);
 const SKIP_CH = CLASS_MODE ? [1, 2] : [];
@@ -5028,8 +5043,8 @@ const WEAPON_TIERS = {
 const wTier = n => n < 6 ? -1 : Math.min(12, Math.floor((n - 6) / 2));   // +6부터 2단계마다 새 이름 (+30이 마지막)
 const weaponName = (w, n, short) => { const t = wTier(n || 0); return t < 0 ? WEAPON_NAME[w] : WEAPON_TIERS[w][t][short ? 1 : 0]; };
 const ENH_MAX = 30;
-const enhCost = n => Math.max(10, Math.round(30 * Math.pow(1.45, Math.min(n, 14)) * Math.pow(1.2, Math.max(0, Math.min(n, 20) - 14)) * Math.pow(1.1, Math.max(0, n - 20)) * 0.48 / 10) * 10);   // 0.48 = 처음 값의 60% × 80%   // +14부터는 천천히, +20부터는 더 천천히
-const enhBase = n => n < 15 ? Math.max(0.3, 0.95 - 0.07 * n) : n < 20 ? 0.3 - 0.03 * (n - 14) : Math.max(0.06, 0.14 - 0.01 * (n - 20));   // 95%부터 7%씩, +15부터 30%→15%, +20부터 14%→6%
+const enhCost = n => Math.max(10, Math.round(30 * Math.pow(1.45, Math.min(n, 14)) * Math.pow(1.2, Math.max(0, Math.min(n, 20) - 14)) * Math.pow(1.1, Math.max(0, n - 20)) * 0.336 / 10) * 10);   // 0.336 = 처음 값의 60% × 80% × 70%   // +14부터는 천천히, +20부터는 더 천천히
+const enhBase = n => Math.min(1, 0.05 + (n < 15 ? Math.max(0.3, 0.95 - 0.07 * n) : n < 20 ? 0.3 - 0.03 * (n - 14) : Math.max(0.06, 0.14 - 0.01 * (n - 20))));   // 전체 +5%   // 95%부터 7%씩, +15부터 30%→15%, +20부터 14%→6%
 const SMITH_BONUS = 0.05;                                               // 대장간에서 강화하면 성공 확률 +5%
 const enhRate = n => Math.min(1, enhBase(n) + (forgeAtSmith ? SMITH_BONUS : 0));
 const nearSmith = () => mapId === 'village' && Math.abs(P.x - NPCS.smith.x) < 140;
@@ -5077,27 +5092,95 @@ function updateForge() {
   $('fgCoins').textContent = admin.on ? '∞ (관리자)' : P.coins + '닢';
   $('fgCoins').style.color = !admin.on && n < ENH_MAX && P.coins < enhCost(n) ? '#ff8a6a' : '';
 }
+// ---------- 강화 연출: 망치질(점점 빨라짐) → 기운 모으기(두근두근) → 성공은 황금빛 폭발, 실패는 붉은 섬광과 연기 ----------
+const fgFx = { parts: [], rays: 0, rayCol: '255,215,106', run: false };
+function fgCenter() {
+  const box = document.querySelector('.forgeBox').getBoundingClientRect(), c = $('fgCanvas').getBoundingClientRect(), k = box.width / document.querySelector('.forgeBox').offsetWidth || 1;
+  return { x: (c.left + c.width / 2 - box.left) / k, y: (c.top + c.height / 2 - box.top) / k };
+}
+function fgBurst(n, col, sp, opt = {}) {
+  const c = fgCenter();
+  for (let i = 0; i < n; i++) {
+    const a = Math.random() * TAU, v = sp * (0.4 + Math.random() * 0.8);
+    fgFx.parts.push({ x: c.x + (opt.r ? Math.cos(a) * opt.r : 0), y: c.y + (opt.r ? Math.sin(a) * opt.r : 0),
+      vx: opt.inward ? -Math.cos(a) * v : Math.cos(a) * v, vy: opt.inward ? -Math.sin(a) * v : Math.sin(a) * v - (opt.up || 0),
+      g: opt.g ?? 0.12, life: opt.life || 40, max: opt.life || 40, col: Array.isArray(col) ? col[i % col.length] : col, s: (opt.s || 3) * (0.6 + Math.random() * 0.8), txt: opt.txt ? opt.txt[i % opt.txt.length] : null });
+  }
+  fgRun();
+}
+function fgRun() {
+  if (fgFx.run) return; fgFx.run = true;
+  const cvf = $('fgFx'), box = document.querySelector('.forgeBox');
+  cvf.width = box.offsetWidth; cvf.height = box.offsetHeight;
+  const g = cvf.getContext('2d');
+  const step = () => {
+    g.clearRect(0, 0, cvf.width, cvf.height);
+    if (fgFx.rays > 0) {   // 회전하는 빛살
+      const c = fgCenter(), t = fgFx.rays;
+      g.save(); g.translate(c.x, c.y); g.rotate((60 - t) * 0.04); g.globalAlpha = Math.min(1, t / 25);
+      for (let i = 0; i < 16; i++) { g.rotate(TAU / 16); const gr = g.createLinearGradient(0, 0, 260, 0); gr.addColorStop(0, `rgba(${fgFx.rayCol},.9)`); gr.addColorStop(1, `rgba(${fgFx.rayCol},0)`); g.fillStyle = gr; g.beginPath(); g.moveTo(0, 0); g.lineTo(260, -14); g.lineTo(260, 14); g.closePath(); g.fill(); }
+      g.restore(); fgFx.rays--;
+    }
+    for (const q of fgFx.parts) {
+      q.x += q.vx; q.y += q.vy; q.vy += q.g; q.vx *= 0.97; q.life--;
+      g.globalAlpha = Math.max(0, q.life / q.max);
+      if (q.txt) { g.fillStyle = q.col; g.font = `bold ${Math.round(q.s * 5)}px serif`; g.textAlign = 'center'; g.fillText(q.txt, q.x, q.y); }
+      else { g.fillStyle = q.col; g.beginPath(); g.arc(q.x, q.y, q.s, 0, TAU); g.fill(); }
+    }
+    g.globalAlpha = 1;
+    fgFx.parts = fgFx.parts.filter(q => q.life > 0);
+    if (fgFx.parts.length || fgFx.rays > 0) requestAnimationFrame(step); else { fgFx.run = false; g.clearRect(0, 0, cvf.width, cvf.height); }
+  };
+  requestAnimationFrame(step);
+}
+function fgShake(big) { const b = document.querySelector('.forgeBox'); b.classList.remove('shake', 'shake2'); void b.offsetWidth; b.classList.add(big ? 'shake2' : 'shake'); }
+function fgFlash(col) { const d = document.createElement('div'); d.className = 'fgFlash'; d.style.background = col; document.querySelector('.forgeBox').appendChild(d); setTimeout(() => d.remove(), 750); }
 function tryEnhance() {
   if (forgeBusy || P.enh >= ENH_MAX) return;
-  const cost = enhCost(P.enh), msg = $('fgMsg');
+  const cost = enhCost(P.enh), msg = $('fgMsg'), box = document.querySelector('.forgeBox');
   if (P.coins < cost && !admin.on) { msg.className = 'fail'; msg.textContent = `엽전이 ${cost - P.coins}닢 모자라요.`; return; }
-  if (!admin.on) P.coins -= cost;   // 관리자 모드: 엽전 무제한 forgeBusy = true; $('fgBtn').disabled = true; updateForge();
-  msg.className = 'work'; msg.textContent = '땅!';
-  [0, 280, 560].forEach((t, i) => setTimeout(() => { beep(880 - i * 60, 0.08, 'square', 0.05, -400); msg.textContent = '땅! '.repeat(i + 1).trim(); }, t));
+  if (!admin.on) P.coins -= cost;   // 관리자 모드: 엽전 무제한
+  forgeBusy = true; $('fgBtn').disabled = true; updateForge();
+  $('fgClose').disabled = true;
+  // 1) 망치질 6번, 점점 빨라지고 소리가 높아져요
+  const hits = [0, 420, 760, 1020, 1220, 1370];
+  msg.className = 'work'; msg.textContent = '';
+  hits.forEach((t, i) => setTimeout(() => {
+    beep(520 + i * 90, 0.09, 'square', 0.06, -380); beep(140, 0.06, 'triangle', 0.05);
+    fgShake(false); fgBurst(14 + i * 3, ['#ffd27a', '#ff9a3a', '#fff2c0'], 4 + i * 0.6, { g: 0.18, life: 28 });
+    msg.textContent = ['땅!', '땅! 땅!', '땅! 땅! 땅!', '쾅!', '쾅! 쾅!', '쾅! 쾅! 쾅!'][i];
+  }, t));
+  // 2) 기운 모으기: 빛이 무기로 빨려 들어가고, 두근두근
   setTimeout(() => {
+    box.classList.add('charge', 'dim'); msg.className = 'work beat'; msg.textContent = '두근… 두근…';
+    beep(180, 1.0, 'sawtooth', 0.035, 900);
+    [0, 420].forEach(t => setTimeout(() => { beep(70, 0.12, 'sine', 0.09); setTimeout(() => beep(60, 0.1, 'sine', 0.07), 140); }, t));
+    fgBurst(46, ['#ffe9a0', '#9fd8ff', '#ffffff'], 3.2, { inward: true, r: 150, g: 0, life: 46, s: 2.5 });
+  }, 1560);
+  // 3) 결과
+  setTimeout(() => {
+    box.classList.remove('charge', 'dim');
     const ok = Math.random() < enhRate(P.enh);
     if (ok) {
       P.enh++;
       const renamed = wTier(P.enh) !== wTier(P.enh - 1);
-      msg.className = 'ok'; msg.textContent = `✨ 강화 성공! ${weaponName(P.c.weapon, P.enh)} +${P.enh}`;
-      if (renamed) toast(`🌟 무기가 「${weaponName(P.c.weapon, P.enh)}」(으)로 거듭났어요!`, '#ffd76a', 260);
-      SFX.lvl();
+      fgFlash('#fff6d8'); fgFx.rays = 70; fgFx.rayCol = P.enh >= 25 ? '120,240,255' : P.enh >= 16 ? '255,120,70' : '255,215,106';
+      fgBurst(70, ['#ffd76a', '#fff2b0', '#ffb347', '#ffffff'], 8, { g: 0.16, life: 60, s: 3.5, up: 2 });
+      fgBurst(14, '#ffe27a', 5, { txt: ['★', '✦', '✧'], g: 0.08, life: 70, s: 4, up: 2 });
+      msg.className = 'ok big'; msg.textContent = `✨ 강화 성공! +${P.enh}`;
+      [523, 659, 784, 1047].forEach((f, i) => setTimeout(() => beep(f, 0.18, 'triangle', 0.07), i * 90));
+      setTimeout(() => SFX.lvl(), 380);
+      if (renamed) setTimeout(() => toast(`🌟 무기가 「${weaponName(P.c.weapon, P.enh)}」(으)로 거듭났어요!`, '#ffd76a', 260), 500);
     } else {
-      msg.className = 'fail'; msg.textContent = `강화 실패… 엽전 ${cost}닢이 사라졌어요. (+${P.enh} 그대로)`;
-      beep(200, 0.35, 'sawtooth', 0.04, -120);
+      fgFlash('#ff3a22'); fgShake(true);
+      fgBurst(40, ['rgba(90,80,70,.85)', 'rgba(140,130,120,.7)', '#ff6a3a'], 3, { g: -0.05, life: 60, s: 6, up: 1 });
+      fgBurst(18, '#ff5a3a', 6, { g: 0.25, life: 30, s: 2.5 });
+      msg.className = 'fail big'; msg.textContent = `💥 강화 실패… (+${P.enh} 그대로)`;
+      beep(160, 0.4, 'sawtooth', 0.07, -110); setTimeout(() => beep(90, 0.5, 'sawtooth', 0.06, -50), 160);
+      setTimeout(() => { if (msg.classList.contains('fail')) msg.textContent = `강화 실패… 엽전 ${cost}닢이 사라졌어요. (+${P.enh} 그대로)`; }, 1400);
     }
-    forgeBusy = false; updateForge(); saveGame(true);
-  }, 900);
+    forgeBusy = false; $('fgClose').disabled = false; updateForge(); saveGame(true);
+  }, 2520);
 }
 $('fgBtn').onclick = tryEnhance;
 // 화면 아래 무기 칸(⚒)을 누르면 어디서나 강화 창이 열려요
