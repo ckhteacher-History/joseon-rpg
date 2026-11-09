@@ -451,7 +451,7 @@
 const SAVE_URL = '';
 
 // 버전 — 고칠 때마다 바꾸면, 화면에 보이는 버전으로 새 버전이 열렸는지 확인할 수 있어요.
-const VERSION = 'v9.27 (보스 체력 2배)';
+const VERSION = 'v9.28 (수업용 두루마리 포탈)';
 // 수업용 버전: 주소 끝에 ?mode=class (또는 /class/ 주소) → 1·4·5·6장만 해요. 2장(삼정의 문란)·3장(들고일어난 백성들)은 건너뛰어요.
 const CLASS_MODE = /[?&]mode=class\b/.test(location.search);
 const SKIP_CH = CLASS_MODE ? [1, 2] : [];
@@ -796,7 +796,7 @@ const MAPS = {
       { x: 50, to: 'goeul', tx: 150, label: '◀ 남원 고을 (삼남)', req: () => !!QS.q5,
         lock: '삼남으로 가는 먼 길이다. 지금은 떠날 이유가 없다.' },
       { x: 1300, to: scrollDest, tx: 150, sub: '서당 훈장의 역사 두루마리',
-        label: () => (QS.q9 ? `📜 다음 이야기 ▶ ${MAPS[scrollDest()].name}` : '📜 다음 이야기 (아직 잠김)'), req: () => !!QS.q9,
+        label: () => ((QS.q9 || QS.q14a) ? `📜 다음 이야기 ▶ ${MAPS[scrollDest()].name}` : '📜 다음 이야기 (아직 잠김)'), req: () => !!(QS.q9 || QS.q14a),
         lock: '다음 이야기로 가는 길이에요. 서당 훈장에게 새 부탁(!)을 받으면 열려요.' },
     ],
     spawns: [],
@@ -5243,7 +5243,7 @@ if (CLASS_MODE) {
   });
   // 건너뛰는 맵(남원·정주·진주)과 그곳으로 가는 길, 지도 위 장소를 지워요
   Object.keys(MAPS).forEach(m => { if (SKIP_CH.includes(MAP_CH[m])) delete MAPS[m]; });
-  Object.values(MAPS).forEach(mp => { mp.portals = (mp.portals || []).filter(pt => MAPS[pt.to]); });
+  Object.values(MAPS).forEach(mp => { mp.portals = (mp.portals || []).filter(pt => typeof pt.to === 'function' || MAPS[pt.to]); });   // 두루마리 포탈(행선지가 바뀌는 것)은 남겨요
   ['namwon', 'jeongju', 'jinju'].forEach(k => { delete PLACES[k]; });
   // 2·3장을 건너뛰어 모자란 성장(레벨·엽전)은 4장을 시작할 때 채워 줘요
   const q4s = QUESTS.find(q => q.id === 'q14a');
