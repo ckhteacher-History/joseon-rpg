@@ -462,7 +462,7 @@
 const SAVE_URL = '';
 
 // 버전 — 고칠 때마다 바꾸면, 화면에 보이는 버전으로 새 버전이 열렸는지 확인할 수 있어요.
-const VERSION = 'v9.36 (보스 공격력 절반)';
+const VERSION = 'v9.37 (보스 피해 체력 비례·체력 절반)';
 // 수업용 버전: 주소 끝에 ?mode=class (또는 /class/ 주소) → 1·4·5·6장만 해요. 2장(삼정의 문란)·3장(들고일어난 백성들)은 건너뛰어요.
 const CLASS_MODE = /[?&]mode=class\b/.test(location.search);
 const SKIP_CH = CLASS_MODE ? [1, 2] : [];
@@ -759,11 +759,11 @@ const MON = {
   sinha: { name: '타락한 세도 가문 신하', hp: 1300, atk: 60, exp: 300, speed: 1.1, w: 32, h: 66, aggro: true, coin: [200, 300], person: 'sinha', weapon: 'brush', shoot: 1, glyph: '官' },
   samjeong: { name: '삼정 문란 도깨비', hp: 1500, atk: 64, exp: 320, speed: 1.4, w: 50, h: 58, aggro: true, coin: [220, 330] },
   bandit: { name: '산적', hp: 95, atk: 13, exp: 28, speed: 1.2, w: 30, h: 62, aggro: true, coin: [10, 20], person: 'bandit', weapon: 'club' },
-  tiger: { name: '산군(山君)', hp: 1520, atk: 30, exp: 320, speed: 2.0, w: 116, h: 58, boss: true, coin: [20, 35],
+  tiger: { name: '산군(山君)', hp: 760, atk: 6, exp: 320, speed: 2.0, w: 116, h: 58, boss: true, coin: [20, 35],
     title: '산군(山君) — 인왕산 호랑이', intro: '어흥!! 산군이 나타났다!' },
   ajeon: { name: '아전', hp: 150, atk: 20, exp: 38, speed: 1.1, w: 30, h: 62, aggro: true, coin: [25, 45], person: 'ajeon', weapon: 'brush' },
   tamgwan: { name: '탐관오리', hp: 260, atk: 26, exp: 62, speed: 0.9, w: 38, h: 66, aggro: true, coin: [40, 70], person: 'tamgwan', weapon: 'paddle', shoot: 1 },
-  satto: { name: '변 사또', hp: 4800, atk: 48, exp: 900, speed: 1.3, w: 56, h: 104, boss: true, coin: [100, 150], person: 'satto', weapon: 'paddle', scale: 1.6,
+  satto: { name: '변 사또', hp: 2400, atk: 8, exp: 900, speed: 1.3, w: 56, h: 104, boss: true, coin: [100, 150], person: 'satto', weapon: 'paddle', scale: 1.6,
     title: '변 사또 — 남원 고을의 탐관오리', intro: '변 사또: "웬 놈이냐! 감히 동헌에 발을 들이다니!"' },
   hwangchung: { name: '메뚜기 떼', hp: 220, atk: 30, exp: 70, speed: 1.4, w: 46, h: 34, float: true, aggro: true, coin: [45, 80] },
   haesuin: { name: '세도가 하수인', hp: 420, atk: 36, exp: 105, speed: 1.2, w: 32, h: 64, aggro: true, coin: [60, 100], person: 'haesuin', weapon: 'club' },
@@ -771,20 +771,20 @@ const MON = {
   jom: { name: '좀벌레 떼', hp: 700, atk: 46, exp: 170, speed: 1.5, w: 46, h: 22, aggro: true, coin: [100, 160] },
   wijo: { name: '족보 위조꾼', hp: 1000, atk: 52, exp: 240, speed: 1.1, w: 30, h: 62, aggro: true, coin: [130, 200], person: 'wijo', weapon: 'brush', shoot: 1, glyph: '譜' },
   chuno: { name: '추노꾼', hp: 1150, atk: 56, exp: 260, speed: 2.0, w: 32, h: 64, aggro: true, coin: [140, 220], person: 'chuno', weapon: 'club' },
-  byeok: { name: '신분의 벽', hp: 18000, atk: 93, exp: 6000, speed: 0.6, w: 150, h: 150, boss: true, coin: [350, 500],
+  byeok: { name: '신분의 벽', hp: 9000, atk: 12, exp: 6000, speed: 0.6, w: 150, h: 150, boss: true, coin: [350, 500],
     title: '신분의 벽 — 흔들리는 신분 질서', intro: '신분의 벽: "양반은 양반, 천민은 천민! 아무도 넘어올 수 없다!"' },
   geogan: { name: '벼슬 거간꾼', hp: 1300, atk: 60, exp: 300, speed: 1.1, w: 36, h: 64, aggro: true, coin: [200, 300], person: 'geogan', weapon: 'brush', shoot: 1, glyph: '官' },
   noemul: { name: '뇌물 상자 도깨비', hp: 1250, atk: 58, exp: 290, speed: 1.3, w: 44, h: 40, aggro: true, coin: [240, 360] },
   cheongji: { name: '권세가 청지기', hp: 1500, atk: 64, exp: 320, speed: 1.8, w: 32, h: 64, aggro: true, coin: [220, 330], person: 'cheongji', weapon: 'club' },
-  sedo: { name: '세도 대감', hp: 26000, atk: 105, exp: 10000, speed: 1.2, w: 62, h: 116, boss: true, coin: [500, 750], person: 'sedo', weapon: 'paddle', scale: 1.8,
+  sedo: { name: '세도 대감', hp: 13000, atk: 13, exp: 10000, speed: 1.2, w: 62, h: 116, boss: true, coin: [500, 750], person: 'sedo', weapon: 'paddle', scale: 1.8,
     title: '세도 대감 — 세도 가문의 권세가 (가상 인물)', intro: '세도 대감: "벼슬도, 과거도, 나라 살림도 모두 우리 가문의 손안에 있다!"' },
-  gotgan: { name: '곳간 도깨비', hp: 9000, atk: 72, exp: 3000, speed: 1.5, w: 110, h: 118, boss: true, coin: [200, 300],
+  gotgan: { name: '곳간 도깨비', hp: 4500, atk: 10, exp: 3000, speed: 1.5, w: 110, h: 118, boss: true, coin: [200, 300],
     title: '곳간 도깨비 — 백성의 곡식을 삼킨 탐욕', intro: '곳간 도깨비: "내 곳간에 손대지 마라!"' },
   // 4장 · 새로운 사상의 등장
   cheonwon: { name: '천원지방 도깨비', hp: 480, atk: 38, exp: 115, speed: 1.2, w: 44, h: 44, float: true, aggro: true, coin: [65, 110] },
   maleum: { name: '땅 욕심 마름', hp: 520, atk: 39, exp: 125, speed: 1.3, w: 34, h: 64, aggro: true, coin: [70, 115], person: 'maleum', weapon: 'club' },
   seosaeng: { name: '공리공론 서생', hp: 600, atk: 42, exp: 140, speed: 1.1, w: 30, h: 62, aggro: true, coin: [80, 130], person: 'seosaeng', weapon: 'brush', shoot: 1, glyph: '空' },
-  seongri: { name: '성리학 도깨비', hp: 13000, atk: 81, exp: 4500, speed: 0.9, w: 150, h: 140, boss: true, coin: [260, 400],
+  seongri: { name: '성리학 도깨비', hp: 6500, atk: 11, exp: 4500, speed: 0.9, w: 150, h: 140, boss: true, coin: [260, 400],
     title: '성리학 도깨비 — 낡은 성리학 질서와 관습을 고집하는 도깨비 (가상)', intro: '성리학 도깨비: "사농공상의 질서를 어지럽히지 마라! 오랑캐의 학문 따위는 이 서원에 들일 수 없다!"' },
 };
 
@@ -2270,8 +2270,13 @@ function gainExp(n) {
 }
 const expNeed = lv => Math.round(30 + lv * lv * 18);
 
+// 보스에게 맞으면: (보스 공격력 + 내 최대 체력의 5.5%) × 공격 배율 → 체력이 적은 직업도, 많은 직업도 한 번에 약 8~10%
+const BOSS_HP_PCT = 0.055;
+let CUR_BOSS = null;
+const bossDmg = (dmg, atk) => dmg / atk * (atk + BOSS_HP_PCT * P.maxHp);
 function hurtPlayer(dmg, fromX) {
   if (P.inv > 0 || P.dead) return;
+  if (CUR_BOSS) dmg = bossDmg(dmg, CUR_BOSS.d.atk);
   if (admin.god) { P.inv = 30; addFloat(P.x, P.y - 66, '무적', 'info'); return; }
   dmg = Math.max(1, Math.round(dmg * rnd(0.85, 1.15)));
   P.hp -= dmg; P.inv = 70;
@@ -2336,11 +2341,11 @@ function updateMonsters() {
 
     if (BOSS_AI[m.t]) {
       const n0 = eprojs.length;
-      BOSS_AI[m.t](m, dx);
+      CUR_BOSS = m; try { BOSS_AI[m.t](m, dx); } finally { CUR_BOSS = null; }
       // 보스는 더 자주(다음 공격까지 약 0.6배 시간), 더 빨리(준비 동작 약 0.67배) 공격하고, 던지거나 떨어뜨리는 공격도 1.6배 빨라요
       if (!m.windup && m.timer > 2 && frame % 3 !== 0) m.timer--;
       if (m.windup > 2 && frame % 2 === 0) m.windup--;
-      for (let i = n0; i < eprojs.length; i++) { eprojs[i].vx *= 1.6; eprojs[i].vy *= 1.6; }
+      for (let i = n0; i < eprojs.length; i++) { eprojs[i].vx *= 1.6; eprojs[i].vy *= 1.6; eprojs[i].bossAtk = m.d.atk; }
     } else {
       if (m.d.shoot && near && Math.abs(dx) < 360 && Math.abs(P.y - m.y) < 100 && --m.timer <= 0) {
         m.timer = rnd(140, 220); m.dir = dx > 0 ? 1 : -1;
@@ -2357,7 +2362,7 @@ function updateMonsters() {
       if (m.x < roamLo(m)) { m.x = roamLo(m); m.dir = 1; }
       if (m.x > roamHi(m)) { m.x = roamHi(m); m.dir = -1; }
     }
-    if (P.inv <= 0 && !P.dead && m.spawnA >= 1 && overlap(pb, monBox(m))) hurtPlayer(m.d.atk * (m.air ? 1.3 : 1), m.x);
+    if (P.inv <= 0 && !P.dead && m.spawnA >= 1 && overlap(pb, monBox(m))) hurtPlayer((m.d.boss ? bossDmg(m.d.atk, m.d.atk) : m.d.atk) * (m.air ? 1.3 : 1), m.x);
   }
 }
 
@@ -2593,7 +2598,7 @@ function updateEnemyProjectiles() {
   for (const e of eprojs) {
     e.x += e.vx; e.y += e.vy; e.life--; e.spin += 0.15;
     const hw = e.brick ? 16 : 9;
-    if (!P.dead && P.inv <= 0 && overlap(pb, { x1: e.x - hw, x2: e.x + hw, y1: e.y - 11, y2: e.y + 11 })) { hurtPlayer(e.dmg, e.x - e.vx * 5); e.life = 0; }
+    if (!P.dead && P.inv <= 0 && overlap(pb, { x1: e.x - hw, x2: e.x + hw, y1: e.y - 11, y2: e.y + 11 })) { hurtPlayer(e.bossAtk ? bossDmg(e.dmg, e.bossAtk) : e.dmg, e.x - e.vx * 5); e.life = 0; }
     if (e.brick && e.y >= GROUND - 10) { e.life = 0; for (let i = 0; i < 5; i++) fx.push({ type: 'p', x: e.x, y: GROUND - 6, vx: rnd(-2, 2), vy: rnd(-2.5, -0.5), life: 18, max: 18, color: '#8a8478', s: 3 }); }
   }
   eprojs = eprojs.filter(e => e.life > 0 && e.x > -40 && e.x < map.w + 40 && e.y < GROUND + 10);
