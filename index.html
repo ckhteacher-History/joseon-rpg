@@ -68,6 +68,11 @@
   #dlg.note{background:rgba(238,244,234,.98);border-color:#2f5d50}
   #dlgPor{width:100px;height:110px;flex:none;background:#efe2c2;border-radius:8px}
   #dlg.note #dlgPor{background:#dfe9d8}
+  #dlg.boss{background:rgba(38,16,14,.96);border-color:#a33a2a;box-shadow:0 0 22px rgba(200,40,20,.45)}
+  #dlg.boss #dlgPor{background:radial-gradient(circle at 50% 60%,#5a1e18,#200a08)}
+  #dlg.boss #dlgName{color:#ff8a5a}
+  #dlg.boss #dlgText{color:#f6e6d0}
+  #dlg.boss #dlgHint{color:#e0a080}
   #dlgName{font-weight:700;color:#8a3b1e;font-size:18px;margin-bottom:6px}
   #dlg.note #dlgName{color:#2f5d50}
   #dlgText{font-size:17px;line-height:1.6;color:#2b1d12}
@@ -435,7 +440,7 @@
 const SAVE_URL = '';
 
 // 버전 — 고칠 때마다 바꾸면, 화면에 보이는 버전으로 새 버전이 열렸는지 확인할 수 있어요.
-const VERSION = 'v9.23 (기술 성장 완화)';
+const VERSION = 'v9.24 (보스 등장 대사)';
 // 수업용 버전: 주소 끝에 ?mode=class (또는 /class/ 주소) → 1·4·5·6장만 해요. 2장(삼정의 문란)·3장(들고일어난 백성들)은 건너뛰어요.
 const CLASS_MODE = /[?&]mode=class\b/.test(location.search);
 const SKIP_CH = CLASS_MODE ? [1, 2] : [];
@@ -1853,7 +1858,27 @@ function enterMap(id, x) {
   if (state === 'play') saveGame(true);
   playBgm(id);
   const boss = mons.find(m => m.d.boss && !m.dead);
-  if (boss) setTimeout(() => { SFX.roar(); shake = 14; toast(boss.d.intro, '#ff8a5a', 220); }, 500);
+  if (boss) setTimeout(() => bossIntro(boss), 650);
+}
+
+// 보스 맵에 들어서면, 보스가 NPC처럼 대화창으로 먼저 위협한 뒤 싸움이 시작돼요 (대화 중에는 게임이 멈춰요)
+const BOSS_TALK = {
+  tiger: ['크르르르…. 감히 내 굴에 발을 들이다니.', '이 은광 굴은 내 영역이다. 광부들도, 너도 모두 내 먹잇감일 뿐이지!', '어흥!! 뼈도 못 추리게 해 주마!'],
+  satto: ['웬 놈이냐! 감히 동헌에 발을 들이다니!', '이 고을의 땅도, 군포도, 환곡도 모두 내 것이다. 백성들 곡식으로 내 곳간을 채우는 게 무슨 죄란 말이냐?', '여봐라! 저놈을 당장 매우 쳐라!'],
+  gotgan: ['킬킬킬…. 쌀 냄새를 맡고 찾아왔느냐?', '이 곳간에 쌓인 곡식은 모두 백성들에게서 거둔 것이지. 이제 한 톨도 남김없이 내 것이다!', '내 곳간에 손대는 놈은 통째로 삼켜 주마!'],
+  seongri: ['에헴! 어디서 오랑캐 학문 냄새가 나는구나.', '사농공상의 차례도 모르는 것들이 수레니, 소비니, 땅을 나누자느니 떠들어 대는구나!', '조상의 법도는 한 글자도 바꿀 수 없다! 이 서원에서 썩 물러가거라!'],
+  byeok: ['멈춰라! 여기서부터는 아무나 넘어올 수 없다.', '양반은 양반, 상민은 상민, 천민은 천민! 태어난 대로 살아야 하는 법이다.', '공명첩? 족보? 그딴 종이 쪼가리로 나를 넘을 수 있을 것 같으냐!'],
+  sedo: ['허허, 겁도 없이 비변사까지 들어왔구나.', '벼슬도, 과거 급제도, 나라 살림도 모두 우리 가문의 손안에 있다. 임금조차 우리 뜻을 거스를 수 없지!', '돈을 바치면 벼슬을 주마. 싫다면…. 여기서 사라져라!'],
+};
+const bossIntroSeen = new Set();
+function bossIntro(boss) {
+  if (state !== 'play' || boss.dead || dialog) return;
+  const start = () => { SFX.roar(); shake = 14; toast('⚔ ' + boss.d.name + '와(과)의 싸움이 시작되었다!', '#ff8a5a', 200); };
+  const lines = BOSS_TALK[boss.t];
+  if (!lines || bossIntroSeen.has(boss.t)) { SFX.roar(); shake = 14; toast(boss.d.intro, '#ff8a5a', 220); return; }   // 두 번째부터는 짧게
+  bossIntroSeen.add(boss.t);
+  SFX.roar(); shake = 10;
+  openDialog(`👹 ${boss.d.name}`, { mon: boss.t }, lines.map(QK), start);
 }
 
 function makeMon(s) {
@@ -2732,6 +2757,7 @@ function showDialogPage() {
   let name = dialog.name, look = dialog.look, text = p;
   if (typeof p === 'object') { name = p.name || name; look = p.look === undefined ? look : p.look; text = p.text; }
   $('dlg').classList.toggle('note', name.includes('역사 노트'));
+  $('dlg').classList.toggle('boss', !!(look && look.mon));
   if (name.includes('역사 노트')) collectNote(text);
   $('dlg').classList.toggle('quiz', isQuizPage());
   $('dlgName').textContent = name;
@@ -2773,7 +2799,8 @@ function showDialogPage() {
   } else { hint.textContent = nextLabel; hint.classList.remove('wait'); }
   const g = $('dlgPor').getContext('2d');
   g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, 200, 220);
-  if (look) { g.setTransform(2.6, 0, 0, 2.6, 0, 0); drawPerson(g, 38, 80, look, 1, { t: 0 }); }
+  if (look && look.mon) { $('dlgPor').width = $('dlgPor').width; drawDexThumb($('dlgPor'), look.mon); }   // 보스 얼굴
+  else if (look) { g.setTransform(2.6, 0, 0, 2.6, 0, 0); drawPerson(g, 38, 80, look, 1, { t: 0 }); }
   else {
     g.font = '90px serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
     g.fillText(name.includes('역사') ? '📜' : '📖', 100, 115);
