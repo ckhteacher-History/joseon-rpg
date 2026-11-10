@@ -156,7 +156,7 @@
   .forgeBox.shake{animation:fgShake .16s}
   .forgeBox.shake2{animation:fgShake .12s 3}
   @keyframes fgShake{0%{transform:translate(0)}25%{transform:translate(-7px,3px) rotate(-.6deg)}50%{transform:translate(6px,-4px) rotate(.6deg)}75%{transform:translate(-3px,-2px)}100%{transform:translate(0)}}
-  .forgeBox.charge #fgCanvas{animation:fgCharge .9s ease-in forwards}
+  .forgeBox.charge #fgCanvas{animation:fgCharge .75s ease-in forwards}
   @keyframes fgCharge{from{box-shadow:0 0 0 0 rgba(255,210,90,0)}to{box-shadow:0 0 46px 18px rgba(255,220,120,.95);transform:scale(1.12)}}
   .forgeBox.dim{filter:brightness(.82)}
   #fgMsg{height:40px;line-height:40px;white-space:nowrap}
@@ -477,7 +477,7 @@
 const SAVE_URL = '';
 
 // 버전 — 고칠 때마다 바꾸면, 화면에 보이는 버전으로 새 버전이 열렸는지 확인할 수 있어요.
-const VERSION = 'v9.41 (강화 연출 단축)';
+const VERSION = 'v9.42 (강화 연출 2초)';
 // 수업용 버전: 주소 끝에 ?mode=class (또는 /class/ 주소) → 1·4·5·6장만 해요. 2장(삼정의 문란)·3장(들고일어난 백성들)은 건너뛰어요.
 const CLASS_MODE = /[?&]mode=class\b/.test(location.search);
 const SKIP_CH = CLASS_MODE ? [1, 2] : [];
@@ -5092,7 +5092,7 @@ function updateForge() {
   $('fgCoins').textContent = admin.on ? '∞ (관리자)' : P.coins + '닢';
   $('fgCoins').style.color = !admin.on && n < ENH_MAX && P.coins < enhCost(n) ? '#ff8a6a' : '';
 }
-// ---------- 강화 연출: 망치질(점점 빨라짐) → 성공은 황금빛 폭발, 실패는 붉은 섬광과 연기 ----------
+// ---------- 강화 연출(약 2초): 망치질(점점 빨라짐) → 두근두근 → 성공은 황금빛 폭발, 실패는 붉은 섬광과 연기 ----------
 const fgFx = { parts: [], rays: 0, rayCol: '255,215,106', run: false };
 function fgCenter() {
   const box = document.querySelector('.forgeBox').getBoundingClientRect(), c = $('fgCanvas').getBoundingClientRect(), k = box.width / document.querySelector('.forgeBox').offsetWidth || 1;
@@ -5143,13 +5143,20 @@ function tryEnhance() {
   forgeBusy = true; $('fgBtn').disabled = true; updateForge();
   $('fgClose').disabled = true;
   // 1) 망치질 6번, 점점 빨라지고 소리가 높아져요
-  const hits = [0, 420, 760, 1020, 1220, 1370];
+  const hits = [0, 320, 570, 760, 900, 1000];
   msg.className = 'work'; msg.textContent = '';
   hits.forEach((t, i) => setTimeout(() => {
     beep(520 + i * 90, 0.09, 'square', 0.06, -380); beep(140, 0.06, 'triangle', 0.05);
     fgShake(false); fgBurst(14 + i * 3, ['#ffd27a', '#ff9a3a', '#fff2c0'], 4 + i * 0.6, { g: 0.18, life: 28 });
     msg.textContent = ['땅!', '땅! 땅!', '땅! 땅! 땅!', '쾅!', '쾅! 쾅!', '쾅! 쾅! 쾅!'][i];
   }, t));
+  // 2) 기운 모으기: 빛이 무기로 빨려 들어가고, 두근두근
+  setTimeout(() => {
+    box.classList.add('charge', 'dim'); msg.className = 'work beat'; msg.textContent = '두근… 두근…';
+    beep(180, 0.75, 'sawtooth', 0.035, 900);
+    [0, 320].forEach(t => setTimeout(() => { beep(70, 0.11, 'sine', 0.09); setTimeout(() => beep(60, 0.09, 'sine', 0.07), 120); }, t));
+    fgBurst(40, ['#ffe9a0', '#9fd8ff', '#ffffff'], 3.6, { inward: true, r: 140, g: 0, life: 36, s: 2.5 });
+  }, 1120);
   // 3) 결과
   setTimeout(() => {
     box.classList.remove('charge', 'dim');
@@ -5173,7 +5180,7 @@ function tryEnhance() {
       setTimeout(() => { if (msg.classList.contains('fail')) msg.textContent = `강화 실패… 엽전 ${cost}닢이 사라졌어요. (+${P.enh} 그대로)`; }, 1400);
     }
     forgeBusy = false; $('fgClose').disabled = false; updateForge(); saveGame(true);
-  }, 1600);
+  }, 1950);
 }
 $('fgBtn').onclick = tryEnhance;
 // 화면 아래 무기 칸(⚒)을 누르면 어디서나 강화 창이 열려요
