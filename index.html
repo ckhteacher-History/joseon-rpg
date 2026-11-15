@@ -477,7 +477,7 @@
 const SAVE_URL = '';
 
 // 버전 — 고칠 때마다 바꾸면, 화면에 보이는 버전으로 새 버전이 열렸는지 확인할 수 있어요.
-const VERSION = 'v9.44 (고단계 강화비 인하)';
+const VERSION = 'v9.45 (조작법 안내 위치)';
 // 수업용 버전: 주소 끝에 ?mode=class (또는 /class/ 주소) → 1·4·5·6장만 해요. 2장(삼정의 문란)·3장(들고일어난 백성들)은 건너뛰어요.
 const CLASS_MODE = /[?&]mode=class\b/.test(location.search);
 const SKIP_CH = CLASS_MODE ? [1, 2] : [];
@@ -4750,9 +4750,9 @@ function drawHelp() {
   const a = Math.min(1, helpT / 40);
   ctx.globalAlpha = a;
   const lines = ['← → 이동 · Space 점프 · 공중에서 Space 이단 점프 · ↓+Space 내려가기', 'Z(Ctrl) 공격(꾹 누르면 연속) · X(Shift) 기술 · A 국밥 먹기', '↑(Enter) 대화·포탈 · G 다음 할 일 · M 지도 · N 노트 · K 도감 · E 강화 · B 귀환'];
-  ctx.fillStyle = 'rgba(20,14,10,.78)'; rr(ctx, VW / 2 - 225, 12, 450, 68, 10); ctx.fill();
+  ctx.fillStyle = 'rgba(20,14,10,.78)'; rr(ctx, VW / 2 - 225, 50, 450, 68, 10); ctx.fill();   // 위쪽 버튼 줄 아래에 그려요
   ctx.font = F(13, true); ctx.textAlign = 'center'; ctx.fillStyle = '#f3e3c0';
-  lines.forEach((l, i) => ctx.fillText(l, VW / 2, 33 + i * 19));
+  lines.forEach((l, i) => ctx.fillText(l, VW / 2, 71 + i * 19));
   ctx.globalAlpha = 1;
 }
 
